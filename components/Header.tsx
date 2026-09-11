@@ -1,0 +1,120 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { ShoppingCart, Menu as MenuIcon, X, User, MapPin, Phone } from 'lucide-react'
+import { useCart } from '@/lib/store'
+
+export default function Header() {
+  const [open, setOpen] = useState(false)
+  const cartCount = useCart((s) => s.items.reduce((sum, i) => sum + i.quantity, 0))
+
+  const links = [
+    { href: '/', label: 'Home' },
+    { href: '/menu', label: 'Menu' },
+    { href: '/offers', label: 'Offers' },
+    { href: '/about', label: 'About' },
+    { href: '/gallery', label: 'Gallery' },
+    { href: '/contact', label: 'Contact' },
+    { href: '/track-order', label: 'Track Order' },
+  ]
+
+  return (
+    <>
+      {/* Top Strip */}
+      <div className="bg-gold text-night text-xs md:text-sm py-2 px-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MapPin size={14} />
+            <span className="font-semibold">Amarpur</span>
+          </div>
+          <a href="tel:+919999999999" className="flex items-center gap-2 font-semibold">
+            <Phone size={14} />
+            <span>+91 9999999999</span>
+          </a>
+        </div>
+      </div>
+
+      {/* Main Header */}
+      <header className="sticky top-0 z-50 bg-night/95 backdrop-blur-md border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16 md:h-20">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center text-night font-bold text-xl">
+              FJ
+            </div>
+            <div className="leading-tight">
+              <p className="text-lg md:text-xl text-gold font-bold">Food Junction</p>
+              <p className="text-[10px] md:text-xs text-white/60 tracking-widest">THE FAMILY RESTAURANT</p>
+            </div>
+          </Link>
+
+          {/* Desktop Nav */}
+          <nav className="hidden lg:flex items-center gap-6">
+            {links.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="text-sm font-medium hover:text-gold transition-colors"
+              >
+                {l.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Right Actions */}
+          <div className="flex items-center gap-2 md:gap-3">
+            <Link href="/cart" className="relative p-2 hover:text-gold transition">
+              <ShoppingCart size={22} />
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 bg-gold text-night text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+
+            <Link href="/login" className="p-2 hover:text-gold transition">
+              <User size={22} />
+            </Link>
+
+            <Link
+              href="/menu"
+              className="hidden md:inline-flex bg-gold text-night font-bold text-sm px-5 py-2.5 rounded-full hover:bg-gold-light transition"
+            >
+              Order Now
+            </Link>
+
+            <button className="lg:hidden p-2" onClick={() => setOpen(!open)}>
+              {open ? <X size={24} /> : <MenuIcon size={24} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        {open && (
+          <div className="lg:hidden bg-night-soft border-t border-white/5">
+            <nav className="px-4 py-4 space-y-1">
+              {links.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  onClick={() => setOpen(false)}
+                  className="block py-3 px-4 rounded-lg hover:bg-night-card hover:text-gold transition font-medium"
+                >
+                  {l.label}
+                </Link>
+              ))}
+              <Link
+                href="/menu"
+                onClick={() => setOpen(false)}
+                className="block mt-3 text-center bg-gold text-night font-bold py-3 rounded-full"
+              >
+                ORDER NOW
+              </Link>
+            </nav>
+          </div>
+        )}
+      </header>
+    </>
+  )
+}
