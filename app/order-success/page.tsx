@@ -1,5 +1,4 @@
 'use client'
-
 import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
@@ -10,6 +9,8 @@ import {
   Clock,
   Package,
   ArrowRight,
+  MessageCircle,
+  Share2,
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -164,6 +165,29 @@ function OrderSuccessContent() {
               </p>
             )}
           </div>
+        </div>
+
+        {/* WhatsApp Share */}
+        <div className="bg-fresh/10 border border-fresh/30 rounded-2xl p-5 mb-5 text-center">
+          <div className="text-4xl mb-2">🎉</div>
+          <p className="font-bold mb-1">Loved our food? Share it with friends!</p>
+          <p className="text-xs text-white/60 mb-4">
+            Help us grow — share Food Junction on WhatsApp
+          </p>
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(
+              `🍽️ I just ordered from *Food Junction - The Family Restaurant*!\n\n` +
+                `Order #${order.orderNumber}\n` +
+                `Total: ₹${order.total}\n\n` +
+                `You should try it too! 👇\n` +
+                `https://food-junction-gamma.vercel.app/`
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 bg-fresh text-night font-bold px-6 py-3 rounded-full hover:bg-fresh-dark transition"
+          >
+            <MessageCircle size={18} /> Share on WhatsApp
+          </a>
         </div>
 
         {/* Buttons */}

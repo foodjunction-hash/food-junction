@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Search } from 'lucide-react'
+import { Search, MessageCircle } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import FoodCard from '@/components/FoodCard'
@@ -133,6 +133,19 @@ export default function MenuPage() {
             )}
           </div>
         </section>
+                {/* Floating WhatsApp Button */}
+        <a
+          href={`https://wa.me/919973318421?text=${encodeURIComponent(
+            'Hi Food Junction! I want to place an order. Can you help?'
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Order on WhatsApp"
+          className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-40 w-14 h-14 rounded-full bg-fresh text-night flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+        >
+          <MessageCircle size={26} />
+        </a>
+
       </main>
 
       <Footer />
