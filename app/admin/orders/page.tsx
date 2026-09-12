@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { Phone, MapPin, Clock, Search, X, CheckCircle2, XCircle } from 'lucide-react'
-import { getOrders, updateOrderStatus, type Order, type OrderStatus } from '@/lib/orders'
+import { getOrders, type Order, type OrderStatus } from '@/lib/orders'
 
 type FilterType = 'all' | OrderStatus
 
@@ -13,8 +13,42 @@ export default function AdminOrdersPage() {
   const [search, setSearch] = useState('')
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
 
-  const loadOrders = () => {
-    setOrders(getOrders())
+  // Map DB format → frontend Order format
+  const mapDbOrder = (o: any): Order => ({
+    id: o.id,
+    orderNumber: o.order_number,
+    createdAt: o.created_at,
+    items: o.items || [],
+    subtotal: o.subtotal,
+    deliveryCharge: o.delivery_charge,
+    tax: o.tax,
+    total: o.total,
+    orderType: o.order_type,
+    paymentMethod: o.payment_method,
+    paymentStatus: o.payment_status,
+    status: o.status,
+    customer: {
+      name: o.customer_name,
+      mobile: o.customer_mobile,
+      email: o.customer_email,
+      address: o.customer_address,
+      landmark: o.customer_landmark,
+      pincode: o.customer_pincode,
+      instructions: o.customer_instructions,
+      tableNumber: o.customer_table_number,
+    },
+  })
+
+  const loadOrders = async () => {
+    try {
+      const res = await fetch('/api/orders', { cache: 'no-store' })
+      const data = await res.json()
+      const dbOrders: Order[] = (data.orders || []).map(mapDbOrder)
+      setOrders(dbOrders)
+    } catch (err) {
+      console.error('Failed to fetch orders:', err)
+      setOrders(getOrders())
+    }
   }
 
   useEffect(() => {
@@ -39,11 +73,27 @@ export default function AdminOrdersPage() {
     })
   }, [orders, filter, search])
 
-  const handleStatusChange = (id: string, status: OrderStatus) => {
-    const updated = updateOrderStatus(id, status)
-    if (updated) {
-      loadOrders()
-      setSelectedOrder(updated)
+  const handleStatusChange = async (id: string, status: OrderStatus) => {
+    try {
+      const res = await fetch(`/api/orders?id=${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        // Refresh list
+        await loadOrders()
+        // Update modal if open
+        if (data.order) {
+          setSelectedOrder(mapDbOrder(data.order))
+        }
+      } else {
+        console.error('Status update failed:', await res.text())
+      }
+    } catch (err) {
+      console.error('Failed to update status:', err)
     }
   }
 
@@ -73,7 +123,7 @@ export default function AdminOrdersPage() {
       <div className="mb-6">
         <h1 className="text-3xl md:text-4xl font-bold mb-1">Orders</h1>
         <p className="text-white/50 text-sm">
-          Manage all customer orders • Auto-refresh every 5s
+          Manage all customer orders • Auto-refresh every 5s • Live from database
         </p>
       </div>
 
@@ -332,11 +382,16 @@ export default function AdminOrdersPage() {
                 <p className="text-xs text-white/40 mb-2">ORDER ITEMS</p>
                 <div className="space-y-2">
                   {selectedOrder.items.map((it) => (
-                    <div key={it.id} className="flex items-center justify-between text-sm">
+                    <div
+                      key={it.id}
+                      className="flex items-center justify-between text-sm"
+                    >
                       <span>
                         {it.image} {it.name} × {it.quantity}
                       </span>
-                      <span className="font-semibold">₹{it.price * it.quantity}</span>
+                      <span className="font-semibold">
+                        ₹{it.price * it.quantity}
+                      </span>
                     </div>
                   ))}
                 </div>

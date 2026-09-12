@@ -85,13 +85,11 @@ export default function CheckoutPage() {
     }
 
     setLoading(true)
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 1200))
 
     const orderId = generateOrderId()
     const orderNumber = generateOrderNumber()
 
-    saveOrder({
+    const orderPayload = {
       id: orderId,
       orderNumber,
       createdAt: new Date().toISOString(),
@@ -120,7 +118,27 @@ export default function CheckoutPage() {
         instructions: form.instructions.trim() || undefined,
         tableNumber: form.tableNumber.trim() || undefined,
       },
-    })
+    }
+
+    // Save to Supabase via API
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderPayload),
+      })
+      if (!res.ok) {
+        console.error('Failed to save order to DB:', await res.text())
+      }
+    } catch (err) {
+      console.error('API error:', err)
+    }
+
+    // Save to localStorage (backup / for track-order page)
+    saveOrder(orderPayload)
+
+    // Small delay for UX
+    await new Promise((r) => setTimeout(r, 800))
 
     clearCart()
     router.push(`/order-success?id=${orderId}`)
@@ -137,9 +155,7 @@ export default function CheckoutPage() {
             <h1 className="text-2xl md:text-3xl font-bold mb-3">
               Cart is Empty
             </h1>
-            <p className="text-white/60 mb-6">
-              Add items before checkout
-            </p>
+            <p className="text-white/60 mb-6">Add items before checkout</p>
             <Link
               href="/menu"
               className="inline-flex bg-gold text-night font-bold px-6 py-3 rounded-full hover:bg-gold-light transition"
@@ -178,7 +194,6 @@ export default function CheckoutPage() {
           <div className="grid lg:grid-cols-3 gap-6">
             {/* LEFT – Form */}
             <div className="lg:col-span-2 space-y-5">
-
               {/* Order Type */}
               <div className="bg-night-card rounded-2xl border border-white/5 p-5">
                 <h2 className="font-bold mb-4 flex items-center gap-2">
@@ -257,7 +272,10 @@ export default function CheckoutPage() {
                           type="tel"
                           value={form.mobile}
                           onChange={(e) =>
-                            updateField('mobile', e.target.value.replace(/\D/g, '').slice(0, 10))
+                            updateField(
+                              'mobile',
+                              e.target.value.replace(/\D/g, '').slice(0, 10)
+                            )
                           }
                           placeholder="10-digit mobile"
                           className={`w-full bg-night border rounded-xl pl-10 pr-3 py-3 text-sm focus:outline-none transition ${
@@ -268,7 +286,9 @@ export default function CheckoutPage() {
                         />
                       </div>
                       {errors.mobile && (
-                        <p className="text-red-400 text-xs mt-1">{errors.mobile}</p>
+                        <p className="text-red-400 text-xs mt-1">
+                          {errors.mobile}
+                        </p>
                       )}
                     </div>
 
@@ -306,7 +326,9 @@ export default function CheckoutPage() {
                           />
                           <textarea
                             value={form.address}
-                            onChange={(e) => updateField('address', e.target.value)}
+                            onChange={(e) =>
+                              updateField('address', e.target.value)
+                            }
                             placeholder="House / Street / Area"
                             rows={2}
                             className={`w-full bg-night border rounded-xl pl-10 pr-3 py-3 text-sm focus:outline-none transition resize-none ${
@@ -317,7 +339,9 @@ export default function CheckoutPage() {
                           />
                         </div>
                         {errors.address && (
-                          <p className="text-red-400 text-xs mt-1">{errors.address}</p>
+                          <p className="text-red-400 text-xs mt-1">
+                            {errors.address}
+                          </p>
                         )}
                       </div>
 
@@ -329,7 +353,9 @@ export default function CheckoutPage() {
                           <input
                             type="text"
                             value={form.landmark}
-                            onChange={(e) => updateField('landmark', e.target.value)}
+                            onChange={(e) =>
+                              updateField('landmark', e.target.value)
+                            }
                             placeholder="Near..."
                             className="w-full bg-night border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-gold/50 focus:outline-none transition"
                           />
@@ -343,7 +369,10 @@ export default function CheckoutPage() {
                             type="text"
                             value={form.pincode}
                             onChange={(e) =>
-                              updateField('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))
+                              updateField(
+                                'pincode',
+                                e.target.value.replace(/\D/g, '').slice(0, 6)
+                              )
                             }
                             placeholder="6-digit pincode"
                             className={`w-full bg-night border rounded-xl px-4 py-3 text-sm focus:outline-none transition ${
@@ -353,7 +382,9 @@ export default function CheckoutPage() {
                             }`}
                           />
                           {errors.pincode && (
-                            <p className="text-red-400 text-xs mt-1">{errors.pincode}</p>
+                            <p className="text-red-400 text-xs mt-1">
+                              {errors.pincode}
+                            </p>
                           )}
                         </div>
                       </div>
@@ -369,7 +400,9 @@ export default function CheckoutPage() {
                       <input
                         type="text"
                         value={form.tableNumber}
-                        onChange={(e) => updateField('tableNumber', e.target.value)}
+                        onChange={(e) =>
+                          updateField('tableNumber', e.target.value)
+                        }
                         placeholder="e.g. 5"
                         className={`w-full bg-night border rounded-xl px-4 py-3 text-sm focus:outline-none transition ${
                           errors.tableNumber
@@ -378,7 +411,9 @@ export default function CheckoutPage() {
                         }`}
                       />
                       {errors.tableNumber && (
-                        <p className="text-red-400 text-xs mt-1">{errors.tableNumber}</p>
+                        <p className="text-red-400 text-xs mt-1">
+                          {errors.tableNumber}
+                        </p>
                       )}
                     </div>
                   )}
@@ -390,7 +425,9 @@ export default function CheckoutPage() {
                     </label>
                     <textarea
                       value={form.instructions}
-                      onChange={(e) => updateField('instructions', e.target.value)}
+                      onChange={(e) =>
+                        updateField('instructions', e.target.value)
+                      }
                       placeholder="Any special requests? (e.g., less spicy, no onion)"
                       rows={2}
                       className="w-full bg-night border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-gold/50 focus:outline-none transition resize-none"
@@ -465,14 +502,18 @@ export default function CheckoutPage() {
               <div className="lg:sticky lg:top-24 bg-night-card rounded-2xl border border-white/5 p-5">
                 <h2 className="font-bold mb-4">Order Summary</h2>
 
-                {/* Items */}
                 <div className="space-y-2 max-h-52 overflow-y-auto mb-4 pr-1">
                   {items.map((item) => (
-                    <div key={item.id} className="flex items-center gap-2 text-sm">
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-2 text-sm"
+                    >
                       <span className="text-2xl">{item.image}</span>
                       <span className="flex-1 truncate">{item.name}</span>
                       <span className="text-white/60">×{item.quantity}</span>
-                      <span className="font-semibold">₹{item.price * item.quantity}</span>
+                      <span className="font-semibold">
+                        ₹{item.price * item.quantity}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -486,7 +527,9 @@ export default function CheckoutPage() {
                     <span className="text-white/60">Delivery</span>
                     <span
                       className={
-                        deliveryCharge === 0 ? 'text-fresh font-semibold' : 'font-semibold'
+                        deliveryCharge === 0
+                          ? 'text-fresh font-semibold'
+                          : 'font-semibold'
                       }
                     >
                       {deliveryCharge === 0 ? 'FREE' : `₹${deliveryCharge}`}
@@ -510,7 +553,8 @@ export default function CheckoutPage() {
                 >
                   {loading ? (
                     <>
-                      <Loader2 size={18} className="animate-spin" /> Placing Order...
+                      <Loader2 size={18} className="animate-spin" /> Placing
+                      Order...
                     </>
                   ) : (
                     <>Place Order • ₹{total}</>

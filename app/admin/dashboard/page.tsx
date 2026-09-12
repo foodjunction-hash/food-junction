@@ -19,8 +19,50 @@ export default function AdminDashboard() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setOrders(getOrders())
-    setMounted(true)
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch('/api/orders', { cache: 'no-store' })
+        const data = await res.json()
+
+        // Map DB format → frontend Order format
+        const dbOrders: Order[] = (data.orders || []).map((o: any) => ({
+          id: o.id,
+          orderNumber: o.order_number,
+          createdAt: o.created_at,
+          items: o.items || [],
+          subtotal: o.subtotal,
+          deliveryCharge: o.delivery_charge,
+          tax: o.tax,
+          total: o.total,
+          orderType: o.order_type,
+          paymentMethod: o.payment_method,
+          paymentStatus: o.payment_status,
+          status: o.status,
+          customer: {
+            name: o.customer_name,
+            mobile: o.customer_mobile,
+            email: o.customer_email,
+            address: o.customer_address,
+            landmark: o.customer_landmark,
+            pincode: o.customer_pincode,
+            instructions: o.customer_instructions,
+            tableNumber: o.customer_table_number,
+          },
+        }))
+        setOrders(dbOrders)
+      } catch (err) {
+        console.error('Failed to fetch orders from DB:', err)
+        // Fallback to localStorage
+        setOrders(getOrders())
+      }
+      setMounted(true)
+    }
+
+    fetchOrders()
+
+    // Auto-refresh every 10 seconds
+    const interval = setInterval(fetchOrders, 10000)
+    return () => clearInterval(interval)
   }, [])
 
   if (!mounted) {
