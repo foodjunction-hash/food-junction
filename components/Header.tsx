@@ -28,9 +28,9 @@ export default function Header() {
             <MapPin size={14} />
             <span className="font-semibold">Amarpur</span>
           </div>
-          <a href="tel:+919999999999" className="flex items-center gap-2 font-semibold">
-            <Phone size={14} />
-            <span>+91 9999999999</span>
+          <a href="tel:+919973318421" className="flex items-center gap-2 font-semibold">
+  <Phone size={14} />
+  <span>+91 99733 18421</span>
           </a>
         </div>
       </div>

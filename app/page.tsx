@@ -56,11 +56,11 @@ export default function Home() {
                     <UtensilsCrossed size={18} /> VIEW MENU
                   </Link>
                   <a
-                    href="tel:+919999999999"
-                    className="border-2 border-fresh text-fresh font-bold px-6 md:px-8 py-3.5 md:py-4 rounded-full hover:bg-fresh hover:text-night transition flex items-center gap-2 text-sm md:text-base"
-                  >
-                    <Phone size={18} /> CALL NOW
-                  </a>
+  href="tel:+919973318421"
+  className="border-2 border-fresh text-fresh font-bold px-6 md:px-8 py-3.5 md:py-4 rounded-full hover:bg-fresh hover:text-night transition flex items-center gap-2 text-sm md:text-base"
+>
+  <Phone size={18} /> CALL NOW
+</a>
                 </div>
 
                 <div className="grid grid-cols-3 gap-6 mt-12 max-w-md mx-auto lg:mx-0">

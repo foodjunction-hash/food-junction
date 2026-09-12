@@ -21,15 +21,17 @@ export default function Footer() {
             <p className="text-sm text-white/60 mb-4">
               Serving delicious, hygienic food to families in Amarpur.
             </p>
+
+            {/* Instagram only */}
             <div className="flex gap-3">
-              <a href="#" className="w-9 h-9 rounded-full bg-night-card border border-white/10 flex items-center justify-center hover:bg-gold hover:text-night transition text-lg">
+              <a
+                href="https://www.instagram.com/shubhamyadav_9272"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="w-9 h-9 rounded-full bg-night-card border border-white/10 flex items-center justify-center hover:bg-gold hover:text-night transition text-lg"
+              >
                 📷
-              </a>
-              <a href="#" className="w-9 h-9 rounded-full bg-night-card border border-white/10 flex items-center justify-center hover:bg-gold hover:text-night transition text-lg">
-                📘
-              </a>
-              <a href="#" className="w-9 h-9 rounded-full bg-night-card border border-white/10 flex items-center justify-center hover:bg-gold hover:text-night transition text-lg">
-                ▶️
               </a>
             </div>
           </div>
@@ -56,11 +58,15 @@ export default function Footer() {
               </li>
               <li className="flex items-start gap-2">
                 <Phone size={16} className="text-gold mt-0.5 flex-shrink-0" />
-                <a href="tel:+919999999999" className="hover:text-gold">+91 9999999999</a>
+                <a href="tel:+919973318421" className="hover:text-gold transition">
+                  +91 99733 18421
+                </a>
               </li>
               <li className="flex items-start gap-2">
                 <Mail size={16} className="text-gold mt-0.5 flex-shrink-0" />
-                <a href="mailto:info@foodjunction.com" className="hover:text-gold">info@foodjunction.com</a>
+                <a href="mailto:shubhamydv9272@gmail.com" className="hover:text-gold transition break-all">
+                  shubhamydv9272@gmail.com
+                </a>
               </li>
             </ul>
           </div>
