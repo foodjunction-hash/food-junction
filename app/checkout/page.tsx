@@ -25,6 +25,7 @@ import {
   saveOrder,
   generateOrderId,
   generateOrderNumber,
+  type Order,
   type OrderType,
   type PaymentMethod,
 } from '@/lib/orders'
@@ -89,7 +90,8 @@ export default function CheckoutPage() {
     const orderId = generateOrderId()
     const orderNumber = generateOrderNumber()
 
-    const orderPayload = {
+    // Typed as Order — fixes TypeScript error
+    const orderPayload: Order = {
       id: orderId,
       orderNumber,
       createdAt: new Date().toISOString(),
