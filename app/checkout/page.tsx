@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import UPIQRCode from '@/components/UPIQRCode'
 import { useCart } from '@/lib/store'
 import {
   saveOrder,
@@ -29,6 +30,10 @@ import {
   type OrderType,
   type PaymentMethod,
 } from '@/lib/orders'
+
+// ⚠️ APNA ACTUAL UPI ID YAHAN DAALO
+const UPI_ID = '99733184212@ibl' // ← Apna UPI ID yahan daalo
+const UPI_NAME = 'Food Junction'
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -45,6 +50,7 @@ export default function CheckoutPage() {
     pincode: '',
     instructions: '',
     tableNumber: '',
+    transactionId: '',
   })
   const [orderType, setOrderType] = useState<OrderType>('delivery')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
@@ -75,6 +81,14 @@ export default function CheckoutPage() {
     if (orderType === 'dinein' && !form.tableNumber.trim())
       e.tableNumber = 'Table number required'
 
+    // UPI ke liye transaction ID required
+    if (paymentMethod === 'upi') {
+      if (!form.transactionId.trim())
+        e.transactionId = 'Transaction ID required'
+      else if (!/^\d{12}$/.test(form.transactionId.trim()))
+        e.transactionId = '12-digit UTR number daalo'
+    }
+
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -90,7 +104,10 @@ export default function CheckoutPage() {
     const orderId = generateOrderId()
     const orderNumber = generateOrderNumber()
 
-    // Typed as Order — fixes TypeScript error
+    // Payment status: 'paid' if online, else 'pending'
+    const paymentStatus =
+      paymentMethod === 'cash' || paymentMethod === 'upi' ? 'pending' : 'paid'
+
     const orderPayload: Order = {
       id: orderId,
       orderNumber,
@@ -108,8 +125,9 @@ export default function CheckoutPage() {
       total,
       orderType,
       paymentMethod,
-      paymentStatus: paymentMethod === 'cash' ? 'pending' : 'paid',
+      paymentStatus,
       status: 'placed',
+      transactionId: form.transactionId.trim() || undefined,
       customer: {
         name: form.name.trim(),
         mobile: form.mobile.trim(),
@@ -136,7 +154,7 @@ export default function CheckoutPage() {
       console.error('API error:', err)
     }
 
-    // Save to localStorage (backup / for track-order page)
+    // Save to localStorage (backup)
     saveOrder(orderPayload)
 
     // Small delay for UX
@@ -497,6 +515,71 @@ export default function CheckoutPage() {
                   ))}
                 </div>
               </div>
+
+              {/* UPI QR Code Section */}
+              {paymentMethod === 'upi' && (
+                <UPIQRCode
+                  upiId={UPI_ID}
+                  name={UPI_NAME}
+                  amount={total}
+                  note={`Order from Food Junction`}
+                />
+              )}
+
+              {/* Transaction ID Input (for UPI) */}
+              {paymentMethod === 'upi' && (
+                <div className="bg-night-card rounded-2xl border border-white/5 p-5">
+                  <h2 className="font-bold mb-4 flex items-center gap-2">
+                    <Check size={18} className="text-gold" /> Payment Confirmation
+                  </h2>
+
+                  <div className="bg-gold/10 border border-gold/30 rounded-xl px-4 py-3 text-xs text-gold mb-4">
+                    ⚠️ Payment karne ke baad UPI app me{' '}
+                    <strong>Transaction ID (UTR)</strong> milega. Usko yahan daalo
+                    — admin verify karega.
+                  </div>
+
+                  <label className="block text-sm text-white/70 mb-1.5">
+                    Transaction ID / UTR Number *
+                  </label>
+                  <input
+                    type="text"
+                    value={form.transactionId}
+                    onChange={(e) =>
+                      updateField(
+                        'transactionId',
+                        e.target.value.replace(/\D/g, '').slice(0, 12)
+                      )
+                    }
+                    placeholder="12-digit UTR (e.g. 412345678901)"
+                    className={`w-full bg-night border rounded-xl px-4 py-3 text-sm focus:outline-none transition font-mono ${
+                      errors.transactionId
+                        ? 'border-red-500'
+                        : 'border-white/10 focus:border-gold/50'
+                    }`}
+                  />
+                  {errors.transactionId && (
+                    <p className="text-red-400 text-xs mt-1">
+                      {errors.transactionId}
+                    </p>
+                  )}
+
+                  <div className="bg-night rounded-xl p-3 mt-3 text-xs text-white/50 space-y-1">
+                    <p>
+                      📱 <span className="text-white/70">PhonePe:</span> Payment
+                      history → Tap transaction
+                    </p>
+                    <p>
+                      📱 <span className="text-white/70">GPay:</span> Transaction
+                      → UTR number
+                    </p>
+                    <p>
+                      📱 <span className="text-white/70">Paytm:</span> Passbook →
+                      Order details
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* RIGHT – Summary */}
@@ -548,6 +631,14 @@ export default function CheckoutPage() {
                   <span className="font-bold text-2xl text-gold">₹{total}</span>
                 </div>
 
+                {/* UPI selected warning */}
+                {paymentMethod === 'upi' && (
+                  <div className="bg-gold/10 border border-gold/30 rounded-xl px-3 py-2 text-xs text-gold mb-3">
+                    💡 UPI se pay karne ke baad order place karo. Admin manually
+                    verify karega.
+                  </div>
+                )}
+
                 <button
                   onClick={handlePlaceOrder}
                   disabled={loading}
@@ -559,7 +650,11 @@ export default function CheckoutPage() {
                       Order...
                     </>
                   ) : (
-                    <>Place Order • ₹{total}</>
+                    <>
+                      {paymentMethod === 'upi'
+                        ? `I've Paid • Place Order`
+                        : `Place Order • ₹${total}`}
+                    </>
                   )}
                 </button>
 

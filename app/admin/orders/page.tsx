@@ -1,10 +1,27 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
-import { Phone, MapPin, Clock, Search, X, CheckCircle2, XCircle } from 'lucide-react'
+import {
+  Phone,
+  MapPin,
+  Clock,
+  Search,
+  X,
+  CheckCircle2,
+  XCircle,
+  IndianRupee,
+} from 'lucide-react'
 import { getOrders, type Order, type OrderStatus } from '@/lib/orders'
 
 type FilterType = 'all' | OrderStatus
+
+// Payment status colors
+const paymentColors: Record<string, string> = {
+  pending: 'bg-gold/20 text-gold',
+  paid: 'bg-fresh/20 text-fresh',
+  failed: 'bg-red-500/20 text-red-400',
+  refunded: 'bg-purple-400/20 text-purple-400',
+}
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
@@ -27,6 +44,7 @@ export default function AdminOrdersPage() {
     paymentMethod: o.payment_method,
     paymentStatus: o.payment_status,
     status: o.status,
+    transactionId: o.transaction_id,
     customer: {
       name: o.customer_name,
       mobile: o.customer_mobile,
@@ -83,9 +101,7 @@ export default function AdminOrdersPage() {
 
       if (res.ok) {
         const data = await res.json()
-        // Refresh list
         await loadOrders()
-        // Update modal if open
         if (data.order) {
           setSelectedOrder(mapDbOrder(data.order))
         }
@@ -94,6 +110,35 @@ export default function AdminOrdersPage() {
       }
     } catch (err) {
       console.error('Failed to update status:', err)
+    }
+  }
+
+  const handleMarkAsPaid = async (order: Order) => {
+    if (
+      !confirm(
+        `Confirm UPI payment received for #${order.orderNumber}?\n\nAmount: ₹${order.total}`
+      )
+    )
+      return
+
+    try {
+      const res = await fetch(`/api/orders?id=${order.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payment_status: 'paid' }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        await loadOrders()
+        if (data.order) {
+          setSelectedOrder(mapDbOrder(data.order))
+        }
+      } else {
+        console.error('Mark as paid failed:', await res.text())
+      }
+    } catch (err) {
+      console.error('Failed to mark as paid:', err)
     }
   }
 
@@ -186,7 +231,7 @@ export default function AdminOrdersPage() {
             >
               <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <p className="font-bold text-gold">#{order.orderNumber}</p>
                     <span
                       className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
@@ -195,6 +240,18 @@ export default function AdminOrdersPage() {
                     >
                       {statusLabel[order.status] || order.status}
                     </span>
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                        paymentColors[order.paymentStatus] || 'bg-white/10 text-white/60'
+                      }`}
+                    >
+                      💰 {order.paymentStatus}
+                    </span>
+                    {order.transactionId && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-blue-500/20 text-blue-400 font-bold">
+                        UTR: {order.transactionId}
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-white/40">
                     {new Date(order.createdAt).toLocaleString('en-IN', {
@@ -253,6 +310,17 @@ export default function AdminOrdersPage() {
                 >
                   View Details
                 </button>
+
+                {/* Mark as Paid button (only for pending UPI/Cash payments) */}
+                {order.paymentStatus === 'pending' &&
+                  (order.paymentMethod === 'upi' || order.paymentMethod === 'cash') && (
+                    <button
+                      onClick={() => handleMarkAsPaid(order)}
+                      className="text-xs bg-blue-500 text-white font-bold px-4 py-2 rounded-full hover:bg-blue-600 transition flex items-center gap-1"
+                    >
+                      <IndianRupee size={14} /> Mark as Paid
+                    </button>
+                  )}
 
                 {order.status === 'placed' && (
                   <>
@@ -329,17 +397,61 @@ export default function AdminOrdersPage() {
             </div>
 
             <div className="p-5 space-y-4">
-              {/* Status */}
-              <div>
-                <p className="text-xs text-white/40 mb-1">STATUS</p>
-                <span
-                  className={`text-xs px-3 py-1 rounded-full font-bold ${
-                    statusColors[selectedOrder.status]
-                  }`}
-                >
-                  {statusLabel[selectedOrder.status]}
-                </span>
+              {/* Status + Payment */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-white/40 mb-1">ORDER STATUS</p>
+                  <span
+                    className={`text-xs px-3 py-1 rounded-full font-bold ${
+                      statusColors[selectedOrder.status]
+                    }`}
+                  >
+                    {statusLabel[selectedOrder.status]}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs text-white/40 mb-1">PAYMENT STATUS</p>
+                  <span
+                    className={`text-xs px-3 py-1 rounded-full font-bold uppercase ${
+                      paymentColors[selectedOrder.paymentStatus]
+                    }`}
+                  >
+                    💰 {selectedOrder.paymentStatus}
+                  </span>
+                </div>
               </div>
+
+              {/* UTR / Transaction ID — PRIMARY CARD */}
+              {selectedOrder.transactionId && (
+                <div className="bg-gradient-to-br from-gold/10 to-gold/5 border border-gold/30 rounded-xl p-4">
+                  <p className="text-xs text-gold font-bold mb-2">
+                    💳 UPI TRANSACTION ID / UTR
+                  </p>
+                  <p className="font-mono font-bold text-gold text-2xl break-all">
+                    {selectedOrder.transactionId}
+                  </p>
+                  <p className="text-xs text-white/60 mt-2">
+                    ✓ Customer ne ye UTR diya hai — UPI app me verify karo
+                  </p>
+                </div>
+              )}
+
+              {/* If UPI but no transaction ID yet */}
+              {!selectedOrder.transactionId &&
+                selectedOrder.paymentMethod === 'upi' &&
+                selectedOrder.paymentStatus === 'pending' && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                    <p className="text-xs text-red-400 font-bold mb-1">
+                      ⚠️ UTR NUMBER MISSING
+                    </p>
+                    <p className="text-xs text-white/60">
+                      Customer ne transaction ID nahi daala. Contact karo:
+                    </p>
+                    <p className="text-sm text-white font-semibold mt-2">
+                      📞 {selectedOrder.customer.mobile}
+                    </p>
+                  </div>
+                )}
 
               {/* Customer */}
               <div className="bg-night rounded-xl p-4">
@@ -435,10 +547,26 @@ export default function AdminOrdersPage() {
                 </div>
               </div>
 
+              {/* Mark as Paid in Modal */}
+              {selectedOrder.paymentStatus === 'pending' &&
+                (selectedOrder.paymentMethod === 'upi' ||
+                  selectedOrder.paymentMethod === 'cash') && (
+                  <button
+                    onClick={() => handleMarkAsPaid(selectedOrder)}
+                    className="w-full bg-blue-500 text-white font-bold py-3 rounded-full hover:bg-blue-600 transition flex items-center justify-center gap-2"
+                  >
+                    <IndianRupee size={18} /> Mark Payment as Received (₹
+                    {selectedOrder.total})
+                  </button>
+                )}
+
               {/* Quick Actions */}
-              <div className="flex flex-wrap gap-2">
-                {(['placed', 'accepted', 'preparing', 'ready', 'delivered'] as OrderStatus[]).map(
-                  (s) => (
+              <div>
+                <p className="text-xs text-white/40 mb-2">CHANGE ORDER STATUS</p>
+                <div className="flex flex-wrap gap-2">
+                  {(
+                    ['placed', 'accepted', 'preparing', 'ready', 'delivered'] as OrderStatus[]
+                  ).map((s) => (
                     <button
                       key={s}
                       onClick={() => handleStatusChange(selectedOrder.id, s)}
@@ -450,8 +578,8 @@ export default function AdminOrdersPage() {
                     >
                       {statusLabel[s]}
                     </button>
-                  )
-                )}
+                  ))}
+                </div>
               </div>
             </div>
           </div>
