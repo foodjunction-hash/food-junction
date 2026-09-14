@@ -1,12 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ShoppingCart, Menu as MenuIcon, X, User, MapPin, Phone } from 'lucide-react'
+import { ShoppingCart, Menu as MenuIcon, X, User, MapPin, Phone, LogOut } from 'lucide-react'
 import { useCart } from '@/lib/store'
+import { getCustomerSession, logoutCustomer, type CustomerSession } from '@/lib/customerAuth'
 
 export default function Header() {
   const [open, setOpen] = useState(false)
+  const [userMenu, setUserMenu] = useState(false)
+  const [session, setSession] = useState<CustomerSession | null>(null)
+  const [mounted, setMounted] = useState(false)
+
   const cartCount = useCart((s) => s.items.reduce((sum, i) => sum + i.quantity, 0))
 
   const links = [
@@ -19,6 +24,18 @@ export default function Header() {
     { href: '/track-order', label: 'Track Order' },
   ]
 
+  useEffect(() => {
+    setSession(getCustomerSession())
+    setMounted(true)
+  }, [])
+
+  const handleLogout = () => {
+    logoutCustomer()
+    setSession(null)
+    setUserMenu(false)
+    window.location.href = '/'
+  }
+
   return (
     <>
       {/* Top Strip */}
@@ -29,8 +46,8 @@ export default function Header() {
             <span className="font-semibold">Amarpur</span>
           </div>
           <a href="tel:+919973318421" className="flex items-center gap-2 font-semibold">
-  <Phone size={14} />
-  <span>+91 99733 18421</span>
+            <Phone size={14} />
+            <span>+91 99733 18421</span>
           </a>
         </div>
       </div>
@@ -73,9 +90,67 @@ export default function Header() {
               )}
             </Link>
 
-            <Link href="/login" className="p-2 hover:text-gold transition">
-              <User size={22} />
-            </Link>
+            {/* User Menu */}
+            {mounted && session ? (
+              <div className="relative">
+                <button
+                  onClick={() => setUserMenu(!userMenu)}
+                  className="flex items-center gap-2 p-1.5 hover:bg-white/5 rounded-full transition"
+                >
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center text-night font-bold text-sm">
+                    {session.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="hidden md:block text-sm font-semibold max-w-[100px] truncate">
+                    {session.name.split(' ')[0]}
+                  </span>
+                </button>
+
+                {userMenu && (
+                  <>
+                    {/* Backdrop */}
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setUserMenu(false)}
+                    />
+                    {/* Dropdown */}
+                    <div className="absolute right-0 top-full mt-2 w-52 bg-night-card border border-white/10 rounded-xl shadow-card z-50 overflow-hidden">
+                      <div className="p-3 border-b border-white/10">
+                        <p className="text-sm font-bold truncate">{session.name}</p>
+                        <p className="text-xs text-white/50 truncate">{session.mobile}</p>
+                      </div>
+                      <Link
+                        href="/profile"
+                        onClick={() => setUserMenu(false)}
+                        className="flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-white/5 transition"
+                      >
+                        <User size={16} /> My Profile
+                      </Link>
+                      <Link
+                        href="/track-order"
+                        onClick={() => setUserMenu(false)}
+                        className="flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-white/5 transition"
+                      >
+                        📍 My Orders
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition border-t border-white/10"
+                      >
+                        <LogOut size={16} /> Logout
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="p-2 hover:text-gold transition"
+                aria-label="Login"
+              >
+                <User size={22} />
+              </Link>
+            )}
 
             <Link
               href="/menu"
@@ -104,6 +179,15 @@ export default function Header() {
                   {l.label}
                 </Link>
               ))}
+              {session && (
+                <Link
+                  href="/profile"
+                  onClick={() => setOpen(false)}
+                  className="block py-3 px-4 rounded-lg hover:bg-night-card hover:text-gold transition font-medium"
+                >
+                  My Profile
+                </Link>
+              )}
               <Link
                 href="/menu"
                 onClick={() => setOpen(false)}

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Test – Food Junction</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0B0B0F;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      max-width: 500px;
+      width: 100%;
+      background: #1C1C24;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    h1 {
+      color: #F5B301;
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: rgba(255,255,255,0.5);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 6px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 12px 16px;
+      background: #0B0B0F;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      color: white;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      margin-bottom: 16px;
+      transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus {
+      border-color: #F5B301;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    button {
+      width: 100%;
+      padding: 16px;
+      background: #F5B301;
+      color: #0B0B0F;
+      border: none;
+      border-radius: 999px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    button:hover { background: #FFD54F; transform: translateY(-2px); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    pre {
+      background: #0B0B0F;
+      padding: 16px;
+      border-radius: 12px;
+      margin-top: 20px;
+      font-size: 12px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: #22C55E;
+      border: 1px solid rgba(34,197,94,0.3);
+    }
+    pre.error {
+      color: #EF4444;
+      border-color: rgba(239,68,68,0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📱 WhatsApp Test</h1>
+    <p class="subtitle">Food Junction – Twilio Integration Test</p>
+
+    <label>To (Mobile Number)</label>
+    <input type="tel" id="to" value="9973318421" placeholder="10-digit mobile number" />
+
+    <label>Message</label>
+    <textarea id="message">🎉 Test from Food Junction!
+
+Agar ye message aa gaya, to WhatsApp integration LIVE hai! ✅</textarea>
+
+    <button id="sendBtn" onclick="sendWhatsApp()">
+      Send WhatsApp Message
+    </button>
+
+    <pre id="output">Click button to send...</pre>
+  </div>
+
+  <script>
+    async function sendWhatsApp() {
+      const btn = document.getElementById('sendBtn')
+      const output = document.getElementById('output')
+      const to = document.getElementById('to').value.trim()
+      const message = document.getElementById('message').value.trim()
+
+      if (!to || !message) {
+        output.textContent = '❌ Please fill both fields'
+        output.className = 'error'
+        return
+      }
+
+      btn.disabled = true
+      btn.textContent = 'Sending...'
+      output.textContent = '⏳ Sending WhatsApp message...'
+      output.className = ''
+
+      try {
+        const res = await fetch('/api/whatsapp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to, message }),
+        })
+        const data = await res.json()
+        output.textContent = '✅ ' + JSON.stringify(data, null, 2)
+        output.className = ''
+        btn.textContent = '✅ Sent!'
+        setTimeout(() => {
+          btn.textContent = 'Send WhatsApp Message'
+        }, 2000)
+      } catch (err) {
+        output.textContent = '❌ Error: ' + err.message
+        output.className = 'error'
+        btn.textContent = 'Send WhatsApp Message'
+      }
+
+      btn.disabled = false
+    }
+  </script>
+</body>
+</html>
