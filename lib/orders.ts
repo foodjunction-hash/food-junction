@@ -23,6 +23,7 @@ export type Order = {
   paymentMethod: PaymentMethod
   paymentStatus: 'pending' | 'paid'
   status: OrderStatus
+  transactionId?: string
   customer: {
     name: string
     mobile: string
@@ -70,7 +71,7 @@ export function generateOrderId(): string {
   return `ord_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
-// ==================== NEW: Status Management ====================
+// ==================== Status Management ====================
 
 export function updateOrderStatus(id: string, status: OrderStatus): Order | null {
   if (typeof window === 'undefined') return null

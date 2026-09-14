@@ -15,14 +15,16 @@ export default function UPIQRCode({ upiId, name, amount, note }: UPIQRCodeProps)
   const [copied, setCopied] = useState(false)
 
   // Build UPI URI
-  const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(
-    name
-  )}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`
+  const upiUri = `upi://pay?pa=${encodeURIComponent(
+    upiId
+  )}&pn=${encodeURIComponent(name)}&am=${amount}&cu=INR&tn=${encodeURIComponent(
+    note
+  )}`
 
   useEffect(() => {
-    // Use QR Server API (free, no key needed)
-    // Alternative: use Google Chart API
-const qrApiUrl = `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(upiUri)}`
+    // QR Server API (free, no key needed, reliable)
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
+      upiUri
     )}`
     setQrUrl(qrApiUrl)
   }, [upiUri])
@@ -97,7 +99,7 @@ const qrApiUrl = `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${en
         <p>3. Complete payment</p>
         <p>4. Screenshot le lo (proof ke liye)</p>
         <p className="text-gold mt-2 font-semibold">
-          5. &quot;I&apos;ve Paid&quot; button click karo below 👇
+          5. Payment ke baad UTR number yahan daalo 👇
         </p>
       </div>
     </div>
