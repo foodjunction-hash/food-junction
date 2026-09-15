@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Phone, UtensilsCrossed, ShoppingBag, Star, Sparkles } from 'lucide-react'
+import {
+  Phone,
+  UtensilsCrossed,
+  ShoppingBag,
+  Star,
+  Sparkles,
+} from 'lucide-react'
+import InstallAppButton from '@/components/InstallAppButton'
 
 export default function Hero() {
   const [mounted, setMounted] = useState(false)
@@ -143,6 +150,9 @@ export default function Hero() {
                   <span>CALL NOW</span>
                 </span>
               </a>
+
+              {/* Install App Button */}
+              <InstallAppButton />
             </div>
 
             {/* Stats Row */}
@@ -187,7 +197,10 @@ export default function Hero() {
               <div className="absolute inset-0 rounded-full border-2 border-dashed border-gold/20 animate-spin-slow" />
               <div
                 className="absolute inset-6 rounded-full border border-gold/10 animate-spin-slow"
-                style={{ animationDirection: 'reverse', animationDuration: '15s' }}
+                style={{
+                  animationDirection: 'reverse',
+                  animationDuration: '15s',
+                }}
               />
 
               {/* Center plate */}
@@ -198,7 +211,10 @@ export default function Hero() {
               </div>
 
               {/* Orbiting Bestseller card */}
-              <div className="absolute top-8 -left-6 animate-float" style={{ animationDelay: '0.5s' }}>
+              <div
+                className="absolute top-8 -left-6 animate-float"
+                style={{ animationDelay: '0.5s' }}
+              >
                 <div className="glass border border-gold/30 rounded-2xl px-4 py-3 shadow-gold hover:scale-105 transition-transform duration-300">
                   <p className="text-[10px] text-white/50 tracking-wider mb-0.5">
                     BESTSELLER
@@ -244,7 +260,9 @@ export default function Hero() {
 
       {/* ===== Scroll Indicator ===== */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2 animate-fade-in">
-        <span className="text-[10px] text-white/40 tracking-[0.3em]">SCROLL</span>
+        <span className="text-[10px] text-white/40 tracking-[0.3em]">
+          SCROLL
+        </span>
         <div className="w-5 h-8 rounded-full border border-gold/40 flex items-start justify-center p-1">
           <div className="w-1 h-2 rounded-full bg-gold animate-bounce-soft" />
         </div>
