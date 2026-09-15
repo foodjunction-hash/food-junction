@@ -12,6 +12,7 @@ import {
   Menu as MenuIcon,
   X,
   Home,
+  BarChart3,
 } from 'lucide-react'
 import { isAdminLoggedIn, logoutAdmin } from '@/lib/auth'
 
@@ -49,10 +50,11 @@ export default function AdminLayout({
     )
   }
 
-  const links = [
+    const links = [
     { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/orders', label: 'Orders', icon: ClipboardList },
     { href: '/admin/menu', label: 'Menu', icon: UtensilsCrossed },
+    { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
     { href: '/admin/settings', label: 'Settings', icon: Settings },
   ]
 
