@@ -9,10 +9,12 @@ export default function Footer() {
 
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center text-night font-bold text-xl">
-                FJ
-              </div>
+                        <div className="flex items-center gap-3 mb-4">
+              <img
+                src="/food-junction-logo.png"
+                alt="Food Junction Logo"
+                className="w-14 h-14 rounded-full object-cover"
+              />
               <div>
                 <p className="text-xl text-gold font-bold">Food Junction</p>
                 <p className="text-xs text-white/60 tracking-widest">THE FAMILY RESTAURANT</p>

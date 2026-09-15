@@ -56,10 +56,12 @@ export default function Header() {
       <header className="sticky top-0 z-50 bg-night/95 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center text-night font-bold text-xl">
-              FJ
-            </div>
+                    <Link href="/" className="flex items-center gap-2 md:gap-3">
+            <img
+              src="/food-junction-logo.png"
+              alt="Food Junction Logo"
+              className="w-11 h-11 md:w-14 md:h-14 rounded-full object-cover"
+            />
             <div className="leading-tight">
               <p className="text-lg md:text-xl text-gold font-bold">Food Junction</p>
               <p className="text-[10px] md:text-xs text-white/60 tracking-widest">THE FAMILY RESTAURANT</p>

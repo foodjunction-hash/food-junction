@@ -73,9 +73,11 @@ export default function LoginPage() {
         <div className="max-w-md mx-auto px-4">
           {/* Logo */}
           <div className="text-center mb-8">
-            <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center text-night font-bold text-3xl mb-4 shadow-gold">
-              FJ
-            </div>
+                        <img
+              src="/food-junction-logo.png"
+              alt="Food Junction Logo"
+              className="w-24 h-24 mx-auto rounded-full object-cover mb-4 shadow-gold"
+            />
             <h1 className="text-2xl md:text-3xl font-bold mb-1">
               Welcome to <span className="text-gradient-gold">Food Junction</span>
             </h1>

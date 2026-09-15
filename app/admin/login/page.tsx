@@ -39,9 +39,11 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center text-night font-bold text-3xl mb-4 shadow-gold">
-            FJ
-          </div>
+                    <img
+            src="/food-junction-logo.png"
+            alt="Food Junction Logo"
+            className="w-24 h-24 mx-auto rounded-full object-cover mb-4 shadow-gold"
+          />
           <h1 className="text-2xl font-bold mb-1">Food Junction Admin</h1>
           <p className="text-white/50 text-sm">Restaurant Management Panel</p>
         </div>

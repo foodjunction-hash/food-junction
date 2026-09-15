@@ -68,10 +68,12 @@ export default function AdminLayout({
       {/* Sidebar (desktop) */}
       <aside className="hidden lg:flex flex-col w-64 bg-night-soft border-r border-white/5 fixed h-full">
         <div className="p-5 border-b border-white/5">
-          <Link href="/admin/dashboard" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center text-night font-bold">
-              FJ
-            </div>
+                    <Link href="/admin/dashboard" className="flex items-center gap-3">
+            <img
+              src="/food-junction-logo.png"
+              alt="Food Junction"
+              className="w-11 h-11 rounded-full object-cover"
+            />
             <div className="leading-tight">
               <p className="text-gold font-bold">Admin Panel</p>
               <p className="text-[10px] text-white/50 tracking-widest">FOOD JUNCTION</p>
@@ -118,10 +120,12 @@ export default function AdminLayout({
 
       {/* Mobile topbar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-night-soft border-b border-white/5 px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center text-night font-bold text-sm">
-            FJ
-          </div>
+                <div className="flex items-center gap-2">
+          <img
+            src="/food-junction-logo.png"
+            alt="Food Junction"
+            className="w-10 h-10 rounded-full object-cover"
+          />
           <span className="text-gold font-bold text-sm">Admin</span>
         </div>
         <button onClick={() => setOpen(!open)} className="p-2">
