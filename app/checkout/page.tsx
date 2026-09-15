@@ -160,6 +160,28 @@ export default function CheckoutPage() {
     // Small delay for UX
     await new Promise((r) => setTimeout(r, 800))
 
+        // Send WhatsApp notification to admin
+    try {
+      await fetch('/api/whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: '9973318421', // ⚠️ Admin ka number yahan daalo
+          contentType: 'template',
+          contentSid: process.env.NEXT_PUBLIC_TWILIO_TEMPLATE_ORDER_PLACED,
+          contentVariables: {
+            1: orderNumber,
+            2: form.name.trim(),
+            3: form.mobile.trim(),
+            4: String(total),
+            5: items.map((i) => `${i.name} x${i.quantity}`).join(', '),
+          },
+        }),
+      })
+    } catch (err) {
+      console.error('Admin WhatsApp notification failed:', err)
+    }
+
     clearCart()
     router.push(`/order-success?id=${orderId}`)
   }

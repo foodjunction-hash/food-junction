@@ -91,7 +91,7 @@ export default function AdminOrdersPage() {
     })
   }, [orders, filter, search])
 
-  const handleStatusChange = async (id: string, status: OrderStatus) => {
+    const handleStatusChange = async (id: string, status: OrderStatus) => {
     try {
       const res = await fetch(`/api/orders?id=${id}`, {
         method: 'PATCH',
@@ -104,6 +104,34 @@ export default function AdminOrdersPage() {
         await loadOrders()
         if (data.order) {
           setSelectedOrder(mapDbOrder(data.order))
+
+          // Send WhatsApp to customer on ACCEPTED or DELIVERED
+          if (status === 'accepted' || status === 'delivered') {
+            const order = mapDbOrder(data.order)
+            const template =
+              status === 'accepted'
+                ? process.env.NEXT_PUBLIC_TWILIO_TEMPLATE_ORDER_ACCEPTED
+                : process.env.NEXT_PUBLIC_TWILIO_TEMPLATE_ORDER_DELIVERED
+
+            try {
+              await fetch('/api/whatsapp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  to: order.customer.mobile,
+                  contentType: 'template',
+                  contentSid: template,
+                  contentVariables: {
+                    1: order.customer.name,
+                    2: order.orderNumber,
+                    3: String(order.total),
+                  },
+                }),
+              })
+            } catch (err) {
+              console.error('Customer WhatsApp notification failed:', err)
+            }
+          }
         }
       } else {
         console.error('Status update failed:', await res.text())
@@ -112,7 +140,6 @@ export default function AdminOrdersPage() {
       console.error('Failed to update status:', err)
     }
   }
-
   const handleMarkAsPaid = async (order: Order) => {
     if (
       !confirm(

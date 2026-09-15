@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from 'next/font/google'
 import './globals.css'
 import StickyCart from '@/components/StickyCart'
 import InstallPWA from '@/components/InstallPWA'
+import BackgroundMusic from '@/components/BackgroundMusic'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -67,6 +68,7 @@ export default function RootLayout({
         {children}
         <StickyCart />
         <InstallPWA />
+        <BackgroundMusic />
 
         {/* Service Worker Registration */}
         <script
