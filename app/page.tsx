@@ -1,192 +1,223 @@
-import Header from '@/components/Header'
-import Footer from '@/components/Footer'
 import Link from 'next/link'
-import { Phone, UtensilsCrossed, ShoppingBag, Star } from 'lucide-react'
+import Header from '@/components/Header'
+import Hero from '@/components/Hero'
+import Footer from '@/components/Footer'
+import FoodCard from '@/components/FoodCard'
+import { FOOD_ITEMS } from '@/lib/data'
+import {
+  ShoppingBag,
+  Star,
+  Leaf,
+  Zap,
+  ShieldCheck,
+  Award,
+  Heart,
+  Truck,
+  ArrowRight,
+} from 'lucide-react'
 
 export default function Home() {
+  const bestsellers = FOOD_ITEMS.filter((f) => f.isBestseller).slice(0, 4)
+
+  const features = [
+    {
+      icon: Leaf,
+      title: 'Fresh Ingredients',
+      desc: 'Daily sourced fresh vegetables & meat',
+      emoji: '🌿',
+    },
+    {
+      icon: Zap,
+      title: 'Fast Delivery',
+      desc: 'Hot food delivered within 30 minutes',
+      emoji: '⚡',
+    },
+    {
+      icon: ShieldCheck,
+      title: 'Hygienic Kitchen',
+      desc: 'FSSAI certified clean kitchen',
+      emoji: '🛡️',
+    },
+    {
+      icon: Award,
+      title: 'Premium Quality',
+      desc: 'Best taste in Amarpur guaranteed',
+      emoji: '🏆',
+    },
+    {
+      icon: Heart,
+      title: 'Family Friendly',
+      desc: 'Perfect ambiance for families',
+      emoji: '❤️',
+    },
+    {
+      icon: Truck,
+      title: 'Free Delivery',
+      desc: 'On orders above ₹500',
+      emoji: '🚚',
+    },
+  ]
+
   return (
     <>
       <Header />
 
       <main className="min-h-screen">
+        <Hero />
 
-        {/* ============ HERO SECTION ============ */}
-        <section className="relative overflow-hidden min-h-[85vh] flex items-center">
-          <div className="absolute inset-0">
-            <div className="w-full h-full bg-gradient-to-br from-night via-night-soft to-night" />
-            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_20%,#F5B301_0%,transparent_50%)]" />
-            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_80%_80%,#22C55E_0%,transparent_50%)]" />
-          </div>
+        {/* ============================================
+            BEST SELLERS SECTION
+            ============================================ */}
+        <section className="relative py-20 md:py-28 bg-night-soft overflow-hidden">
+          {/* Background effects */}
+          <div className="absolute inset-0 bg-dots opacity-20" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-gold/5 rounded-full blur-[120px]" />
 
-          <div className="absolute top-20 left-10 text-6xl opacity-10 animate-pulse">🍕</div>
-          <div className="absolute bottom-20 right-10 text-6xl opacity-10 animate-pulse">🍔</div>
-
-          <div className="relative max-w-7xl mx-auto px-4 py-20 w-full">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              <div className="text-center lg:text-left">
-                <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/30 text-gold px-4 py-1.5 rounded-full text-sm mb-6">
-                  <Star size={14} fill="currentColor" />
-                  <span>Amarpur&apos;s Favorite Family Restaurant</span>
-                </div>
-
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-4 leading-tight">
-                  Taste That Brings
-                  <br />
-                  <span className="text-gradient-gold">Family</span> Together
-                </h1>
-
-                <p className="text-xl md:text-2xl text-white/80 mb-2">
-                  Fresh • Delicious • Hygienic
-                </p>
-                <p className="text-white/50 mb-10 text-sm md:text-base">
-                  Order online • Home delivery • Takeaway • Dine-in
-                </p>
-
-                <div className="flex flex-wrap gap-3 md:gap-4 justify-center lg:justify-start">
-                  <Link
-                    href="/menu"
-                    className="bg-gold text-night font-bold px-6 md:px-8 py-3.5 md:py-4 rounded-full hover:bg-gold-light transition-all flex items-center gap-2 text-sm md:text-base"
-                  >
-                    <ShoppingBag size={18} /> ORDER NOW
-                  </Link>
-                  <Link
-                    href="/menu"
-                    className="border-2 border-gold text-gold font-bold px-6 md:px-8 py-3.5 md:py-4 rounded-full hover:bg-gold hover:text-night transition flex items-center gap-2 text-sm md:text-base"
-                  >
-                    <UtensilsCrossed size={18} /> VIEW MENU
-                  </Link>
-                  <a
-  href="tel:+919973318421"
-  className="border-2 border-fresh text-fresh font-bold px-6 md:px-8 py-3.5 md:py-4 rounded-full hover:bg-fresh hover:text-night transition flex items-center gap-2 text-sm md:text-base"
->
-  <Phone size={18} /> CALL NOW
-</a>
-                </div>
-
-                <div className="grid grid-cols-3 gap-6 mt-12 max-w-md mx-auto lg:mx-0">
-                  <div>
-                    <p className="text-3xl md:text-4xl text-gold font-bold">50+</p>
-                    <p className="text-xs md:text-sm text-white/60">Dishes</p>
-                  </div>
-                  <div>
-                    <p className="text-3xl md:text-4xl text-gold font-bold">10K+</p>
-                    <p className="text-xs md:text-sm text-white/60">Happy Customers</p>
-                  </div>
-                  <div>
-                    <p className="text-3xl md:text-4xl text-gold font-bold">30min</p>
-                    <p className="text-xs md:text-sm text-white/60">Fast Delivery</p>
-                  </div>
-                </div>
+          <div className="relative max-w-7xl mx-auto px-4">
+            {/* Section Header */}
+            <div className="text-center mb-14">
+              <div className="inline-flex items-center gap-2 text-gold tracking-[0.3em] text-xs md:text-sm mb-3">
+                <span className="w-8 h-px bg-gradient-to-r from-transparent to-gold" />
+                <span className="font-semibold">OUR SPECIALTIES</span>
+                <span className="w-8 h-px bg-gradient-to-l from-transparent to-gold" />
               </div>
-
-              <div className="relative hidden lg:block">
-                <div className="relative w-full aspect-square max-w-md mx-auto">
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-gold/30 to-fresh/20 blur-3xl" />
-                  <div className="relative w-full h-full rounded-full border-4 border-gold/20 flex items-center justify-center bg-night-card/50">
-                    <span className="text-[180px]">🍽️</span>
-                  </div>
-
-                  <div className="absolute top-10 -left-4 bg-night-card border border-gold/30 rounded-2xl px-4 py-3">
-                    <p className="text-xs text-white/60">Bestseller</p>
-                    <p className="text-sm font-bold text-gold">Hyderabadi Biryani</p>
-                  </div>
-                  <div className="absolute bottom-10 -right-4 bg-night-card border border-fresh/30 rounded-2xl px-4 py-3">
-                    <p className="text-xs text-white/60">Delivery in</p>
-                    <p className="text-sm font-bold text-fresh">30 minutes ⚡</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ============ BEST SELLERS ============ */}
-        <section className="py-16 md:py-24 bg-night-soft">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="text-center mb-12">
-              <p className="text-gold tracking-[0.3em] text-sm mb-2">OUR SPECIALTIES</p>
-              <h2 className="text-4xl md:text-5xl font-bold">
-                Best <span className="text-gradient-gold">Sellers</span>
+              <h2 className="font-display text-4xl md:text-6xl font-bold mb-4">
+                Best <span className="text-shimmer">Sellers</span>
               </h2>
+              <p className="text-white/60 max-w-2xl mx-auto text-sm md:text-base">
+                Handpicked dishes loved by our customers
+              </p>
+              {/* Underline */}
+              <div className="w-24 h-1 bg-gradient-to-r from-transparent via-gold to-transparent mx-auto mt-6 opacity-60" />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {[
-                { name: 'Farmhouse Pizza', price: 249, old: 299, emoji: '🍕' },
-                { name: 'Chicken Zinger Burger', price: 139, old: 159, emoji: '🍔' },
-                { name: 'Hyderabadi Biryani', price: 249, old: 0, emoji: '🍚' },
-                { name: 'Paneer Butter Masala', price: 219, old: 0, emoji: '🍛' },
-              ].map((item, i) => (
-                <div
-                  key={i}
-                  className="group bg-night-card rounded-2xl overflow-hidden border border-white/5 hover:border-gold/40 transition-all"
-                >
-                  <div className="aspect-square flex items-center justify-center text-8xl bg-gradient-to-br from-gold/10 to-fresh/10 group-hover:scale-110 transition-transform duration-500">
-                    {item.emoji}
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-bold text-base mb-2 group-hover:text-gold transition">
-                      {item.name}
-                    </h3>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-gold font-bold text-lg">₹{item.price}</span>
-                        {item.old > 0 && (
-                          <span className="text-white/40 text-sm line-through">₹{item.old}</span>
-                        )}
-                      </div>
-                      <span className="text-xs bg-gold/10 text-gold border border-gold/30 px-3 py-1.5 rounded-full font-semibold">
-                        ADD +
-                      </span>
-                    </div>
-                  </div>
-                </div>
+            {/* Grid using premium FoodCard */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+              {bestsellers.map((item) => (
+                <FoodCard key={item.id} item={item} />
               ))}
             </div>
 
-            <div className="text-center mt-10">
+            {/* CTA */}
+            <div className="text-center mt-14">
               <Link
                 href="/menu"
-                className="inline-flex border-2 border-gold text-gold font-bold px-8 py-3.5 rounded-full hover:bg-gold hover:text-night transition"
+                className="group inline-flex items-center gap-2 border-2 border-gold text-gold font-bold px-8 py-4 rounded-full hover:bg-gold hover:text-night transition-all duration-300 hover:shadow-[0_10px_30px_rgba(245,179,1,0.3)] hover:scale-105"
               >
-                View Full Menu →
+                <span>View Full Menu</span>
+                <ArrowRight
+                  size={18}
+                  className="group-hover:translate-x-1 transition-transform"
+                />
               </Link>
             </div>
           </div>
         </section>
 
-        {/* ============ WHY CHOOSE US ============ */}
-        <section className="py-16 md:py-24">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="text-center mb-12">
-              <p className="text-gold tracking-[0.3em] text-sm mb-2">WHY CHOOSE US</p>
-              <h2 className="text-4xl md:text-5xl font-bold">
-                The <span className="text-gradient-gold">Food Junction</span> Promise
+        {/* ============================================
+            WHY CHOOSE US SECTION
+            ============================================ */}
+        <section className="relative py-20 md:py-28 overflow-hidden">
+          {/* Background effects */}
+          <div className="absolute inset-0 bg-mesh opacity-50" />
+
+          <div className="relative max-w-7xl mx-auto px-4">
+            {/* Section Header */}
+            <div className="text-center mb-14">
+              <div className="inline-flex items-center gap-2 text-gold tracking-[0.3em] text-xs md:text-sm mb-3">
+                <span className="w-8 h-px bg-gradient-to-r from-transparent to-gold" />
+                <span className="font-semibold">WHY CHOOSE US</span>
+                <span className="w-8 h-px bg-gradient-to-l from-transparent to-gold" />
+              </div>
+              <h2 className="font-display text-4xl md:text-6xl font-bold mb-4">
+                The <span className="text-shimmer">Food Junction</span> Promise
               </h2>
+              <p className="text-white/60 max-w-2xl mx-auto text-sm md:text-base">
+                We promise fresh, hygienic, and delicious food with every order
+              </p>
+              <div className="w-24 h-1 bg-gradient-to-r from-transparent via-gold to-transparent mx-auto mt-6 opacity-60" />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {[
-                { emoji: '🌿', title: 'Fresh Ingredients', desc: 'Daily sourced fresh vegetables & meat' },
-                { emoji: '⚡', title: 'Fast Delivery', desc: 'Hot food delivered within 30 minutes' },
-                { emoji: '🛡️', title: 'Hygienic Kitchen', desc: 'FSSAI certified clean kitchen' },
-                { emoji: '🏆', title: 'Premium Quality', desc: 'Best taste in Amarpur guaranteed' },
-                { emoji: '❤️', title: 'Family Friendly', desc: 'Perfect ambiance for families' },
-                { emoji: '🚚', title: 'Free Delivery', desc: 'On orders above ₹500' },
-              ].map((f, i) => (
+            {/* Feature cards grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+              {features.map((f, i) => (
                 <div
                   key={i}
-                  className="bg-night-card rounded-2xl p-5 border border-white/5 hover:border-gold/30 transition-all text-center"
+                  className="group relative glass border border-white/5 rounded-2xl p-6 text-center card-premium overflow-hidden"
                 >
-                  <div className="text-4xl mb-3">{f.emoji}</div>
-                  <h3 className="font-bold text-lg mb-1">{f.title}</h3>
-                  <p className="text-sm text-white/60">{f.desc}</p>
+                  {/* Hover glow */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-gold/20 rounded-full blur-3xl" />
+                  </div>
+
+                  {/* Icon circle */}
+                  <div className="relative w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-gold/20 to-gold/5 border border-gold/30 flex items-center justify-center mb-5 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-[0_0_20px_rgba(245,179,1,0.1)] group-hover:shadow-[0_0_30px_rgba(245,179,1,0.4)]">
+                    <f.icon
+                      size={28}
+                      className="text-gold group-hover:scale-110 transition-transform"
+                    />
+                    {/* Emoji floating */}
+                    <span className="absolute -top-2 -right-2 text-2xl opacity-0 group-hover:opacity-100 group-hover:animate-bounce-soft transition-opacity">
+                      {f.emoji}
+                    </span>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="font-bold text-lg mb-2 group-hover:text-gold transition-colors">
+                    {f.title}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-sm text-white/60 group-hover:text-white/80 transition-colors leading-relaxed">
+                    {f.desc}
+                  </p>
+
+                  {/* Bottom gold line */}
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 group-hover:w-3/4 h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent transition-all duration-500" />
                 </div>
               ))}
             </div>
           </div>
         </section>
 
+        {/* ============================================
+            FINAL CTA SECTION
+            ============================================ */}
+        <section className="relative py-20 md:py-28 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-gold/10 via-night to-night" />
+          <div className="absolute inset-0 bg-dots opacity-30" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gold/20 rounded-full blur-[100px]" />
+
+          <div className="relative max-w-4xl mx-auto px-4 text-center">
+            <div className="text-6xl mb-6 animate-bounce-soft">🍽️</div>
+            <h2 className="font-display text-4xl md:text-6xl font-bold mb-4">
+              Hungry? <span className="text-shimmer">Order Now!</span>
+            </h2>
+            <p className="text-white/60 mb-10 text-base md:text-lg max-w-2xl mx-auto">
+              Fresh, delicious, hygienic food delivered to your doorstep in just
+              30 minutes. Ab kya sochna? 🍕
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Link
+                href="/menu"
+                className="group relative bg-gradient-to-br from-gold to-gold-dark text-night font-bold px-10 py-4 rounded-full btn-premium text-base md:text-lg shadow-gold hover:shadow-[0_15px_40px_rgba(245,179,1,0.5)]"
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  <ShoppingBag size={20} />
+                  <span>Order Now</span>
+                </span>
+              </Link>
+              <a
+                href="tel:+919973318421"
+                className="group border-2 border-gold text-gold font-bold px-10 py-4 rounded-full hover:bg-gold hover:text-night transition-all duration-300 text-base md:text-lg hover:scale-105"
+              >
+                <span className="flex items-center gap-2">
+                  📞 Call Now
+                </span>
+              </a>
+            </div>
+          </div>
+        </section>
       </main>
 
       <Footer />
