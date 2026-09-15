@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -22,6 +22,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import UPIQRCode from '@/components/UPIQRCode'
 import { useCart } from '@/lib/store'
+import { getCustomerSession } from '@/lib/customerAuth'
 import {
   saveOrder,
   generateOrderId,
@@ -32,7 +33,7 @@ import {
 } from '@/lib/orders'
 
 // ⚠️ APNA ACTUAL UPI ID YAHAN DAALO
-const UPI_ID = '99733184212@ibl' // ← Apna UPI ID yahan daalo
+const UPI_ID = '9973318421@ibl'
 const UPI_NAME = 'Food Junction'
 
 export default function CheckoutPage() {
@@ -41,6 +42,7 @@ export default function CheckoutPage() {
   const getSubtotal = useCart((s) => s.getSubtotal)
   const clearCart = useCart((s) => s.clear)
 
+  const [checkingAuth, setCheckingAuth] = useState(true)
   const [form, setForm] = useState({
     name: '',
     mobile: '',
@@ -56,6 +58,31 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // ============================================
+  // LOGIN GUARD — Checkout pe aane ke liye login zaroori
+  // ============================================
+  useEffect(() => {
+    const session = getCustomerSession()
+
+    if (!session) {
+      // Save redirect intent
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('fj-redirect-after-login', '/checkout')
+      }
+      router.push('/login?redirect=/checkout')
+      return
+    }
+
+    // Pre-fill form with customer data
+    setForm((prev) => ({
+      ...prev,
+      name: prev.name || session.name || '',
+      mobile: prev.mobile || session.mobile || '',
+    }))
+
+    setCheckingAuth(false)
+  }, [router])
 
   const subtotal = getSubtotal()
   const deliveryCharge = orderType === 'delivery' && subtotal < 500 ? 30 : 0
@@ -81,7 +108,6 @@ export default function CheckoutPage() {
     if (orderType === 'dinein' && !form.tableNumber.trim())
       e.tableNumber = 'Table number required'
 
-    // UPI ke liye transaction ID required
     if (paymentMethod === 'upi') {
       if (!form.transactionId.trim())
         e.transactionId = 'Transaction ID required'
@@ -104,7 +130,6 @@ export default function CheckoutPage() {
     const orderId = generateOrderId()
     const orderNumber = generateOrderNumber()
 
-    // Payment status: 'paid' if online, else 'pending'
     const paymentStatus =
       paymentMethod === 'cash' || paymentMethod === 'upi' ? 'pending' : 'paid'
 
@@ -140,7 +165,7 @@ export default function CheckoutPage() {
       },
     }
 
-    // Save to Supabase via API
+    // Save to Supabase
     try {
       const res = await fetch('/api/orders', {
         method: 'POST',
@@ -154,19 +179,18 @@ export default function CheckoutPage() {
       console.error('API error:', err)
     }
 
-    // Save to localStorage (backup)
+    // Save to localStorage
     saveOrder(orderPayload)
 
-    // Small delay for UX
     await new Promise((r) => setTimeout(r, 800))
 
-        // Send WhatsApp notification to admin
+    // Send WhatsApp notification to admin
     try {
       await fetch('/api/whatsapp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to: '9973318421', // ⚠️ Admin ka number yahan daalo
+          to: '9973318421',
           contentType: 'template',
           contentSid: process.env.NEXT_PUBLIC_TWILIO_TEMPLATE_ORDER_PLACED,
           contentVariables: {
@@ -186,7 +210,27 @@ export default function CheckoutPage() {
     router.push(`/order-success?id=${orderId}`)
   }
 
-  // Empty cart redirect
+  // ============================================
+  // LOADING — Auth check
+  // ============================================
+  if (checkingAuth) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-[60vh] flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="animate-spin text-gold mx-auto mb-3" size={32} />
+            <p className="text-white/60 text-sm">Checking authentication...</p>
+          </div>
+        </main>
+        <Footer />
+      </>
+    )
+  }
+
+  // ============================================
+  // EMPTY CART
+  // ============================================
   if (items.length === 0) {
     return (
       <>
@@ -653,7 +697,6 @@ export default function CheckoutPage() {
                   <span className="font-bold text-2xl text-gold">₹{total}</span>
                 </div>
 
-                {/* UPI selected warning */}
                 {paymentMethod === 'upi' && (
                   <div className="bg-gold/10 border border-gold/30 rounded-xl px-3 py-2 text-xs text-gold mb-3">
                     💡 UPI se pay karne ke baad order place karo. Admin manually

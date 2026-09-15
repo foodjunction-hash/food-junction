@@ -1,13 +1,16 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ArrowLeft, ShoppingBag, Trash2, Tag } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import CartItem from '@/components/CartItem'
 import { useCart } from '@/lib/store'
+import { getCustomerSession } from '@/lib/customerAuth'
 
 export default function CartPage() {
+  const router = useRouter()
   const items = useCart((s) => s.items)
   const getSubtotal = useCart((s) => s.getSubtotal)
   const clear = useCart((s) => s.clear)
@@ -16,6 +19,23 @@ export default function CartPage() {
   const deliveryCharge = subtotal >= 500 || subtotal === 0 ? 0 : 30
   const tax = Math.round(subtotal * 0.05)
   const grandTotal = subtotal + deliveryCharge + tax
+
+  // ============================================
+  // LOGIN CHECK — Checkout pe jaane ke liye
+  // ============================================
+  const handleProceedToCheckout = () => {
+    const session = getCustomerSession()
+
+    if (!session) {
+      // Save redirect intent
+      sessionStorage.setItem('fj-redirect-after-login', '/checkout')
+      router.push('/login?redirect=/checkout')
+      return
+    }
+
+    // Logged in — go to checkout
+    router.push('/checkout')
+  }
 
   // Empty cart
   if (items.length === 0) {
@@ -126,12 +146,13 @@ export default function CartPage() {
                   <span className="font-bold text-2xl text-gold">₹{grandTotal}</span>
                 </div>
 
-                <Link
-                  href="/checkout"
+                {/* Proceed to Checkout — with login guard */}
+                <button
+                  onClick={handleProceedToCheckout}
                   className="w-full bg-gold text-night font-bold py-4 rounded-full hover:bg-gold-light transition shadow-gold flex items-center justify-center gap-2"
                 >
                   <ShoppingBag size={18} /> Proceed to Checkout
-                </Link>
+                </button>
 
                 <Link
                   href="/menu"
