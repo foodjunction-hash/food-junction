@@ -147,12 +147,15 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* ===== Bottom Bar ===== */}
+                {/* ===== Bottom Bar ===== */}
         <div className="divider-gold mt-12 mb-6" />
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-white/40">
           <p>
-            © 2026 Food Junction – The Family Restaurant. All rights reserved.
-            Devloper by Shubham Yadav  
+            © 2026 Food Junction — The Family Restaurant. All rights reserved.
+          </p>
+          <p className="flex items-center gap-2">
+            <span className="text-white/30">Developed by</span>
+            <span className="text-gold font-semibold">Shubham Yadav</span>
           </p>
           <div className="flex gap-5">
             <Link
