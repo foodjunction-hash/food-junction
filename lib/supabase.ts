@@ -28,6 +28,7 @@ export type DBOrder = {
   payment_method: string
   payment_status: string
   status: string
+  transaction_id?: string | null
   customer_name: string
   customer_mobile: string
   customer_email?: string
@@ -78,5 +79,19 @@ export type DBSettings = {
   delivery_charge: number
   free_above: number
   tax_percent: number
+  updated_at: string
+}
+
+// ============================================
+// SERVICES TABLE (for Coming Soon feature)
+// ============================================
+
+export type DBService = {
+  id: string
+  name: string
+  description: string
+  emoji: string
+  is_enabled: boolean
+  coming_soon_message: string
   updated_at: string
 }

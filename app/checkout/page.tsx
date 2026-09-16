@@ -17,12 +17,14 @@ import {
   Smartphone,
   Loader2,
   Check,
+  AlertCircle,
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import UPIQRCode from '@/components/UPIQRCode'
 import { useCart } from '@/lib/store'
 import { getCustomerSession } from '@/lib/customerAuth'
+import { supabase } from '@/lib/supabase'
 import {
   saveOrder,
   generateOrderId,
@@ -43,6 +45,14 @@ export default function CheckoutPage() {
   const clearCart = useCart((s) => s.clear)
 
   const [checkingAuth, setCheckingAuth] = useState(true)
+  const [serviceStatus, setServiceStatus] = useState<
+    Record<string, { enabled: boolean; message: string }>
+  >({
+    delivery: { enabled: true, message: '' },
+    takeaway: { enabled: true, message: '' },
+    dinein: { enabled: true, message: '' },
+  })
+  const [servicesLoading, setServicesLoading] = useState(true)
   const [form, setForm] = useState({
     name: '',
     mobile: '',
@@ -60,13 +70,12 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   // ============================================
-  // LOGIN GUARD — Checkout pe aane ke liye login zaroori
+  // LOGIN GUARD
   // ============================================
   useEffect(() => {
     const session = getCustomerSession()
 
     if (!session) {
-      // Save redirect intent
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('fj-redirect-after-login', '/checkout')
       }
@@ -74,7 +83,6 @@ export default function CheckoutPage() {
       return
     }
 
-    // Pre-fill form with customer data
     setForm((prev) => ({
       ...prev,
       name: prev.name || session.name || '',
@@ -84,10 +92,61 @@ export default function CheckoutPage() {
     setCheckingAuth(false)
   }, [router])
 
+  // ============================================
+  // LOAD SERVICES STATUS
+  // ============================================
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('services')
+          .select('id, is_enabled, coming_soon_message')
+
+        if (error) throw error
+
+        const status: Record<string, { enabled: boolean; message: string }> = {
+          delivery: { enabled: true, message: '' },
+          takeaway: { enabled: true, message: '' },
+          dinein: { enabled: true, message: '' },
+        }
+
+        data?.forEach((s: any) => {
+          status[s.id] = {
+            enabled: s.is_enabled,
+            message: s.coming_soon_message || 'Coming soon!',
+          }
+        })
+
+        setServiceStatus(status)
+      } catch (err) {
+        console.error('Failed to load services:', err)
+      }
+      setServicesLoading(false)
+    }
+    loadServices()
+  }, [])
+
+  // ============================================
+  // AUTO-SET ORDER TYPE TO FIRST ENABLED SERVICE
+  // ============================================
+  useEffect(() => {
+    if (servicesLoading) return
+    if (!serviceStatus[orderType]?.enabled) {
+      const firstEnabled = (['delivery', 'takeaway', 'dinein'] as OrderType[]).find(
+        (t) => serviceStatus[t]?.enabled
+      )
+      if (firstEnabled) {
+        setOrderType(firstEnabled)
+      }
+    }
+  }, [servicesLoading, serviceStatus])
+
   const subtotal = getSubtotal()
   const deliveryCharge = orderType === 'delivery' && subtotal < 500 ? 30 : 0
   const tax = Math.round(subtotal * 0.05)
   const total = subtotal + deliveryCharge + tax
+
+  const currentServiceDisabled = !serviceStatus[orderType]?.enabled
 
   const updateField = (key: string, value: string) => {
     setForm((s) => ({ ...s, [key]: value }))
@@ -120,6 +179,11 @@ export default function CheckoutPage() {
   }
 
   const handlePlaceOrder = async () => {
+    if (currentServiceDisabled) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
     if (!validate()) {
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
@@ -165,7 +229,6 @@ export default function CheckoutPage() {
       },
     }
 
-    // Save to Supabase
     try {
       const res = await fetch('/api/orders', {
         method: 'POST',
@@ -179,12 +242,10 @@ export default function CheckoutPage() {
       console.error('API error:', err)
     }
 
-    // Save to localStorage
     saveOrder(orderPayload)
 
     await new Promise((r) => setTimeout(r, 800))
 
-    // Send WhatsApp notification to admin
     try {
       await fetch('/api/whatsapp', {
         method: 'POST',
@@ -211,16 +272,16 @@ export default function CheckoutPage() {
   }
 
   // ============================================
-  // LOADING — Auth check
+  // LOADING
   // ============================================
-  if (checkingAuth) {
+  if (checkingAuth || servicesLoading) {
     return (
       <>
         <Header />
         <main className="min-h-[60vh] flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="animate-spin text-gold mx-auto mb-3" size={32} />
-            <p className="text-white/60 text-sm">Checking authentication...</p>
+            <p className="text-white/60 text-sm">Loading checkout...</p>
           </div>
         </main>
         <Footer />
@@ -290,23 +351,56 @@ export default function CheckoutPage() {
                     { id: 'delivery', label: 'Home Delivery', icon: Home },
                     { id: 'takeaway', label: 'Takeaway', icon: ShoppingBag },
                     { id: 'dinein', label: 'Dine-in', icon: UtensilsCrossed },
-                  ].map((opt) => (
-                    <button
-                      key={opt.id}
-                      onClick={() => setOrderType(opt.id as OrderType)}
-                      className={`flex flex-col items-center gap-2 p-3 md:p-4 rounded-xl border-2 transition ${
-                        orderType === opt.id
-                          ? 'border-gold bg-gold/10 text-gold'
-                          : 'border-white/10 text-white/70 hover:border-gold/40'
-                      }`}
-                    >
-                      <opt.icon size={22} />
-                      <span className="text-xs md:text-sm font-semibold text-center">
-                        {opt.label}
-                      </span>
-                    </button>
-                  ))}
+                  ].map((opt) => {
+                    const status = serviceStatus[opt.id]
+                    const isDisabled = !status?.enabled
+                    return (
+                      <button
+                        key={opt.id}
+                        onClick={() =>
+                          !isDisabled && setOrderType(opt.id as OrderType)
+                        }
+                        disabled={isDisabled}
+                        className={`flex flex-col items-center gap-2 p-3 md:p-4 rounded-xl border-2 transition relative ${
+                          isDisabled
+                            ? 'border-white/5 text-white/30 cursor-not-allowed bg-white/5'
+                            : orderType === opt.id
+                            ? 'border-gold bg-gold/10 text-gold'
+                            : 'border-white/10 text-white/70 hover:border-gold/40'
+                        }`}
+                      >
+                        <opt.icon size={22} />
+                        <span className="text-xs md:text-sm font-semibold text-center">
+                          {opt.label}
+                        </span>
+                        {isDisabled && (
+                          <span className="absolute top-1 right-1 text-[8px] bg-red-500 text-white px-1.5 py-0.5 rounded-full font-bold">
+                            SOON
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
+
+                {/* Coming Soon Banner */}
+                {currentServiceDisabled && (
+                  <div className="mt-4 flex items-start gap-3 bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                    <AlertCircle
+                      size={18}
+                      className="text-red-400 flex-shrink-0 mt-0.5"
+                    />
+                    <div>
+                      <p className="font-bold text-red-400 text-sm mb-1">
+                        Service Unavailable
+                      </p>
+                      <p className="text-xs text-white/70">
+                        {serviceStatus[orderType]?.message ||
+                          'This service is currently unavailable. Please choose another option.'}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Customer Details */}
@@ -704,16 +798,25 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
+                {currentServiceDisabled && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2 text-xs text-red-300 mb-3">
+                    ⚠️ Selected service is unavailable. Please choose another
+                    order type.
+                  </div>
+                )}
+
                 <button
                   onClick={handlePlaceOrder}
-                  disabled={loading}
-                  className="w-full bg-gold text-night font-bold py-4 rounded-full hover:bg-gold-light transition shadow-gold flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                  disabled={loading || currentServiceDisabled}
+                  className="w-full bg-gold text-night font-bold py-4 rounded-full hover:bg-gold-light transition shadow-gold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>
                       <Loader2 size={18} className="animate-spin" /> Placing
                       Order...
                     </>
+                  ) : currentServiceDisabled ? (
+                    <>Service Unavailable</>
                   ) : (
                     <>
                       {paymentMethod === 'upi'

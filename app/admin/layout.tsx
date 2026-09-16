@@ -14,6 +14,7 @@ import {
   Home,
   BarChart3,
   QrCode,
+  Briefcase,
 } from 'lucide-react'
 import { isAdminLoggedIn, logoutAdmin } from '@/lib/auth'
 
@@ -56,6 +57,7 @@ export default function AdminLayout({
     { href: '/admin/orders', label: 'Orders', icon: ClipboardList },
     { href: '/admin/menu', label: 'Menu', icon: UtensilsCrossed },
     { href: '/admin/tables', label: 'Table QR', icon: QrCode },
+    { href: '/admin/services', label: 'Services', icon: Briefcase },
     { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
     { href: '/admin/settings', label: 'Settings', icon: Settings },
   ]
@@ -78,14 +80,17 @@ export default function AdminLayout({
             />
             <div className="leading-tight">
               <p className="text-gold font-bold">Admin Panel</p>
-              <p className="text-[10px] text-white/50 tracking-widest">FOOD JUNCTION</p>
+              <p className="text-[10px] text-white/50 tracking-widest">
+                FOOD JUNCTION
+              </p>
             </div>
           </Link>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {links.map((l) => {
-            const active = pathname === l.href || pathname.startsWith(l.href + '/')
+            const active =
+              pathname === l.href || pathname.startsWith(l.href + '/')
             return (
               <Link
                 key={l.href}
@@ -140,7 +145,8 @@ export default function AdminLayout({
         <div className="lg:hidden fixed inset-0 z-30 bg-night/95 backdrop-blur pt-16">
           <nav className="p-4 space-y-1">
             {links.map((l) => {
-              const active = pathname === l.href || pathname.startsWith(l.href + '/')
+              const active =
+                pathname === l.href || pathname.startsWith(l.href + '/')
               return (
                 <Link
                   key={l.href}
