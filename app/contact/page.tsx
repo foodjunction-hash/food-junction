@@ -16,6 +16,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Sparkles,
+  Crown,
+  Code2,
 } from 'lucide-react'
 
 export default function ContactPage() {
@@ -39,7 +41,6 @@ export default function ContactPage() {
     e.preventDefault()
     setError('')
 
-    // Validation
     if (!form.name.trim()) return setError('Name required')
     if (!/^\d{10}$/.test(form.mobile.trim()))
       return setError('Enter valid 10-digit mobile')
@@ -48,7 +49,6 @@ export default function ContactPage() {
     setLoading(true)
     await new Promise((r) => setTimeout(r, 800))
 
-    // TODO: Send to backend / email / WhatsApp
     console.log('Contact form submitted:', form)
 
     setSuccess(true)
@@ -82,6 +82,25 @@ export default function ContactPage() {
       color: 'text-blue-400',
       bg: 'bg-blue-400/10',
       border: 'border-blue-400/30',
+    },
+  ]
+
+  const TEAM = [
+    {
+      name: 'Raj Nandni',
+      role: 'Owner & Founder',
+      photo: '/team/owner.jpg',
+      icon: Crown,
+      color: 'from-gold to-gold-dark',
+      description: 'For any queries about food, orders, or feedback',
+    },
+    {
+      name: 'Shubham Yadav',
+      role: 'Web Developer',
+      photo: '/team/developer-new.jpg',
+      icon: Code2,
+      color: 'from-fresh to-fresh-dark',
+      description: 'For technical issues, website bugs, or feature requests',
     },
   ]
 
@@ -140,9 +159,97 @@ export default function ContactPage() {
           </div>
         </section>
 
-        {/* ===== Form + Map ===== */}
-        <section className="relative py-16 md:py-24 bg-mesh">
+        {/* ===== Talk to Team Section ===== */}
+        <section className="relative py-16 md:py-20 bg-mesh">
           <div className="absolute inset-0 bg-dots opacity-30" />
+
+          <div className="relative max-w-5xl mx-auto px-4">
+            <div className="text-center mb-12">
+              <p className="text-gold tracking-[0.3em] text-xs md:text-sm mb-3">
+                TALK TO US
+              </p>
+              <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
+                Reach the <span className="text-shimmer">Right Person</span>
+              </h2>
+              <p className="text-white/60 max-w-2xl mx-auto text-sm md:text-base">
+                Directly contact the team member for your specific query
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
+              {TEAM.map((member, i) => (
+                <div
+                  key={i}
+                  className="group relative bg-night-card border border-white/5 rounded-2xl p-6 card-premium overflow-hidden"
+                >
+                  {/* Glow */}
+                  <div
+                    className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${member.color} rounded-full blur-3xl opacity-10 group-hover:opacity-30 transition-opacity`}
+                  />
+
+                  {/* Photo + Info */}
+                  <div className="relative flex items-center gap-4 mb-4">
+                    {/* Photo */}
+                    <div className="relative flex-shrink-0">
+                      <div
+                        className={`absolute inset-0 rounded-full bg-gradient-to-br ${member.color} blur-md opacity-40`}
+                      />
+                      <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-gold/40 group-hover:border-gold transition-all">
+                        <img
+                          src={member.photo}
+                          alt={member.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-lg group-hover:text-gold transition">
+                        {member.name}
+                      </h3>
+                      <span
+                        className={`inline-flex items-center gap-1 bg-gradient-to-br ${member.color} text-night text-[10px] font-bold px-2.5 py-0.5 rounded-full mt-1`}
+                      >
+                        <member.icon size={10} />
+                        <span>{member.role}</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-white/60 leading-relaxed">
+                    {member.description}
+                  </p>
+
+                  {/* Contact buttons */}
+                  <div className="flex gap-2 mt-4">
+                    <a
+                      href="https://wa.me/919973318421"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 text-xs text-center bg-fresh/10 border border-fresh/30 text-fresh font-semibold py-2 rounded-full hover:bg-fresh/20 transition"
+                    >
+                      💬 WhatsApp
+                    </a>
+                    <a
+                      href="tel:+919973318421"
+                      className="flex-1 text-xs text-center bg-gold/10 border border-gold/30 text-gold font-semibold py-2 rounded-full hover:bg-gold/20 transition"
+                    >
+                      📞 Call
+                    </a>
+                  </div>
+
+                  {/* Bottom gold line */}
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ===== Form + Map ===== */}
+        <section className="relative py-16 md:py-24 bg-night-soft">
+          <div className="absolute inset-0 bg-dots opacity-20" />
 
           <div className="relative max-w-7xl mx-auto px-4">
             <div className="grid lg:grid-cols-2 gap-8">
@@ -404,8 +511,8 @@ export default function ContactPage() {
         </section>
 
         {/* ===== Bottom CTA ===== */}
-        <section className="relative py-16 md:py-20 bg-night-soft">
-          <div className="absolute inset-0 bg-dots opacity-20" />
+        <section className="relative py-16 md:py-20 bg-mesh">
+          <div className="absolute inset-0 bg-dots opacity-30" />
           <div className="relative max-w-3xl mx-auto px-4 text-center">
             <div className="text-5xl mb-4">🍽️</div>
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-3">

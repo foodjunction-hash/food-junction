@@ -13,9 +13,10 @@ import {
   ShoppingBag,
   X,
   Maximize2,
+  Users,
 } from 'lucide-react'
 
-type Category = 'all' | 'food' | 'ambience' | 'moments'
+type Category = 'all' | 'food' | 'ambience' | 'moments' | 'team'
 
 type GalleryItem = {
   id: number
@@ -23,9 +24,28 @@ type GalleryItem = {
   title: string
   category: Category
   bgColor: string
+  image?: string
 }
 
 const GALLERY_ITEMS: GalleryItem[] = [
+  // Team
+  {
+    id: 22,
+    emoji: '👑',
+    title: 'Raj Nandni (Owner)',
+    category: 'team',
+    bgColor: 'from-gold/30 to-amber-500/30',
+    image: '/team/owner.jpg',
+  },
+  {
+    id: 23,
+    emoji: '💻',
+    title: 'Shubham Yadav (Developer)',
+    category: 'team',
+    bgColor: 'from-fresh/30 to-green-500/30',
+    image: '/team/developer-new.jpg',
+  },
+
   // Food
   { id: 1, emoji: '🍕', title: 'Farmhouse Pizza', category: 'food', bgColor: 'from-gold/20 to-red-500/20' },
   { id: 2, emoji: '🍔', title: 'Chicken Zinger Burger', category: 'food', bgColor: 'from-orange-500/20 to-yellow-500/20' },
@@ -36,7 +56,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
   { id: 7, emoji: '🍰', title: 'Chocolate Brownie', category: 'food', bgColor: 'from-pink-500/20 to-purple-500/20' },
   { id: 8, emoji: '🥟', title: 'Chicken Momos', category: 'food', bgColor: 'from-green-500/20 to-teal-500/20' },
   { id: 9, emoji: '🍽️', title: 'Family Thali', category: 'food', bgColor: 'from-gold/20 to-amber-500/20' },
-  
+
   // Ambience
   { id: 10, emoji: '🏪', title: 'Restaurant Interior', category: 'ambience', bgColor: 'from-blue-500/20 to-purple-500/20' },
   { id: 11, emoji: '🪑', title: 'Family Seating', category: 'ambience', bgColor: 'from-gold/20 to-fresh/20' },
@@ -44,7 +64,7 @@ const GALLERY_ITEMS: GalleryItem[] = [
   { id: 13, emoji: '🍽️', title: 'Dining Tables', category: 'ambience', bgColor: 'from-fresh/20 to-blue-500/20' },
   { id: 14, emoji: '🎨', title: 'Wall Decor', category: 'ambience', bgColor: 'from-purple-500/20 to-pink-500/20' },
   { id: 15, emoji: '🌿', title: 'Green Corner', category: 'ambience', bgColor: 'from-fresh/20 to-green-500/20' },
-  
+
   // Moments
   { id: 16, emoji: '👨‍👩‍👧‍👦', title: 'Family Time', category: 'moments', bgColor: 'from-gold/20 to-fresh/20' },
   { id: 17, emoji: '🎂', title: 'Birthday Celebrations', category: 'moments', bgColor: 'from-pink-500/20 to-purple-500/20' },
@@ -59,6 +79,7 @@ const CATEGORIES: { id: Category; label: string; emoji: string; icon: any }[] = 
   { id: 'food', label: 'Food', emoji: '🍽️', icon: Utensils },
   { id: 'ambience', label: 'Ambience', emoji: '🏪', icon: Building2 },
   { id: 'moments', label: 'Moments', emoji: '❤️', icon: Heart },
+  { id: 'team', label: 'Team', emoji: '👥', icon: Users },
 ]
 
 export default function GalleryPage() {
@@ -75,6 +96,7 @@ export default function GalleryPage() {
     food: GALLERY_ITEMS.filter((i) => i.category === 'food').length,
     ambience: GALLERY_ITEMS.filter((i) => i.category === 'ambience').length,
     moments: GALLERY_ITEMS.filter((i) => i.category === 'moments').length,
+    team: GALLERY_ITEMS.filter((i) => i.category === 'team').length,
   }
 
   return (
@@ -98,7 +120,7 @@ export default function GalleryPage() {
               Our <span className="text-shimmer">Gallery</span>
             </h1>
             <p className="text-white/60 text-lg max-w-2xl mx-auto">
-              Food, ambience aur moments ki ek jhalak — dekhiye hamari duniya 🎨
+              Food, ambience, moments aur team ki ek jhalak 🎨
             </p>
           </div>
         </section>
@@ -150,12 +172,20 @@ export default function GalleryPage() {
                     className={`absolute inset-0 bg-gradient-to-br ${item.bgColor}`}
                   />
 
-                  {/* Emoji */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-6xl md:text-7xl group-hover:scale-125 group-hover:rotate-6 transition-all duration-500 select-none">
-                      {item.emoji}
-                    </span>
-                  </div>
+                  {/* IMAGE or EMOJI */}
+                  {item.image ? (
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-6xl md:text-7xl group-hover:scale-125 group-hover:rotate-6 transition-all duration-500 select-none">
+                        {item.emoji}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Hover overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-night via-night/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -235,11 +265,20 @@ export default function GalleryPage() {
             <div
               className={`aspect-square rounded-3xl overflow-hidden border-2 border-gold/40 bg-gradient-to-br ${selected.bgColor} relative`}
             >
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[240px] animate-float select-none">
-                  {selected.emoji}
-                </span>
-              </div>
+              {/* IMAGE or EMOJI in Modal */}
+              {selected.image ? (
+                <img
+                  src={selected.image}
+                  alt={selected.title}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[240px] animate-float select-none">
+                    {selected.emoji}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="mt-5 text-center">

@@ -14,6 +14,8 @@ import {
   Heart,
   Truck,
   ArrowRight,
+  Code2,
+  Crown,
 } from 'lucide-react'
 
 export default function Home() {
@@ -55,6 +57,23 @@ export default function Home() {
       title: 'Free Delivery',
       desc: 'On orders above ₹500',
       emoji: '🚚',
+    },
+  ]
+
+  const team = [
+    {
+      name: 'Raj Nandni',
+      role: 'Owner & Founder',
+      photo: '/team/owner.jpg',
+      icon: Crown,
+      color: 'from-gold to-gold-dark',
+    },
+    {
+      name: 'Shubham Yadav',
+      role: 'Web Developer',
+      photo: '/team/developer-new.jpg',
+      icon: Code2,
+      color: 'from-fresh to-fresh-dark',
     },
   ]
 
@@ -176,6 +195,80 @@ export default function Home() {
                   <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 group-hover:w-3/4 h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent transition-all duration-500" />
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================
+            MEET THE TEAM SECTION
+            ============================================ */}
+        <section className="relative py-16 md:py-24 bg-night-soft overflow-hidden">
+          <div className="absolute inset-0 bg-dots opacity-20" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gold/10 rounded-full blur-[100px]" />
+
+          <div className="relative max-w-4xl mx-auto px-4">
+            <div className="text-center mb-12">
+              <p className="text-gold tracking-[0.3em] text-xs md:text-sm mb-3">
+                MEET THE TEAM
+              </p>
+              <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
+                The <span className="text-shimmer">People</span> Behind
+              </h2>
+              <p className="text-white/60 max-w-2xl mx-auto text-sm md:text-base">
+                The duo who built this dream — from food to code
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {team.map((member, i) => (
+                <div
+                  key={i}
+                  className="group relative bg-night-card border border-white/5 rounded-3xl p-6 text-center card-premium overflow-hidden"
+                >
+                  {/* Glow */}
+                  <div
+                    className={`absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-gradient-to-br ${member.color} rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity`}
+                  />
+
+                  {/* Photo */}
+                  <div className="relative mx-auto mb-5">
+                    <div
+                      className={`absolute inset-0 rounded-full bg-gradient-to-br ${member.color} blur-lg opacity-40 group-hover:opacity-70 transition-opacity`}
+                    />
+                    <div className="relative w-24 h-24 md:w-28 md:h-28 mx-auto rounded-full overflow-hidden border-4 border-gold/30 group-hover:border-gold transition-all duration-500 group-hover:scale-105">
+                      <img
+                        src={member.photo}
+                        alt={member.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Info */}
+                  <h3 className="font-display text-xl font-bold mb-1 group-hover:text-gold transition-colors">
+                    {member.name}
+                  </h3>
+                  <span
+                    className={`inline-flex items-center gap-1 bg-gradient-to-br ${member.color} text-night text-xs font-bold px-3 py-1 rounded-full shadow-gold mb-3`}
+                  >
+                    <member.icon size={12} />
+                    <span>{member.role}</span>
+                  </span>
+
+                  {/* Bottom gold line */}
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 group-hover:w-3/4 h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent transition-all duration-500" />
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center mt-10">
+              <Link
+                href="/about"
+                className="inline-flex items-center gap-2 border-2 border-gold text-gold font-bold px-6 py-3 rounded-full hover:bg-gold hover:text-night transition"
+              >
+                <span>Read Full Story</span>
+                <ArrowRight size={16} />
+              </Link>
             </div>
           </div>
         </section>
