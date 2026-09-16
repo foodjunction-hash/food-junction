@@ -151,7 +151,8 @@ export default function Footer() {
         <div className="divider-gold mt-12 mb-6" />
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-white/40">
           <p>
-            © 2025 Food Junction – The Family Restaurant. All rights reserved.
+            © 2026 Food Junction – The Family Restaurant. All rights reserved.
+            Devloper by Shubham Yadav  
           </p>
           <div className="flex gap-5">
             <Link
