@@ -28,17 +28,17 @@ export default function Hero() {
           muted
           playsInline
           preload="auto"
-          className="absolute inset-0 w-full h-full object-cover opacity-95"
+          className="absolute inset-0 w-full h-full object-cover opacity-60"
         >
           <source src="/hero-video.mp4" type="video/mp4" />
         </video>
 
         {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-br from-night/85 via-night/75 to-night/90" />
+        <div className="absolute inset-0 bg-gradient-to-br from-night/70 via-night/60 to-night/80" />
       </div>
 
       {/* ===== Multi-Layer Background ===== */}
-      <div className="absolute inset-0 bg-mesh opacity-60" />
+      <div className="absolute inset-0 bg-mesh opacity-30" />
       <div className="absolute inset-0 bg-dots opacity-20" />
 
       {/* Radial glow */}
@@ -95,7 +95,6 @@ export default function Hero() {
               <br />
               <span className="text-shimmer relative">
                 Family
-                {/* Underline glow */}
                 <span className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gold to-transparent opacity-60 blur-sm" />
               </span>{' '}
               Together
@@ -193,7 +192,6 @@ export default function Hero() {
                   <p className="text-xs md:text-sm text-white/50 group-hover:text-white/70 transition-colors">
                     {stat.label}
                   </p>
-                  {/* Gold underline */}
                   <div className="w-8 h-0.5 bg-gradient-to-r from-gold to-transparent mx-auto lg:mx-0 mt-2 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               ))}
@@ -207,10 +205,8 @@ export default function Hero() {
             }`}
           >
             <div className="relative w-full aspect-square max-w-md mx-auto">
-              {/* Outer glow */}
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-gold/30 via-gold/10 to-fresh/20 blur-3xl animate-pulse-glow" />
 
-              {/* Rotating rings */}
               <div className="absolute inset-0 rounded-full border-2 border-dashed border-gold/20 animate-spin-slow" />
               <div
                 className="absolute inset-6 rounded-full border border-gold/10 animate-spin-slow"
@@ -220,14 +216,12 @@ export default function Hero() {
                 }}
               />
 
-              {/* Center plate */}
               <div className="absolute inset-12 rounded-full border-4 border-gold/20 bg-night-card/50 backdrop-blur flex items-center justify-center group">
                 <span className="text-[160px] animate-float select-none">
                   🍽️
                 </span>
               </div>
 
-              {/* Orbiting Bestseller card */}
               <div
                 className="absolute top-8 -left-6 animate-float"
                 style={{ animationDelay: '0.5s' }}
@@ -242,7 +236,6 @@ export default function Hero() {
                 </div>
               </div>
 
-              {/* Orbiting Delivery card */}
               <div
                 className="absolute bottom-8 -right-6 animate-float"
                 style={{ animationDelay: '1.5s' }}
@@ -257,7 +250,6 @@ export default function Hero() {
                 </div>
               </div>
 
-              {/* Small floating accent dots */}
               <div className="absolute top-1/4 right-4 w-2 h-2 rounded-full bg-gold shadow-gold animate-pulse" />
               <div
                 className="absolute bottom-1/4 left-6 w-2 h-2 rounded-full bg-fresh animate-pulse"

@@ -106,7 +106,6 @@ export default function Home() {
               <p className="text-white/60 max-w-2xl mx-auto text-sm md:text-base">
                 Handpicked dishes loved by our customers
               </p>
-              {/* Underline */}
               <div className="w-24 h-1 bg-gradient-to-r from-transparent via-gold to-transparent mx-auto mt-6 opacity-60" />
             </div>
 
@@ -164,34 +163,28 @@ export default function Home() {
                   key={i}
                   className="group relative glass border border-white/5 rounded-2xl p-6 text-center card-premium overflow-hidden"
                 >
-                  {/* Hover glow */}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-gold/20 rounded-full blur-3xl" />
                   </div>
 
-                  {/* Icon circle */}
                   <div className="relative w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-gold/20 to-gold/5 border border-gold/30 flex items-center justify-center mb-5 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-[0_0_20px_rgba(245,179,1,0.1)] group-hover:shadow-[0_0_30px_rgba(245,179,1,0.4)]">
                     <f.icon
                       size={28}
                       className="text-gold group-hover:scale-110 transition-transform"
                     />
-                    {/* Emoji floating */}
                     <span className="absolute -top-2 -right-2 text-2xl opacity-0 group-hover:opacity-100 group-hover:animate-bounce-soft transition-opacity">
                       {f.emoji}
                     </span>
                   </div>
 
-                  {/* Title */}
                   <h3 className="font-bold text-lg mb-2 group-hover:text-gold transition-colors">
                     {f.title}
                   </h3>
 
-                  {/* Description */}
                   <p className="text-sm text-white/60 group-hover:text-white/80 transition-colors leading-relaxed">
                     {f.desc}
                   </p>
 
-                  {/* Bottom gold line */}
                   <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 group-hover:w-3/4 h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent transition-all duration-500" />
                 </div>
               ))}
@@ -225,12 +218,10 @@ export default function Home() {
                   key={i}
                   className="group relative bg-night-card border border-white/5 rounded-3xl p-6 text-center card-premium overflow-hidden"
                 >
-                  {/* Glow */}
                   <div
                     className={`absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-gradient-to-br ${member.color} rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity`}
                   />
 
-                  {/* Photo */}
                   <div className="relative mx-auto mb-5">
                     <div
                       className={`absolute inset-0 rounded-full bg-gradient-to-br ${member.color} blur-lg opacity-40 group-hover:opacity-70 transition-opacity`}
@@ -244,7 +235,6 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Info */}
                   <h3 className="font-display text-xl font-bold mb-1 group-hover:text-gold transition-colors">
                     {member.name}
                   </h3>
@@ -255,7 +245,6 @@ export default function Home() {
                     <span>{member.role}</span>
                   </span>
 
-                  {/* Bottom gold line */}
                   <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 group-hover:w-3/4 h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent transition-all duration-500" />
                 </div>
               ))}
