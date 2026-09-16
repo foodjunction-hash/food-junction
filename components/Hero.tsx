@@ -20,13 +20,30 @@ export default function Hero() {
 
   return (
     <section className="relative overflow-hidden min-h-[90vh] flex items-center">
+      {/* ===== Video Background ===== */}
+      <div className="absolute inset-0 overflow-hidden">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          className="absolute inset-0 w-full h-full object-cover opacity-95"
+        >
+          <source src="/hero-video.mp4" type="video/mp4" />
+        </video>
+
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-br from-night/85 via-night/75 to-night/90" />
+      </div>
+
       {/* ===== Multi-Layer Background ===== */}
-      <div className="absolute inset-0 bg-mesh" />
-      <div className="absolute inset-0 bg-dots opacity-40" />
+      <div className="absolute inset-0 bg-mesh opacity-60" />
+      <div className="absolute inset-0 bg-dots opacity-20" />
 
       {/* Radial glow */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full bg-gold/10 blur-[120px] animate-pulse-glow" />
-      <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full bg-fresh/10 blur-[100px]" />
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full bg-gold/10 blur-[120px] animate-pulse-glow pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full bg-fresh/10 blur-[100px] pointer-events-none" />
 
       {/* Floating emojis (decorative) */}
       <div className="absolute top-20 left-10 text-6xl opacity-[0.07] animate-float select-none pointer-events-none">
