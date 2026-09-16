@@ -105,7 +105,7 @@ export default function AboutPage() {
     {
       name: 'Shubham Yadav',
       role: 'Web Developer',
-      photo: '/team/developer.jpg',
+      photo: '/team/developer-new.jpg',
       icon: Code2,
       description:
         'Designed and built this complete digital ordering system for Food Junction.',
