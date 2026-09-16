@@ -13,6 +13,7 @@ import {
   X,
   Home,
   BarChart3,
+  QrCode,
 } from 'lucide-react'
 import { isAdminLoggedIn, logoutAdmin } from '@/lib/auth'
 
@@ -50,10 +51,11 @@ export default function AdminLayout({
     )
   }
 
-    const links = [
+  const links = [
     { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/orders', label: 'Orders', icon: ClipboardList },
     { href: '/admin/menu', label: 'Menu', icon: UtensilsCrossed },
+    { href: '/admin/tables', label: 'Table QR', icon: QrCode },
     { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
     { href: '/admin/settings', label: 'Settings', icon: Settings },
   ]
@@ -68,7 +70,7 @@ export default function AdminLayout({
       {/* Sidebar (desktop) */}
       <aside className="hidden lg:flex flex-col w-64 bg-night-soft border-r border-white/5 fixed h-full">
         <div className="p-5 border-b border-white/5">
-                    <Link href="/admin/dashboard" className="flex items-center gap-3">
+          <Link href="/admin/dashboard" className="flex items-center gap-3">
             <img
               src="/food-junction-logo.png"
               alt="Food Junction"
@@ -120,7 +122,7 @@ export default function AdminLayout({
 
       {/* Mobile topbar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-night-soft border-b border-white/5 px-4 h-16 flex items-center justify-between">
-                <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <img
             src="/food-junction-logo.png"
             alt="Food Junction"

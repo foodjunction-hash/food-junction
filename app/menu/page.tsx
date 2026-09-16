@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Search, MessageCircle } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -9,10 +10,19 @@ import { FOOD_ITEMS, CATEGORIES } from '@/lib/data'
 
 type Filter = 'all' | 'veg' | 'nonveg' | 'bestseller'
 
-export default function MenuPage() {
+function MenuPageContent() {
+  const searchParams = useSearchParams()
+  const tableNumber = searchParams.get('table')
   const [selectedCat, setSelectedCat] = useState('all')
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
+
+  // Save table number to sessionStorage for checkout auto-fill
+  useEffect(() => {
+    if (tableNumber && typeof window !== 'undefined') {
+      sessionStorage.setItem('fj-table-number', tableNumber)
+    }
+  }, [tableNumber])
 
   const filtered = useMemo(() => {
     return FOOD_ITEMS.filter((item) => {
@@ -29,6 +39,22 @@ export default function MenuPage() {
   return (
     <>
       <Header />
+
+      {/* ===== Table Banner (if scanned from QR) ===== */}
+      {tableNumber && (
+        <div className="bg-gradient-to-r from-gold via-gold-light to-gold text-night py-3 px-4 shadow-gold relative overflow-hidden">
+          <div className="absolute inset-0 bg-grid opacity-10" />
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 relative z-10">
+            <span className="text-xl">🍽️</span>
+            <p className="font-bold text-sm md:text-base text-center">
+              Welcome! You are ordering for{' '}
+              <span className="bg-night text-gold px-3 py-1 rounded-full font-bold inline-block">
+                Table {tableNumber}
+              </span>
+            </p>
+          </div>
+        </div>
+      )}
 
       <main className="min-h-screen pb-20">
         {/* Page Header */}
@@ -133,10 +159,13 @@ export default function MenuPage() {
             )}
           </div>
         </section>
-                {/* Floating WhatsApp Button */}
+
+        {/* Floating WhatsApp Button */}
         <a
           href={`https://wa.me/919973318421?text=${encodeURIComponent(
-            'Hi Food Junction! I want to place an order. Can you help?'
+            tableNumber
+              ? `Hi Food Junction! I'm ordering from Table ${tableNumber}. Can you help?`
+              : 'Hi Food Junction! I want to place an order. Can you help?'
           )}`}
           target="_blank"
           rel="noopener noreferrer"
@@ -145,10 +174,26 @@ export default function MenuPage() {
         >
           <MessageCircle size={26} />
         </a>
-
       </main>
 
       <Footer />
     </>
+  )
+}
+
+export default function MenuPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-night">
+          <div className="text-center">
+            <div className="text-4xl mb-3 animate-pulse">🍽️</div>
+            <p className="text-white/60">Loading menu...</p>
+          </div>
+        </div>
+      }
+    >
+      <MenuPageContent />
+    </Suspense>
   )
 }
