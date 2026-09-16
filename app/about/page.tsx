@@ -13,6 +13,8 @@ import {
   ArrowRight,
   ShoppingBag,
   Star,
+  Code2,
+  Crown,
 } from 'lucide-react'
 
 export default function AboutPage() {
@@ -89,6 +91,28 @@ export default function AboutPage() {
     },
   ]
 
+    const team = [
+    {
+      name: 'RAJ NANDNI',
+      role: 'Owner & Founder',
+      photo: '/team/owner.jpg',
+      icon: Crown,
+      description:
+        'Founder of Food Junction — with a vision to serve the best food in Amarpur.',
+      color: 'from-gold to-gold-dark',
+      emoji: '👑',
+    },
+    {
+      name: 'Shubham Yadav',
+      role: 'Web Developer',
+      photo: '/team/developer.jpg',
+      icon: Code2,
+      description:
+        'Designed and built this complete digital ordering system for Food Junction.',
+      color: 'from-fresh to-fresh-dark',
+      emoji: '💻',
+    },
+  ]
   return (
     <>
       <Header />
@@ -315,6 +339,73 @@ export default function AboutPage() {
                   </p>
 
                   <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 group-hover:w-3/4 h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent transition-all duration-500" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+                {/* ===== Meet the Team ===== */}
+        <section className="relative py-16 md:py-24 bg-night-soft">
+          <div className="absolute inset-0 bg-dots opacity-20" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gold/10 rounded-full blur-[100px]" />
+
+          <div className="relative max-w-5xl mx-auto px-4">
+            <div className="text-center mb-14">
+              <p className="text-gold tracking-[0.3em] text-sm mb-3">
+                MEET THE TEAM
+              </p>
+              <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
+                The <span className="text-shimmer">People</span> Behind
+              </h2>
+              <p className="text-white/60 max-w-2xl mx-auto">
+                The man who built this dream — from food to code
+              </p>
+            </div>
+
+            <div className="flex justify-center">
+              {team.map((member, i) => (
+                <div key={i} className="group relative max-w-md w-full">
+                  {/* Card */}
+                  <div className="relative bg-night-card border border-white/5 rounded-3xl p-8 text-center card-premium overflow-hidden">
+                    {/* Glow */}
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-40 bg-gold/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                    {/* Photo */}
+                    <div className="relative mx-auto mb-6">
+                      <div
+                        className={`absolute inset-0 rounded-full bg-gradient-to-br ${member.color} blur-lg opacity-40 group-hover:opacity-70 transition-opacity`}
+                      />
+                      <div className="relative w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full overflow-hidden border-4 border-gold/30 group-hover:border-gold transition-all duration-500 group-hover:scale-105">
+                        <img
+                          src={member.photo}
+                          alt={member.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      {/* Role badge */}
+                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2">
+                        <span
+                          className={`inline-flex items-center gap-1.5 bg-gradient-to-br ${member.color} text-night text-xs font-bold px-3 py-1.5 rounded-full shadow-gold`}
+                        >
+                          <member.icon size={12} />
+                          <span>{member.role}</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Info */}
+                    <h3 className="font-display text-2xl font-bold mb-2 mt-4 group-hover:text-gold transition-colors">
+                      {member.name}
+                    </h3>
+                    <p className="text-sm text-white/60 leading-relaxed px-4">
+                      {member.description}
+                    </p>
+
+                    {/* Bottom gold line */}
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 group-hover:w-3/4 h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent transition-all duration-500" />
+                  </div>
                 </div>
               ))}
             </div>
