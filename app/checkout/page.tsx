@@ -23,10 +23,8 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import UPIQRCode from '@/components/UPIQRCode'
 import { useCart } from '@/lib/store'
-import { getCustomerSession } from '@/lib/customerAuth'
 import { supabase } from '@/lib/supabase'
 import {
-  saveOrder,
   generateOrderId,
   generateOrderNumber,
   type Order,
@@ -34,7 +32,6 @@ import {
   type PaymentMethod,
 } from '@/lib/orders'
 
-// ⚠️ APNA ACTUAL UPI ID YAHAN DAALO
 const UPI_ID = '9973318421@ibl'
 const UPI_NAME = 'Food Junction'
 
@@ -70,26 +67,34 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   // ============================================
-  // LOGIN GUARD
+  // LOGIN GUARD (Supabase Auth)
   // ============================================
   useEffect(() => {
-    const session = getCustomerSession()
+    const checkAuth = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-    if (!session) {
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('fj-redirect-after-login', '/checkout')
+      if (!user) {
+        router.push('/login?redirect=/checkout')
+        return
       }
-      router.push('/login?redirect=/checkout')
-      return
+
+      const meta = user.user_metadata || {}
+      const name = meta.full_name || meta.name || ''
+      const mobile = meta.phone || ''
+
+      setForm((prev) => ({
+        ...prev,
+        name: prev.name || name,
+        mobile: prev.mobile || mobile,
+        email: prev.email || user.email || '',
+      }))
+
+      setCheckingAuth(false)
     }
 
-    setForm((prev) => ({
-      ...prev,
-      name: prev.name || session.name || '',
-      mobile: prev.mobile || session.mobile || '',
-    }))
-
-    setCheckingAuth(false)
+    checkAuth()
   }, [router])
 
   // ============================================
@@ -127,7 +132,7 @@ export default function CheckoutPage() {
   }, [])
 
   // ============================================
-  // AUTO-SET ORDER TYPE TO FIRST ENABLED SERVICE
+  // AUTO-SET ORDER TYPE
   // ============================================
   useEffect(() => {
     if (servicesLoading) return
@@ -242,8 +247,6 @@ export default function CheckoutPage() {
       console.error('API error:', err)
     }
 
-    saveOrder(orderPayload)
-
     await new Promise((r) => setTimeout(r, 800))
 
     try {
@@ -271,9 +274,6 @@ export default function CheckoutPage() {
     router.push(`/order-success?id=${orderId}`)
   }
 
-  // ============================================
-  // LOADING
-  // ============================================
   if (checkingAuth || servicesLoading) {
     return (
       <>
@@ -289,9 +289,6 @@ export default function CheckoutPage() {
     )
   }
 
-  // ============================================
-  // EMPTY CART
-  // ============================================
   if (items.length === 0) {
     return (
       <>
@@ -299,9 +296,7 @@ export default function CheckoutPage() {
         <main className="min-h-[60vh] flex items-center justify-center py-20">
           <div className="text-center max-w-md mx-auto px-4">
             <div className="text-7xl mb-4">🛒</div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-3">
-              Cart is Empty
-            </h1>
+            <h1 className="text-2xl md:text-3xl font-bold mb-3">Cart is Empty</h1>
             <p className="text-white/60 mb-6">Add items before checkout</p>
             <Link
               href="/menu"
@@ -322,7 +317,6 @@ export default function CheckoutPage() {
 
       <main className="min-h-screen py-8 md:py-12">
         <div className="max-w-6xl mx-auto px-4">
-          {/* Header */}
           <div className="mb-6 md:mb-8">
             <Link
               href="/cart"
@@ -339,7 +333,6 @@ export default function CheckoutPage() {
           </div>
 
           <div className="grid lg:grid-cols-3 gap-6">
-            {/* LEFT – Form */}
             <div className="lg:col-span-2 space-y-5">
               {/* Order Type */}
               <div className="bg-night-card rounded-2xl border border-white/5 p-5">
@@ -383,7 +376,6 @@ export default function CheckoutPage() {
                   })}
                 </div>
 
-                {/* Coming Soon Banner */}
                 {currentServiceDisabled && (
                   <div className="mt-4 flex items-start gap-3 bg-red-500/10 border border-red-500/30 rounded-xl p-4">
                     <AlertCircle
@@ -410,7 +402,6 @@ export default function CheckoutPage() {
                 </h2>
 
                 <div className="space-y-4">
-                  {/* Name */}
                   <div>
                     <label className="block text-sm text-white/70 mb-1.5">
                       Full Name *
@@ -437,7 +428,6 @@ export default function CheckoutPage() {
                     )}
                   </div>
 
-                  {/* Mobile + Email */}
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm text-white/70 mb-1.5">
@@ -492,7 +482,6 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* Delivery fields */}
                   {orderType === 'delivery' && (
                     <>
                       <div>
@@ -571,7 +560,6 @@ export default function CheckoutPage() {
                     </>
                   )}
 
-                  {/* Table Number (Dine-in) */}
                   {orderType === 'dinein' && (
                     <div>
                       <label className="block text-sm text-white/70 mb-1.5">
@@ -598,7 +586,6 @@ export default function CheckoutPage() {
                     </div>
                   )}
 
-                  {/* Instructions */}
                   <div>
                     <label className="block text-sm text-white/70 mb-1.5">
                       Special Instructions
@@ -608,7 +595,7 @@ export default function CheckoutPage() {
                       onChange={(e) =>
                         updateField('instructions', e.target.value)
                       }
-                      placeholder="Any special requests? (e.g., less spicy, no onion)"
+                      placeholder="Any special requests?"
                       rows={2}
                       className="w-full bg-night border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-gold/50 focus:outline-none transition resize-none"
                     />
@@ -676,7 +663,6 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* UPI QR Code Section */}
               {paymentMethod === 'upi' && (
                 <UPIQRCode
                   upiId={UPI_ID}
@@ -686,7 +672,6 @@ export default function CheckoutPage() {
                 />
               )}
 
-              {/* Transaction ID Input (for UPI) */}
               {paymentMethod === 'upi' && (
                 <div className="bg-night-card rounded-2xl border border-white/5 p-5">
                   <h2 className="font-bold mb-4 flex items-center gap-2">
@@ -695,8 +680,7 @@ export default function CheckoutPage() {
 
                   <div className="bg-gold/10 border border-gold/30 rounded-xl px-4 py-3 text-xs text-gold mb-4">
                     ⚠️ Payment karne ke baad UPI app me{' '}
-                    <strong>Transaction ID (UTR)</strong> milega. Usko yahan daalo
-                    — admin verify karega.
+                    <strong>Transaction ID (UTR)</strong> milega. Usko yahan daalo.
                   </div>
 
                   <label className="block text-sm text-white/70 mb-1.5">
@@ -711,7 +695,7 @@ export default function CheckoutPage() {
                         e.target.value.replace(/\D/g, '').slice(0, 12)
                       )
                     }
-                    placeholder="12-digit UTR (e.g. 412345678901)"
+                    placeholder="12-digit UTR"
                     className={`w-full bg-night border rounded-xl px-4 py-3 text-sm focus:outline-none transition font-mono ${
                       errors.transactionId
                         ? 'border-red-500'
@@ -723,21 +707,6 @@ export default function CheckoutPage() {
                       {errors.transactionId}
                     </p>
                   )}
-
-                  <div className="bg-night rounded-xl p-3 mt-3 text-xs text-white/50 space-y-1">
-                    <p>
-                      📱 <span className="text-white/70">PhonePe:</span> Payment
-                      history → Tap transaction
-                    </p>
-                    <p>
-                      📱 <span className="text-white/70">GPay:</span> Transaction
-                      → UTR number
-                    </p>
-                    <p>
-                      📱 <span className="text-white/70">Paytm:</span> Passbook →
-                      Order details
-                    </p>
-                  </div>
                 </div>
               )}
             </div>
@@ -793,15 +762,13 @@ export default function CheckoutPage() {
 
                 {paymentMethod === 'upi' && (
                   <div className="bg-gold/10 border border-gold/30 rounded-xl px-3 py-2 text-xs text-gold mb-3">
-                    💡 UPI se pay karne ke baad order place karo. Admin manually
-                    verify karega.
+                    💡 UPI se pay karne ke baad order place karo.
                   </div>
                 )}
 
                 {currentServiceDisabled && (
                   <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2 text-xs text-red-300 mb-3">
-                    ⚠️ Selected service is unavailable. Please choose another
-                    order type.
+                    ⚠️ Selected service is unavailable.
                   </div>
                 )}
 

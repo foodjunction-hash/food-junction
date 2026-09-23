@@ -36,30 +36,6 @@ export type Order = {
   }
 }
 
-const STORAGE_KEY = 'fj-orders'
-
-export function saveOrder(order: Order) {
-  if (typeof window === 'undefined') return
-  const orders = getOrders()
-  orders.unshift(order)
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(orders))
-}
-
-export function getOrders(): Order[] {
-  if (typeof window === 'undefined') return []
-  try {
-    const data = localStorage.getItem(STORAGE_KEY)
-    return data ? JSON.parse(data) : []
-  } catch {
-    return []
-  }
-}
-
-export function getOrderById(id: string): Order | null {
-  const orders = getOrders()
-  return orders.find((o) => o.id === id || o.orderNumber === id) || null
-}
-
 export function generateOrderNumber(): string {
   const now = new Date()
   const date = now.toISOString().slice(0, 10).replace(/-/g, '')
@@ -69,18 +45,6 @@ export function generateOrderNumber(): string {
 
 export function generateOrderId(): string {
   return `ord_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-}
-
-// ==================== Status Management ====================
-
-export function updateOrderStatus(id: string, status: OrderStatus): Order | null {
-  if (typeof window === 'undefined') return null
-  const orders = getOrders()
-  const index = orders.findIndex((o) => o.id === id || o.orderNumber === id)
-  if (index === -1) return null
-  orders[index] = { ...orders[index], status }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(orders))
-  return orders[index]
 }
 
 export const ORDER_STATUSES: {

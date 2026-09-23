@@ -1,16 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase, type DBOrder } from '@/lib/supabase'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+
+async function getSupabase() {
+  const cookieStore = await cookies()
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
+          } catch {}
+        },
+      },
+    }
+  )
+}
 
 // ============================================
 // POST /api/orders — Create new order
 // ============================================
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await getSupabase()
     const body = await req.json()
 
-    // Map frontend order → DB columns
-    const dbOrder: Omit<DBOrder, 'created_at' | 'updated_at'> = {
-      id: body.id,
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    const dbOrder = {
       order_number: body.orderNumber,
       items: body.items,
       subtotal: body.subtotal,
@@ -21,14 +47,16 @@ export async function POST(req: NextRequest) {
       payment_method: body.paymentMethod,
       payment_status: body.paymentStatus,
       status: body.status,
+      transaction_id: body.transactionId || null,
       customer_name: body.customer.name,
       customer_mobile: body.customer.mobile,
-      customer_email: body.customer.email || null as any,
-      customer_address: body.customer.address || null as any,
-      customer_landmark: body.customer.landmark || null as any,
-      customer_pincode: body.customer.pincode || null as any,
-      customer_instructions: body.customer.instructions || null as any,
-      customer_table_number: body.customer.tableNumber || null as any,
+      customer_email: body.customer.email || null,
+      customer_address: body.customer.address || null,
+      customer_landmark: body.customer.landmark || null,
+      customer_pincode: body.customer.pincode || null,
+      customer_instructions: body.customer.instructions || null,
+      customer_table_number: body.customer.tableNumber || null,
+      auth_user_id: user?.id || null,
     }
 
     const { data, error } = await supabase
@@ -53,14 +81,17 @@ export async function POST(req: NextRequest) {
 }
 
 // ============================================
-// GET /api/orders — Fetch all orders
-// Optional query: ?status=placed  ?mobile=9876543210
+// GET /api/orders — Fetch orders
+// Query params: ?status=placed  ?mobile=9876543210  ?email=x  ?mine=true
 // ============================================
 export async function GET(req: NextRequest) {
   try {
+    const supabase = await getSupabase()
     const { searchParams } = new URL(req.url)
     const status = searchParams.get('status')
     const mobile = searchParams.get('mobile')
+    const email = searchParams.get('email')
+    const mine = searchParams.get('mine')
 
     let query = supabase
       .from('orders')
@@ -69,6 +100,17 @@ export async function GET(req: NextRequest) {
 
     if (status) query = query.eq('status', status)
     if (mobile) query = query.eq('customer_mobile', mobile)
+    if (email) query = query.eq('customer_email', email)
+
+    if (mine === 'true') {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        return NextResponse.json({ orders: [] }, { status: 200 })
+      }
+      query = query.eq('auth_user_id', user.id)
+    }
 
     const { data, error } = await query
 
@@ -89,10 +131,10 @@ export async function GET(req: NextRequest) {
 
 // ============================================
 // PATCH /api/orders?id=xxx — Update order status
-// Body: { status: 'accepted' } etc.
 // ============================================
 export async function PATCH(req: NextRequest) {
   try {
+    const supabase = await getSupabase()
     const { searchParams } = new URL(req.url)
     const id = searchParams.get('id')
 
