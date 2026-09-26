@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Search, MessageCircle, Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { Search, MessageCircle, Loader2, Crown, Code2, ArrowRight } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import FoodCard from '@/components/FoodCard'
@@ -162,6 +163,87 @@ function MenuPageContent() {
                 </div>
               </>
             )}
+          </div>
+        </section>
+
+        {/* ============================================
+            MEET THE TEAM BANNER (Compact)
+            ============================================ */}
+        <section className="py-10 md:py-14 bg-night-soft border-t border-white/5 relative overflow-hidden">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-gold/10 rounded-full blur-[100px]" />
+
+          <div className="relative max-w-4xl mx-auto px-4">
+            {/* Header */}
+            <div className="text-center mb-6">
+              <p className="text-gold tracking-[0.3em] text-xs mb-2 font-semibold">
+                MEET THE TEAM
+              </p>
+              <h3 className="text-2xl md:text-3xl font-bold">
+                The <span className="text-shimmer">People</span> Behind
+              </h3>
+            </div>
+
+            {/* Compact Team Cards */}
+            <div className="grid grid-cols-2 gap-3 md:gap-5 max-w-xl mx-auto">
+              {/* Owner */}
+              <div className="group relative bg-night-card border border-white/5 rounded-2xl p-4 text-center hover:border-gold/40 transition-all">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-24 bg-gradient-to-br from-gold to-gold-dark rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity" />
+
+                <div className="relative mx-auto mb-3">
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-gold to-gold-dark blur-md opacity-40 group-hover:opacity-70 transition-opacity" />
+                  <div className="relative w-16 h-16 md:w-20 md:h-20 mx-auto rounded-full overflow-hidden border-2 border-gold/40 group-hover:border-gold transition-all group-hover:scale-105">
+                    <img
+                      src="/team/owner.jpg"
+                      alt="Owner"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+
+                <p className="font-bold text-sm md:text-base group-hover:text-gold transition-colors">
+                  Raj Nandni
+                </p>
+                <span className="inline-flex items-center gap-1 bg-gradient-to-br from-gold to-gold-dark text-night text-[10px] font-bold px-2 py-0.5 rounded-full mt-1">
+                  <Crown size={9} />
+                  Owner
+                </span>
+              </div>
+
+              {/* Developer */}
+              <div className="group relative bg-night-card border border-white/5 rounded-2xl p-4 text-center hover:border-fresh/40 transition-all">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-24 bg-gradient-to-br from-fresh to-fresh-dark rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity" />
+
+                <div className="relative mx-auto mb-3">
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-fresh to-fresh-dark blur-md opacity-40 group-hover:opacity-70 transition-opacity" />
+                  <div className="relative w-16 h-16 md:w-20 md:h-20 mx-auto rounded-full overflow-hidden border-2 border-fresh/40 group-hover:border-fresh transition-all group-hover:scale-105">
+                    <img
+                      src="/team/developer-new.jpg"
+                      alt="Developer"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+
+                <p className="font-bold text-sm md:text-base group-hover:text-fresh transition-colors">
+                  Shubham Yadav
+                </p>
+                <span className="inline-flex items-center gap-1 bg-gradient-to-br from-fresh to-fresh-dark text-night text-[10px] font-bold px-2 py-0.5 rounded-full mt-1">
+                  <Code2 size={9} />
+                  Developer
+                </span>
+              </div>
+            </div>
+
+            {/* Link to about */}
+            <div className="text-center mt-6">
+              <Link
+                href="/about"
+                className="inline-flex items-center gap-1.5 text-gold hover:text-gold-light text-sm font-semibold transition group"
+              >
+                Read Full Story
+                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
           </div>
         </section>
 
