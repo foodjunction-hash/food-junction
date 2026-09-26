@@ -4,18 +4,16 @@ import { useEffect, useState, useMemo } from 'react'
 import {
   Phone,
   MapPin,
-  Clock,
   Search,
   X,
   CheckCircle2,
   XCircle,
   IndianRupee,
 } from 'lucide-react'
-import { getOrders, type Order, type OrderStatus } from '@/lib/orders'
+import { type Order, type OrderStatus } from '@/lib/orders'
 
 type FilterType = 'all' | OrderStatus
 
-// Payment status colors
 const paymentColors: Record<string, string> = {
   pending: 'bg-gold/20 text-gold',
   paid: 'bg-fresh/20 text-fresh',
@@ -23,15 +21,24 @@ const paymentColors: Record<string, string> = {
   refunded: 'bg-purple-400/20 text-purple-400',
 }
 
-export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([])
-  const [mounted, setMounted] = useState(false)
-  const [filter, setFilter] = useState<FilterType>('all')
-  const [search, setSearch] = useState('')
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+const statusColors: Record<string, string> = {
+  placed: 'bg-gold/20 text-gold',
+  accepted: 'bg-blue-400/20 text-blue-400',
+  preparing: 'bg-purple-400/20 text-purple-400',
+  ready: 'bg-fresh/20 text-fresh',
+  delivered: 'bg-white/10 text-white/60',
+}
 
-  // Map DB format → frontend Order format
-  const mapDbOrder = (o: any): Order => ({
+const statusLabel: Record<string, string> = {
+  placed: 'PLACED',
+  accepted: 'ACCEPTED',
+  preparing: 'PREPARING',
+  ready: 'READY',
+  delivered: 'DELIVERED',
+}
+
+function mapDbOrder(o: any): Order {
+  return {
     id: o.id,
     orderNumber: o.order_number,
     createdAt: o.created_at,
@@ -55,7 +62,15 @@ export default function AdminOrdersPage() {
       instructions: o.customer_instructions,
       tableNumber: o.customer_table_number,
     },
-  })
+  }
+}
+
+export default function AdminOrdersPage() {
+  const [orders, setOrders] = useState<Order[]>([])
+  const [mounted, setMounted] = useState(false)
+  const [filter, setFilter] = useState<FilterType>('all')
+  const [search, setSearch] = useState('')
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
 
   const loadOrders = async () => {
     try {
@@ -65,7 +80,6 @@ export default function AdminOrdersPage() {
       setOrders(dbOrders)
     } catch (err) {
       console.error('Failed to fetch orders:', err)
-      setOrders(getOrders())
     }
   }
 
@@ -91,7 +105,7 @@ export default function AdminOrdersPage() {
     })
   }, [orders, filter, search])
 
-    const handleStatusChange = async (id: string, status: OrderStatus) => {
+  const handleStatusChange = async (id: string, status: OrderStatus) => {
     try {
       const res = await fetch(`/api/orders?id=${id}`, {
         method: 'PATCH',
@@ -105,7 +119,6 @@ export default function AdminOrdersPage() {
         if (data.order) {
           setSelectedOrder(mapDbOrder(data.order))
 
-          // Send WhatsApp to customer on ACCEPTED or DELIVERED
           if (status === 'accepted' || status === 'delivered') {
             const order = mapDbOrder(data.order)
             const template =
@@ -133,17 +146,16 @@ export default function AdminOrdersPage() {
             }
           }
         }
-      } else {
-        console.error('Status update failed:', await res.text())
       }
     } catch (err) {
       console.error('Failed to update status:', err)
     }
   }
+
   const handleMarkAsPaid = async (order: Order) => {
     if (
       !confirm(
-        `Confirm UPI payment received for #${order.orderNumber}?\n\nAmount: ₹${order.total}`
+        `Confirm payment received for #${order.orderNumber}?\n\nAmount: ₹${order.total}`
       )
     )
       return
@@ -158,11 +170,7 @@ export default function AdminOrdersPage() {
       if (res.ok) {
         const data = await res.json()
         await loadOrders()
-        if (data.order) {
-          setSelectedOrder(mapDbOrder(data.order))
-        }
-      } else {
-        console.error('Mark as paid failed:', await res.text())
+        if (data.order) setSelectedOrder(mapDbOrder(data.order))
       }
     } catch (err) {
       console.error('Failed to mark as paid:', err)
@@ -173,55 +181,66 @@ export default function AdminOrdersPage() {
     return <div className="p-6 text-white/60 text-sm">Loading orders...</div>
   }
 
-  const statusColors: Record<string, string> = {
-    placed: 'bg-gold/20 text-gold',
-    accepted: 'bg-blue-400/20 text-blue-400',
-    preparing: 'bg-purple-400/20 text-purple-400',
-    ready: 'bg-fresh/20 text-fresh',
-    delivered: 'bg-white/10 text-white/60',
-  }
-
-  const statusLabel: Record<string, string> = {
-    placed: 'PLACED',
-    accepted: 'ACCEPTED',
-    preparing: 'PREPARING',
-    ready: 'READY',
-    delivered: 'DELIVERED',
-  }
-
   return (
     <div className="p-4 md:p-8">
-      {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl md:text-4xl font-bold mb-1">Orders</h1>
         <p className="text-white/50 text-sm">
-          Manage all customer orders • Auto-refresh every 5s • Live from database
+          Manage all customer orders • Auto-refresh every 5s • Live from
+          database
         </p>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
         {[
-          { label: 'All', value: orders.length, status: 'all' as const, color: 'text-white' },
-          { label: 'Placed', value: orders.filter((o) => o.status === 'placed').length, status: 'placed' as const, color: 'text-gold' },
-          { label: 'Preparing', value: orders.filter((o) => o.status === 'preparing').length, status: 'preparing' as const, color: 'text-purple-400' },
-          { label: 'Ready', value: orders.filter((o) => o.status === 'ready').length, status: 'ready' as const, color: 'text-fresh' },
-          { label: 'Delivered', value: orders.filter((o) => o.status === 'delivered').length, status: 'delivered' as const, color: 'text-white/60' },
+          {
+            label: 'All',
+            value: orders.length,
+            status: 'all' as const,
+            color: 'text-white',
+          },
+          {
+            label: 'Placed',
+            value: orders.filter((o) => o.status === 'placed').length,
+            status: 'placed' as const,
+            color: 'text-gold',
+          },
+          {
+            label: 'Preparing',
+            value: orders.filter((o) => o.status === 'preparing').length,
+            status: 'preparing' as const,
+            color: 'text-purple-400',
+          },
+          {
+            label: 'Ready',
+            value: orders.filter((o) => o.status === 'ready').length,
+            status: 'ready' as const,
+            color: 'text-fresh',
+          },
+          {
+            label: 'Delivered',
+            value: orders.filter((o) => o.status === 'delivered').length,
+            status: 'delivered' as const,
+            color: 'text-white/60',
+          },
         ].map((s) => (
           <button
             key={s.label}
             onClick={() => setFilter(s.status)}
             className={`bg-night-card border rounded-2xl p-3 md:p-4 text-left transition ${
-              filter === s.status ? 'border-gold' : 'border-white/5 hover:border-gold/40'
+              filter === s.status
+                ? 'border-gold'
+                : 'border-white/5 hover:border-gold/40'
             }`}
           >
-            <p className={`text-2xl md:text-3xl font-bold ${s.color}`}>{s.value}</p>
+            <p className={`text-2xl md:text-3xl font-bold ${s.color}`}>
+              {s.value}
+            </p>
             <p className="text-xs text-white/50 mt-1">{s.label}</p>
           </button>
         ))}
       </div>
 
-      {/* Search */}
       <div className="mb-6">
         <div className="relative max-w-md">
           <Search
@@ -238,7 +257,6 @@ export default function AdminOrdersPage() {
         </div>
       </div>
 
-      {/* Orders List */}
       {filtered.length === 0 ? (
         <div className="bg-night-card border border-white/5 rounded-2xl p-10 text-center">
           <div className="text-5xl mb-3">📭</div>
@@ -262,14 +280,16 @@ export default function AdminOrdersPage() {
                     <p className="font-bold text-gold">#{order.orderNumber}</p>
                     <span
                       className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                        statusColors[order.status] || 'bg-white/10 text-white/60'
+                        statusColors[order.status] ||
+                        'bg-white/10 text-white/60'
                       }`}
                     >
                       {statusLabel[order.status] || order.status}
                     </span>
                     <span
                       className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                        paymentColors[order.paymentStatus] || 'bg-white/10 text-white/60'
+                        paymentColors[order.paymentStatus] ||
+                        'bg-white/10 text-white/60'
                       }`}
                     >
                       💰 {order.paymentStatus}
@@ -295,7 +315,6 @@ export default function AdminOrdersPage() {
                 </div>
               </div>
 
-              {/* Customer + Items summary */}
               <div className="grid md:grid-cols-2 gap-3 mb-3">
                 <div className="bg-night rounded-xl p-3">
                   <p className="text-xs text-white/40 mb-1">CUSTOMER</p>
@@ -306,7 +325,9 @@ export default function AdminOrdersPage() {
                   {order.customer.address && (
                     <p className="text-xs text-white/60 flex items-start gap-1 mt-0.5">
                       <MapPin size={11} className="mt-0.5 flex-shrink-0" />
-                      <span className="line-clamp-1">{order.customer.address}</span>
+                      <span className="line-clamp-1">
+                        {order.customer.address}
+                      </span>
                     </p>
                   )}
                 </div>
@@ -329,7 +350,6 @@ export default function AdminOrdersPage() {
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setSelectedOrder(order)}
@@ -338,9 +358,9 @@ export default function AdminOrdersPage() {
                   View Details
                 </button>
 
-                {/* Mark as Paid button (only for pending UPI/Cash payments) */}
                 {order.paymentStatus === 'pending' &&
-                  (order.paymentMethod === 'upi' || order.paymentMethod === 'cash') && (
+                  (order.paymentMethod === 'upi' ||
+                    order.paymentMethod === 'cash') && (
                     <button
                       onClick={() => handleMarkAsPaid(order)}
                       className="text-xs bg-blue-500 text-white font-bold px-4 py-2 rounded-full hover:bg-blue-600 transition flex items-center gap-1"
@@ -398,7 +418,6 @@ export default function AdminOrdersPage() {
         </div>
       )}
 
-      {/* Order Detail Modal */}
       {selectedOrder && (
         <div
           className="fixed inset-0 z-50 bg-night/80 backdrop-blur-sm flex items-center justify-center p-4"
@@ -410,7 +429,9 @@ export default function AdminOrdersPage() {
           >
             <div className="sticky top-0 bg-night-card border-b border-white/10 p-5 flex items-center justify-between">
               <div>
-                <p className="font-bold text-gold">#{selectedOrder.orderNumber}</p>
+                <p className="font-bold text-gold">
+                  #{selectedOrder.orderNumber}
+                </p>
                 <p className="text-xs text-white/40 mt-0.5">
                   {new Date(selectedOrder.createdAt).toLocaleString('en-IN')}
                 </p>
@@ -424,7 +445,6 @@ export default function AdminOrdersPage() {
             </div>
 
             <div className="p-5 space-y-4">
-              {/* Status + Payment */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-xs text-white/40 mb-1">ORDER STATUS</p>
@@ -448,7 +468,6 @@ export default function AdminOrdersPage() {
                 </div>
               </div>
 
-              {/* UTR / Transaction ID — PRIMARY CARD */}
               {selectedOrder.transactionId && (
                 <div className="bg-gradient-to-br from-gold/10 to-gold/5 border border-gold/30 rounded-xl p-4">
                   <p className="text-xs text-gold font-bold mb-2">
@@ -463,24 +482,6 @@ export default function AdminOrdersPage() {
                 </div>
               )}
 
-              {/* If UPI but no transaction ID yet */}
-              {!selectedOrder.transactionId &&
-                selectedOrder.paymentMethod === 'upi' &&
-                selectedOrder.paymentStatus === 'pending' && (
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
-                    <p className="text-xs text-red-400 font-bold mb-1">
-                      ⚠️ UTR NUMBER MISSING
-                    </p>
-                    <p className="text-xs text-white/60">
-                      Customer ne transaction ID nahi daala. Contact karo:
-                    </p>
-                    <p className="text-sm text-white font-semibold mt-2">
-                      📞 {selectedOrder.customer.mobile}
-                    </p>
-                  </div>
-                )}
-
-              {/* Customer */}
               <div className="bg-night rounded-xl p-4">
                 <p className="text-xs text-white/40 mb-2">CUSTOMER DETAILS</p>
                 <p className="font-bold mb-1">{selectedOrder.customer.name}</p>
@@ -516,7 +517,6 @@ export default function AdminOrdersPage() {
                 )}
               </div>
 
-              {/* Items */}
               <div className="bg-night rounded-xl p-4">
                 <p className="text-xs text-white/40 mb-2">ORDER ITEMS</p>
                 <div className="space-y-2">
@@ -558,23 +558,6 @@ export default function AdminOrdersPage() {
                 </div>
               </div>
 
-              {/* Info */}
-              <div className="bg-night rounded-xl p-4 grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-xs text-white/40">Order Type</p>
-                  <p className="font-semibold capitalize">
-                    {selectedOrder.orderType}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-white/40">Payment</p>
-                  <p className="font-semibold capitalize">
-                    {selectedOrder.paymentMethod} • {selectedOrder.paymentStatus}
-                  </p>
-                </div>
-              </div>
-
-              {/* Mark as Paid in Modal */}
               {selectedOrder.paymentStatus === 'pending' &&
                 (selectedOrder.paymentMethod === 'upi' ||
                   selectedOrder.paymentMethod === 'cash') && (
@@ -587,12 +570,19 @@ export default function AdminOrdersPage() {
                   </button>
                 )}
 
-              {/* Quick Actions */}
               <div>
-                <p className="text-xs text-white/40 mb-2">CHANGE ORDER STATUS</p>
+                <p className="text-xs text-white/40 mb-2">
+                  CHANGE ORDER STATUS
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {(
-                    ['placed', 'accepted', 'preparing', 'ready', 'delivered'] as OrderStatus[]
+                    [
+                      'placed',
+                      'accepted',
+                      'preparing',
+                      'ready',
+                      'delivered',
+                    ] as OrderStatus[]
                   ).map((s) => (
                     <button
                       key={s}

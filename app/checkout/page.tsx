@@ -270,8 +270,14 @@ export default function CheckoutPage() {
       console.error('Admin WhatsApp notification failed:', err)
     }
 
+    // Save BOTH order ID and order number for order-success page
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('fj-last-order-id', orderId)
+      sessionStorage.setItem('fj-last-order-number', orderNumber)
+    }
+
     clearCart()
-    router.push(`/order-success?id=${orderId}`)
+    router.push(`/order-success?id=${orderNumber}`)
   }
 
   if (checkingAuth || servicesLoading) {

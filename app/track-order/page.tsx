@@ -17,16 +17,9 @@ import {
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import OrderTimeline from '@/components/OrderTimeline'
-import {
-  getOrderById as getLocalOrderById,
-  getOrders as getLocalOrders,
-  ORDER_STATUSES,
-  type Order,
-  type OrderStatus,
-} from '@/lib/orders'
-import { getCustomerSession } from '@/lib/customerAuth'
+import { supabase } from '@/lib/supabase'
+import { ORDER_STATUSES, type Order, type OrderStatus } from '@/lib/orders'
 
-// Map DB format → frontend Order format
 function mapDbOrder(o: any): Order {
   return {
     id: o.id,
@@ -41,6 +34,7 @@ function mapDbOrder(o: any): Order {
     paymentMethod: o.payment_method,
     paymentStatus: o.payment_status,
     status: o.status,
+    transactionId: o.transaction_id,
     customer: {
       name: o.customer_name,
       mobile: o.customer_mobile,
@@ -68,33 +62,31 @@ function TrackOrderContent() {
 
   const initialId = searchParams.get('id')
 
-  // Load customer session + orders
   useEffect(() => {
     const load = async () => {
       setLoading(true)
-      const session = getCustomerSession()
-      setCustomerName(session?.name || null)
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        const meta = user.user_metadata || {}
+        setCustomerName(meta.full_name || meta.name || user.email || 'Customer')
+      }
 
       try {
         const res = await fetch('/api/orders', { cache: 'no-store' })
         const data = await res.json()
         const allDbOrders: Order[] = (data.orders || []).map(mapDbOrder)
-
         setRecentOrders(allDbOrders.slice(0, 3))
 
-        if (session) {
-          const mine = allDbOrders.filter(
-            (o) => o.customer.mobile === session.mobile
-          )
+        if (user) {
+          const mine = allDbOrders.filter((o: any) => o.auth_user_id === user.id)
           setMyOrders(mine)
         }
       } catch (err) {
         console.error('Failed to fetch orders:', err)
-        const local = getLocalOrders()
-        setRecentOrders(local.slice(0, 3))
-        if (session) {
-          setMyOrders(local.filter((o) => o.customer.mobile === session.mobile))
-        }
       }
 
       setLoading(false)
@@ -102,7 +94,6 @@ function TrackOrderContent() {
     load()
   }, [])
 
-  // Load specific order by ID
   useEffect(() => {
     const fetchOrder = async () => {
       if (!initialId) return
@@ -113,20 +104,15 @@ function TrackOrderContent() {
         const found = all.find(
           (o) => o.id === initialId || o.orderNumber === initialId
         )
-        if (found) {
-          setOrder(found)
-          setSearched(true)
-          return
-        }
-      } catch {}
-      const local = getLocalOrderById(initialId)
-      setOrder(local)
+        if (found) setOrder(found)
+      } catch (err) {
+        console.error(err)
+      }
       setSearched(true)
     }
     fetchOrder()
   }, [initialId])
 
-  // Auto-advance status
   useEffect(() => {
     if (!order || !autoPlay) return
     if (order.status === 'delivered') {
@@ -135,7 +121,9 @@ function TrackOrderContent() {
     }
 
     const timer = setTimeout(async () => {
-      const currentIndex = ORDER_STATUSES.findIndex((s) => s.key === order.status)
+      const currentIndex = ORDER_STATUSES.findIndex(
+        (s) => s.key === order.status
+      )
       const nextIndex = Math.min(currentIndex + 1, ORDER_STATUSES.length - 1)
       if (nextIndex === currentIndex) return
 
@@ -158,7 +146,6 @@ function TrackOrderContent() {
 
   const handleSearch = async () => {
     if (!searchId.trim()) return
-
     try {
       const res = await fetch('/api/orders', { cache: 'no-store' })
       const data = await res.json()
@@ -176,14 +163,10 @@ function TrackOrderContent() {
         return
       }
     } catch {}
-
-    const local = getLocalOrderById(searchId.trim())
-    setOrder(local)
+    setOrder(null)
     setSearched(true)
-    if (local) router.push(`/track-order?id=${local.id}`)
   }
 
-  // ---------- LOADING ----------
   if (loading) {
     return (
       <main className="min-h-[60vh] flex items-center justify-center">
@@ -209,7 +192,6 @@ function TrackOrderContent() {
             </p>
           </div>
 
-          {/* Search */}
           <div className="bg-night-card rounded-2xl border border-white/5 p-5 mb-6">
             <label className="block text-sm text-white/70 mb-2">
               Order ID / Order Number / Mobile
@@ -245,11 +227,11 @@ function TrackOrderContent() {
             )}
           </div>
 
-          {/* My Orders (logged in) */}
           {customerName && myOrders.length > 0 && (
             <div className="bg-gradient-to-br from-gold/10 to-gold/5 border border-gold/30 rounded-2xl p-5 mb-6">
               <h3 className="font-bold mb-3 flex items-center gap-2">
-                <User size={18} className="text-gold" /> My Orders ({myOrders.length})
+                <User size={18} className="text-gold" /> My Orders (
+                {myOrders.length})
               </h3>
               <div className="space-y-2">
                 {myOrders.map((o) => (
@@ -263,7 +245,8 @@ function TrackOrderContent() {
                         #{o.orderNumber}
                       </p>
                       <p className="text-xs text-white/40">
-                        {new Date(o.createdAt).toLocaleDateString('en-IN')} • ₹{o.total}
+                        {new Date(o.createdAt).toLocaleDateString('en-IN')} • ₹
+                        {o.total}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -278,7 +261,10 @@ function TrackOrderContent() {
                       >
                         {o.status}
                       </span>
-                      <ArrowRight size={16} className="text-white/40 group-hover:text-gold" />
+                      <ArrowRight
+                        size={16}
+                        className="text-white/40 group-hover:text-gold"
+                      />
                     </div>
                   </Link>
                 ))}
@@ -286,7 +272,6 @@ function TrackOrderContent() {
             </div>
           )}
 
-          {/* Recent Orders (not logged in) */}
           {recentOrders.length > 0 && !customerName && (
             <div className="bg-night-card rounded-2xl border border-white/5 p-5">
               <h3 className="font-bold mb-3 text-sm text-white/70">
@@ -311,7 +296,10 @@ function TrackOrderContent() {
                       <span className="text-xs text-white/60 capitalize">
                         {o.status}
                       </span>
-                      <ArrowRight size={16} className="text-white/40 group-hover:text-gold" />
+                      <ArrowRight
+                        size={16}
+                        className="text-white/40 group-hover:text-gold"
+                      />
                     </div>
                   </Link>
                 ))}
@@ -319,7 +307,6 @@ function TrackOrderContent() {
             </div>
           )}
 
-          {/* Login CTA */}
           {!customerName && (
             <div className="mt-6 text-center">
               <p className="text-sm text-white/50 mb-3">
@@ -348,21 +335,18 @@ function TrackOrderContent() {
   return (
     <main className="min-h-screen py-8 md:py-12">
       <div className="max-w-6xl mx-auto px-4">
-        {/* Header */}
         <div className="mb-6 md:mb-8">
-          <Link
-            href="/track-order"
-            className="inline-flex items-center gap-1 text-sm text-white/60 hover:text-gold mb-2 transition"
-            onClick={(e) => {
-              e.preventDefault()
+          <button
+            onClick={() => {
               setOrder(null)
               setSearched(false)
               setSearchId('')
               router.push('/track-order')
             }}
+            className="inline-flex items-center gap-1 text-sm text-white/60 hover:text-gold mb-2 transition"
           >
             ← Track another order
-          </Link>
+          </button>
           <h1 className="text-3xl md:text-4xl font-bold">
             Live <span className="text-gradient-gold">Tracking</span>
           </h1>
@@ -372,9 +356,7 @@ function TrackOrderContent() {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left – Timeline */}
           <div className="lg:col-span-2 space-y-5">
-            {/* Order ID Card */}
             <div className="bg-gradient-to-br from-gold/20 to-gold/5 border border-gold/30 rounded-2xl p-5">
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>
@@ -402,17 +384,18 @@ function TrackOrderContent() {
               </div>
             </div>
 
-            {/* Timeline */}
             <OrderTimeline currentStatus={order.status} />
 
-            {/* Order Items */}
             <div className="bg-night-card rounded-2xl border border-white/5 p-5">
               <h2 className="font-bold mb-4 flex items-center gap-2">
                 <Package size={18} className="text-gold" /> Order Items
               </h2>
               <div className="space-y-2 mb-4">
                 {order.items.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3 text-sm">
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3 text-sm"
+                  >
                     <span className="text-2xl">{item.image}</span>
                     <span className="flex-1 truncate">{item.name}</span>
                     <span className="text-white/50">×{item.quantity}</span>
@@ -429,9 +412,7 @@ function TrackOrderContent() {
             </div>
           </div>
 
-          {/* Right – Info */}
           <div className="lg:col-span-1 space-y-5">
-            {/* Order Info */}
             <div className="bg-night-card rounded-2xl border border-white/5 p-5">
               <h2 className="font-bold mb-4 flex items-center gap-2">
                 <Clock size={18} className="text-gold" /> Order Info
@@ -453,7 +434,9 @@ function TrackOrderContent() {
                   <span className="text-white/50">Status</span>
                   <span
                     className={`font-semibold capitalize ${
-                      order.paymentStatus === 'paid' ? 'text-fresh' : 'text-gold'
+                      order.paymentStatus === 'paid'
+                        ? 'text-fresh'
+                        : 'text-gold'
                     }`}
                   >
                     {order.paymentStatus}
@@ -466,7 +449,6 @@ function TrackOrderContent() {
               </div>
             </div>
 
-            {/* Delivery Address */}
             {order.customer.address && (
               <div className="bg-night-card rounded-2xl border border-white/5 p-5">
                 <h2 className="font-bold mb-3 flex items-center gap-2">
@@ -484,7 +466,6 @@ function TrackOrderContent() {
               </div>
             )}
 
-            {/* Contact */}
             <div className="bg-night-card rounded-2xl border border-white/5 p-5">
               <h2 className="font-bold mb-3 flex items-center gap-2">
                 <Phone size={18} className="text-gold" /> Need Help?
@@ -500,7 +481,6 @@ function TrackOrderContent() {
               </a>
             </div>
 
-            {/* Delivered CTA */}
             {order.status === 'delivered' && (
               <div className="bg-fresh/10 border border-fresh/30 rounded-2xl p-5 text-center">
                 <div className="text-4xl mb-2">🎉</div>

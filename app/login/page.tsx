@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   User,
@@ -14,41 +14,48 @@ import {
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import GoogleLoginButton from '@/components/GoogleLoginButton'
+import { supabase } from '@/lib/supabase'
 import { loginAdmin, isAdminLoggedIn } from '@/lib/auth'
-import { loginCustomer, isCustomerLoggedIn } from '@/lib/customerAuth'
 
 type Tab = 'customer' | 'admin'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get('redirect') || '/profile'
+
   const [tab, setTab] = useState<Tab>('customer')
-  const [identifier, setIdentifier] = useState('')
-  const [password, setPassword] = useState('')
   const [adminUser, setAdminUser] = useState('')
   const [adminPass, setAdminPass] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [checkingAuth, setCheckingAuth] = useState(true)
 
+  // ============================================
+  // AUTO-REDIRECT if already logged in (Supabase Auth)
+  // ============================================
   useEffect(() => {
-    if (isAdminLoggedIn()) router.push('/admin/dashboard')
-    else if (isCustomerLoggedIn()) router.push('/profile')
-  }, [router])
+    const checkAuth = async () => {
+      if (isAdminLoggedIn()) {
+        router.push('/admin/dashboard')
+        return
+      }
 
-  const handleCustomerLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-    await new Promise((r) => setTimeout(r, 500))
+      if (user) {
+        // Already logged in → redirect
+        router.push(redirectTo)
+        return
+      }
 
-    const result = loginCustomer(identifier, password)
-    if (result.success) {
-      router.push('/profile')
-    } else {
-      setError(result.error || 'Login failed')
-      setLoading(false)
+      setCheckingAuth(false)
     }
-  }
+
+    checkAuth()
+  }, [router, redirectTo])
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -66,6 +73,19 @@ export default function LoginPage() {
     }
   }
 
+  // Loading state
+  if (checkingAuth) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-[60vh] flex items-center justify-center">
+          <Loader2 className="animate-spin text-gold" size={32} />
+        </main>
+        <Footer />
+      </>
+    )
+  }
+
   return (
     <>
       <Header />
@@ -80,7 +100,8 @@ export default function LoginPage() {
               className="w-24 h-24 mx-auto rounded-full object-cover mb-4 shadow-gold"
             />
             <h1 className="text-2xl md:text-3xl font-bold mb-1">
-              Welcome to <span className="text-gradient-gold">Food Junction</span>
+              Welcome to{' '}
+              <span className="text-gradient-gold">Food Junction</span>
             </h1>
             <p className="text-white/50 text-sm">Login to continue</p>
           </div>
@@ -117,7 +138,6 @@ export default function LoginPage() {
 
           {/* Card */}
           <div className="bg-night-card border border-white/10 rounded-2xl p-6 shadow-card">
-            {/* Error */}
             {error && (
               <div className="mb-4 flex items-start gap-2 bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2.5 text-sm text-red-300">
                 <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
@@ -127,82 +147,22 @@ export default function LoginPage() {
 
             {/* Customer Form */}
             {tab === 'customer' && (
-              <form onSubmit={handleCustomerLogin} className="space-y-4">
-                
-                {/* Google Login Button */}
+              <div className="space-y-4">
                 <GoogleLoginButton />
 
-                {/* Divider */}
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-white/10"></div>
-                  <span className="text-white/40 text-xs">OR</span>
-                  <div className="flex-1 h-px bg-white/10"></div>
-                </div>
-
-                <div>
-                  <label className="block text-sm text-white/70 mb-1.5">
-                    Mobile Number or Email
-                  </label>
-                  <div className="relative">
-                    <User
-                      size={16}
-                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40"
-                    />
-                    <input
-                      type="text"
-                      value={identifier}
-                      onChange={(e) => setIdentifier(e.target.value)}
-                      placeholder="9876543210 or you@email.com"
-                      className="w-full bg-night border border-white/10 rounded-xl pl-10 pr-3 py-3 text-sm focus:border-gold/50 focus:outline-none transition"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm text-white/70 mb-1.5">Password</label>
-                  <div className="relative">
-                    <Lock
-                      size={16}
-                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40"
-                    />
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full bg-night border border-white/10 rounded-xl pl-10 pr-3 py-3 text-sm focus:border-gold/50 focus:outline-none transition"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-gold text-night font-bold py-3.5 rounded-full hover:bg-gold-light transition flex items-center justify-center gap-2 disabled:opacity-60"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" /> Logging in...
-                    </>
-                  ) : (
-                    'Login'
-                  )}
-                </button>
-
-                <p className="text-center text-sm text-white/50 pt-2">
-                  New to Food Junction?{' '}
-                  <Link href="/register" className="text-gold hover:text-gold-light font-semibold">
-                    Create Account
-                  </Link>
+                <p className="text-center text-xs text-white/40 pt-2">
+                  More login options coming soon
                 </p>
-              </form>
+              </div>
             )}
 
             {/* Admin Form */}
             {tab === 'admin' && (
               <form onSubmit={handleAdminLogin} className="space-y-4">
                 <div>
-                  <label className="block text-sm text-white/70 mb-1.5">Username</label>
+                  <label className="block text-sm text-white/70 mb-1.5">
+                    Username
+                  </label>
                   <div className="relative">
                     <User
                       size={16}
@@ -219,7 +179,9 @@ export default function LoginPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm text-white/70 mb-1.5">Password</label>
+                  <label className="block text-sm text-white/70 mb-1.5">
+                    Password
+                  </label>
                   <div className="relative">
                     <Lock
                       size={16}
@@ -242,7 +204,8 @@ export default function LoginPage() {
                 >
                   {loading ? (
                     <>
-                      <Loader2 size={18} className="animate-spin" /> Logging in...
+                      <Loader2 size={18} className="animate-spin" /> Logging
+                      in...
                     </>
                   ) : (
                     'Login as Admin'

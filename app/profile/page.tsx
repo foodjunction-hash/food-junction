@@ -7,7 +7,7 @@ import { User, Phone, Mail, Package, LogOut, ShoppingBag, ArrowRight, Clock, Loa
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { supabase } from '@/lib/supabase'
-import { getOrders as getLocalOrders, type Order } from '@/lib/orders'
+import { type Order } from '@/lib/orders'
 
 // Map DB format → frontend Order format
 function mapDbOrder(o: any): Order {
@@ -60,7 +60,6 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const load = async () => {
-      // 1. Supabase Auth se current user lo
       const { data: { user: authUser }, error } = await supabase.auth.getUser()
 
       if (error || !authUser) {
@@ -68,7 +67,6 @@ export default function ProfilePage() {
         return
       }
 
-      // 2. User ka profile data nikalo
       const meta = authUser.user_metadata || {}
       const profileData: ProfileUser = {
         name: meta.full_name || meta.name || 'Customer',
@@ -77,7 +75,6 @@ export default function ProfilePage() {
         avatarUrl: meta.avatar_url || meta.picture,
       }
 
-      // 3. customers table se mobile number try karo
       const { data: customerRow } = await supabase
         .from('customers')
         .select('name, mobile, email')
@@ -92,27 +89,13 @@ export default function ProfilePage() {
 
       setUser(profileData)
 
-      // 4. Orders fetch karo (mobile ya email se match karke)
       try {
-        const res = await fetch('/api/orders', { cache: 'no-store' })
+        const res = await fetch('/api/orders?mine=true', { cache: 'no-store' })
         const data = await res.json()
-        const allDb: Order[] = (data.orders || []).map(mapDbOrder)
-        const mine = allDb.filter(
-          (o) =>
-            (profileData.mobile && o.customer.mobile === profileData.mobile) ||
-            (profileData.email && o.customer.email === profileData.email)
-        )
-        setOrders(mine)
+        const myOrders: Order[] = (data.orders || []).map(mapDbOrder)
+        setOrders(myOrders)
       } catch (err) {
         console.error('Failed to fetch orders:', err)
-        const local = getLocalOrders()
-        setOrders(
-          local.filter(
-            (o) =>
-              (profileData.mobile && o.customer.mobile === profileData.mobile) ||
-              (profileData.email && o.customer.email === profileData.email)
-          )
-        )
       }
 
       setMounted(true)
@@ -120,7 +103,6 @@ export default function ProfilePage() {
 
     load()
 
-    // 5. Auth state change sun lo (logout hone par redirect)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === 'SIGNED_OUT' || !session) {
@@ -149,7 +131,6 @@ export default function ProfilePage() {
     )
   }
 
-  // Calculate stats
   const totalOrders = orders.length
   const totalSpent = orders.reduce((sum, o) => sum + o.total, 0)
   const pendingOrders = orders.filter((o) => o.status !== 'delivered').length
@@ -160,7 +141,6 @@ export default function ProfilePage() {
 
       <main className="min-h-screen py-8 md:py-12">
         <div className="max-w-4xl mx-auto px-4">
-          {/* Header */}
           <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
             <div className="flex items-center gap-4">
               {user.avatarUrl ? (
@@ -191,7 +171,6 @@ export default function ProfilePage() {
             </button>
           </div>
 
-          {/* Stats */}
           <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6">
             <div className="bg-night-card border border-white/5 rounded-2xl p-4 text-center">
               <p className="text-2xl md:text-3xl font-bold text-gold mb-1">
@@ -213,7 +192,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Info Card */}
           <div className="bg-night-card border border-white/5 rounded-2xl p-5 md:p-6 mb-6">
             <h2 className="font-bold mb-4 flex items-center gap-2">
               <User size={18} className="text-gold" /> Account Info
@@ -242,7 +220,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Orders */}
           <div className="bg-night-card border border-white/5 rounded-2xl p-5 md:p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-bold flex items-center gap-2">
