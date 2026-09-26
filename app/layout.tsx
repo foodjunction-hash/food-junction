@@ -5,6 +5,7 @@ import './globals.css'
 import StickyCart from '@/components/StickyCart'
 import InstallPWA from '@/components/InstallPWA'
 import BackgroundMusic from '@/components/BackgroundMusic'
+import RestaurantStatusBanner from '@/components/RestaurantStatusBanner'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -66,6 +67,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className="antialiased min-h-screen">
+        <RestaurantStatusBanner />
         {children}
         <StickyCart />
         <InstallPWA />

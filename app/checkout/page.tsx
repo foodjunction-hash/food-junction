@@ -18,6 +18,7 @@ import {
   Loader2,
   Check,
   AlertCircle,
+  Power,
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -42,6 +43,7 @@ export default function CheckoutPage() {
   const clearCart = useCart((s) => s.clear)
 
   const [checkingAuth, setCheckingAuth] = useState(true)
+  const [restaurantOpen, setRestaurantOpen] = useState<boolean | null>(null)
   const [serviceStatus, setServiceStatus] = useState<
     Record<string, { enabled: boolean; message: string }>
   >({
@@ -67,7 +69,7 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   // ============================================
-  // LOGIN GUARD (Supabase Auth)
+  // LOGIN GUARD
   // ============================================
   useEffect(() => {
     const checkAuth = async () => {
@@ -96,6 +98,51 @@ export default function CheckoutPage() {
 
     checkAuth()
   }, [router])
+
+  // ============================================
+  // LOAD RESTAURANT STATUS
+  // ============================================
+  useEffect(() => {
+    const loadRestaurantStatus = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('settings')
+          .select('is_open')
+          .eq('id', 'main')
+          .maybeSingle()
+
+        if (error) throw error
+        setRestaurantOpen(data?.is_open ?? true)
+      } catch (err) {
+        console.error('Failed to load restaurant status:', err)
+        setRestaurantOpen(true) // fallback assume open
+      }
+    }
+
+    loadRestaurantStatus()
+
+    // Poll every 30 seconds
+    const interval = setInterval(loadRestaurantStatus, 30000)
+
+    // Realtime subscription
+    const channel = supabase
+      .channel('checkout-settings')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'settings' },
+        (payload: any) => {
+          if (payload.new?.is_open !== undefined) {
+            setRestaurantOpen(payload.new.is_open)
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      clearInterval(interval)
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   // ============================================
   // LOAD SERVICES STATUS
@@ -137,9 +184,9 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (servicesLoading) return
     if (!serviceStatus[orderType]?.enabled) {
-      const firstEnabled = (['delivery', 'takeaway', 'dinein'] as OrderType[]).find(
-        (t) => serviceStatus[t]?.enabled
-      )
+      const firstEnabled = (
+        ['delivery', 'takeaway', 'dinein'] as OrderType[]
+      ).find((t) => serviceStatus[t]?.enabled)
       if (firstEnabled) {
         setOrderType(firstEnabled)
       }
@@ -152,6 +199,7 @@ export default function CheckoutPage() {
   const total = subtotal + deliveryCharge + tax
 
   const currentServiceDisabled = !serviceStatus[orderType]?.enabled
+  const isRestaurantClosed = restaurantOpen === false
 
   const updateField = (key: string, value: string) => {
     setForm((s) => ({ ...s, [key]: value }))
@@ -184,6 +232,14 @@ export default function CheckoutPage() {
   }
 
   const handlePlaceOrder = async () => {
+    // ✅ Check restaurant status before placing order
+    if (isRestaurantClosed) {
+      alert(
+        '🔴 Restaurant is currently CLOSED.\n\nOrders are not being accepted right now. Please try again later.'
+      )
+      return
+    }
+
     if (currentServiceDisabled) {
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
@@ -270,7 +326,6 @@ export default function CheckoutPage() {
       console.error('Admin WhatsApp notification failed:', err)
     }
 
-    // Save BOTH order ID and order number for order-success page
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('fj-last-order-id', orderId)
       sessionStorage.setItem('fj-last-order-number', orderNumber)
@@ -280,7 +335,7 @@ export default function CheckoutPage() {
     router.push(`/order-success?id=${orderNumber}`)
   }
 
-  if (checkingAuth || servicesLoading) {
+  if (checkingAuth || servicesLoading || restaurantOpen === null) {
     return (
       <>
         <Header />
@@ -288,6 +343,84 @@ export default function CheckoutPage() {
           <div className="text-center">
             <Loader2 className="animate-spin text-gold mx-auto mb-3" size={32} />
             <p className="text-white/60 text-sm">Loading checkout...</p>
+          </div>
+        </main>
+        <Footer />
+      </>
+    )
+  }
+
+  // ✅ Restaurant CLOSED - show blocking screen
+  if (isRestaurantClosed) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-[70vh] flex items-center justify-center py-20 relative">
+          {/* Background glow */}
+          <div className="fixed inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-red-500/10 rounded-full blur-[120px] animate-pulse" />
+            <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-red-500/5 rounded-full blur-[100px] animate-pulse" />
+          </div>
+
+          <div className="relative z-10 text-center max-w-lg mx-auto px-4">
+            {/* Icon */}
+            <div className="relative inline-block mb-6">
+              <div className="absolute inset-0 bg-red-500/40 rounded-full blur-2xl animate-pulse" />
+              <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-2xl shadow-red-500/40 border-4 border-red-400/30">
+                <Power size={44} className="text-white" strokeWidth={2.5} />
+              </div>
+            </div>
+
+            {/* Title */}
+            <div className="mb-4">
+              <span className="inline-block text-[10px] bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1 rounded-full font-bold uppercase tracking-widest mb-3">
+                ● Currently Closed
+              </span>
+              <h1 className="text-3xl md:text-4xl font-bold mb-2">
+                Restaurant is <span className="text-red-400">Closed</span>
+              </h1>
+              <p className="text-white/60 text-sm md:text-base">
+                We&apos;re not accepting orders right now. Please come back
+                later or call us for more info.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
+              <a
+                href="tel:+919973318421"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-fresh to-emerald-600 text-night font-bold px-6 py-3.5 rounded-full hover:scale-105 transition-all shadow-lg shadow-fresh/20"
+              >
+                <Phone size={18} /> Call Restaurant
+              </a>
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white/80 font-semibold px-6 py-3.5 rounded-full transition-all border border-white/10 hover:border-white/20"
+              >
+                <ArrowLeft size={18} /> Back to Home
+              </Link>
+            </div>
+
+            {/* Info */}
+            <div className="mt-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 text-left">
+              <p className="text-xs text-white/50 uppercase tracking-wider font-bold mb-2">
+                💡 What can you do?
+              </p>
+              <ul className="text-sm text-white/70 space-y-1.5">
+                <li className="flex items-start gap-2">
+                  <span className="text-gold">•</span>
+                  Call us to check when we&apos;re opening
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-gold">•</span>
+                  Save items in cart and order later
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-gold">•</span>
+                  Follow us for updates
+                </li>
+              </ul>
+            </div>
           </div>
         </main>
         <Footer />
@@ -644,7 +777,11 @@ export default function CheckoutPage() {
                         paymentMethod === opt.id
                           ? 'border-gold bg-gold/10'
                           : 'border-white/10 hover:border-gold/40'
-                      } ${opt.id === 'online' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      } ${
+                        opt.id === 'online'
+                          ? 'opacity-50 cursor-not-allowed'
+                          : ''
+                      }`}
                     >
                       <div
                         className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -686,7 +823,8 @@ export default function CheckoutPage() {
 
                   <div className="bg-gold/10 border border-gold/30 rounded-xl px-4 py-3 text-xs text-gold mb-4">
                     ⚠️ Payment karne ke baad UPI app me{' '}
-                    <strong>Transaction ID (UTR)</strong> milega. Usko yahan daalo.
+                    <strong>Transaction ID (UTR)</strong> milega. Usko yahan
+                    daalo.
                   </div>
 
                   <label className="block text-sm text-white/70 mb-1.5">
