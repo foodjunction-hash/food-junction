@@ -19,6 +19,7 @@ import {
   Check,
   AlertCircle,
   Power,
+  Clock,
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -44,6 +45,8 @@ export default function CheckoutPage() {
 
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [restaurantOpen, setRestaurantOpen] = useState<boolean | null>(null)
+  const [openingTime, setOpeningTime] = useState('10:00')
+  const [closingTime, setClosingTime] = useState('22:00')
   const [serviceStatus, setServiceStatus] = useState<
     Record<string, { enabled: boolean; message: string }>
   >({
@@ -100,31 +103,31 @@ export default function CheckoutPage() {
   }, [router])
 
   // ============================================
-  // LOAD RESTAURANT STATUS
+  // LOAD RESTAURANT STATUS + TIMES
   // ============================================
   useEffect(() => {
     const loadRestaurantStatus = async () => {
       try {
         const { data, error } = await supabase
           .from('settings')
-          .select('is_open')
+          .select('is_open, opening_time, closing_time')
           .eq('id', 'main')
           .maybeSingle()
 
         if (error) throw error
         setRestaurantOpen(data?.is_open ?? true)
+        if (data?.opening_time) setOpeningTime(data.opening_time)
+        if (data?.closing_time) setClosingTime(data.closing_time)
       } catch (err) {
         console.error('Failed to load restaurant status:', err)
-        setRestaurantOpen(true) // fallback assume open
+        setRestaurantOpen(true)
       }
     }
 
     loadRestaurantStatus()
 
-    // Poll every 30 seconds
     const interval = setInterval(loadRestaurantStatus, 30000)
 
-    // Realtime subscription
     const channel = supabase
       .channel('checkout-settings')
       .on(
@@ -133,6 +136,12 @@ export default function CheckoutPage() {
         (payload: any) => {
           if (payload.new?.is_open !== undefined) {
             setRestaurantOpen(payload.new.is_open)
+          }
+          if (payload.new?.opening_time) {
+            setOpeningTime(payload.new.opening_time)
+          }
+          if (payload.new?.closing_time) {
+            setClosingTime(payload.new.closing_time)
           }
         }
       )
@@ -201,6 +210,16 @@ export default function CheckoutPage() {
   const currentServiceDisabled = !serviceStatus[orderType]?.enabled
   const isRestaurantClosed = restaurantOpen === false
 
+  // ✅ Format time (10:00 → 10:00 AM)
+  const formatTime = (time: string) => {
+    if (!time) return ''
+    const [hours, minutes] = time.split(':')
+    const h = parseInt(hours)
+    const ampm = h >= 12 ? 'PM' : 'AM'
+    const displayH = h % 12 || 12
+    return `${displayH}:${minutes} ${ampm}`
+  }
+
   const updateField = (key: string, value: string) => {
     setForm((s) => ({ ...s, [key]: value }))
     if (errors[key]) setErrors((e) => ({ ...e, [key]: '' }))
@@ -232,7 +251,6 @@ export default function CheckoutPage() {
   }
 
   const handlePlaceOrder = async () => {
-    // ✅ Check restaurant status before placing order
     if (isRestaurantClosed) {
       alert(
         '🔴 Restaurant is currently CLOSED.\n\nOrders are not being accepted right now. Please try again later.'
@@ -350,7 +368,7 @@ export default function CheckoutPage() {
     )
   }
 
-  // ✅ Restaurant CLOSED - show blocking screen
+  // ✅ Restaurant CLOSED - blocking screen with opening time
   if (isRestaurantClosed) {
     return (
       <>
@@ -372,7 +390,7 @@ export default function CheckoutPage() {
             </div>
 
             {/* Title */}
-            <div className="mb-4">
+            <div className="mb-6">
               <span className="inline-block text-[10px] bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1 rounded-full font-bold uppercase tracking-widest mb-3">
                 ● Currently Closed
               </span>
@@ -381,45 +399,44 @@ export default function CheckoutPage() {
               </h1>
               <p className="text-white/60 text-sm md:text-base">
                 We&apos;re not accepting orders right now. Please come back
-                later or call us for more info.
+                during our opening hours.
+              </p>
+            </div>
+
+            {/* Opening Hours Card */}
+            <div className="bg-gradient-to-br from-amber-500/20 via-yellow-500/5 to-transparent border border-amber-500/30 rounded-2xl p-5 mb-6 max-w-md mx-auto text-left">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center shadow-lg shadow-amber-500/30 flex-shrink-0">
+                  <Clock size={22} className="text-night" strokeWidth={2.5} />
+                </div>
+                <div>
+                  <p className="text-[10px] text-white/50 uppercase tracking-widest font-bold mb-0.5">
+                    Opening Hours
+                  </p>
+                  <p className="text-lg font-bold text-gold">
+                    {formatTime(openingTime)} — {formatTime(closingTime)}
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-white/60 border-t border-white/10 pt-3">
+                We&apos;ll be back soon! Save your cart and order when we open.
               </p>
             </div>
 
             {/* Actions */}
-            <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
-              <a
-                href="tel:+919973318421"
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-fresh to-emerald-600 text-night font-bold px-6 py-3.5 rounded-full hover:scale-105 transition-all shadow-lg shadow-fresh/20"
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Link
+                href="/menu"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-gold to-gold-dark text-night font-bold px-6 py-3.5 rounded-full hover:scale-105 transition-all shadow-lg shadow-gold/20"
               >
-                <Phone size={18} /> Call Restaurant
-              </a>
+                <ShoppingBag size={18} /> Browse Menu
+              </Link>
               <Link
                 href="/"
                 className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white/80 font-semibold px-6 py-3.5 rounded-full transition-all border border-white/10 hover:border-white/20"
               >
                 <ArrowLeft size={18} /> Back to Home
               </Link>
-            </div>
-
-            {/* Info */}
-            <div className="mt-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 text-left">
-              <p className="text-xs text-white/50 uppercase tracking-wider font-bold mb-2">
-                💡 What can you do?
-              </p>
-              <ul className="text-sm text-white/70 space-y-1.5">
-                <li className="flex items-start gap-2">
-                  <span className="text-gold">•</span>
-                  Call us to check when we&apos;re opening
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-gold">•</span>
-                  Save items in cart and order later
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-gold">•</span>
-                  Follow us for updates
-                </li>
-              </ul>
             </div>
           </div>
         </main>

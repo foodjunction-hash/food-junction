@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { X, AlertTriangle, Power, Clock, Phone } from 'lucide-react'
+import { X, AlertTriangle, Power, Clock } from 'lucide-react'
 
 export default function RestaurantStatusBanner() {
   const [isOpen, setIsOpen] = useState<boolean | null>(null)
+  const [openingTime, setOpeningTime] = useState('10:00')
+  const [closingTime, setClosingTime] = useState('22:00')
   const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
@@ -13,12 +15,14 @@ export default function RestaurantStatusBanner() {
       try {
         const { data, error } = await supabase
           .from('settings')
-          .select('is_open, opening_time, closing_time, phone')
+          .select('is_open, opening_time, closing_time')
           .eq('id', 'main')
           .maybeSingle()
 
         if (error) throw error
         setIsOpen(data?.is_open ?? true)
+        if (data?.opening_time) setOpeningTime(data.opening_time)
+        if (data?.closing_time) setClosingTime(data.closing_time)
       } catch (err) {
         console.error('Failed to fetch restaurant status:', err)
       }
@@ -39,6 +43,12 @@ export default function RestaurantStatusBanner() {
           if (payload.new?.is_open !== undefined) {
             setIsOpen(payload.new.is_open)
           }
+          if (payload.new?.opening_time) {
+            setOpeningTime(payload.new.opening_time)
+          }
+          if (payload.new?.closing_time) {
+            setClosingTime(payload.new.closing_time)
+          }
         }
       )
       .subscribe()
@@ -48,6 +58,16 @@ export default function RestaurantStatusBanner() {
       supabase.removeChannel(channel)
     }
   }, [])
+
+  // Format time (10:00 → 10:00 AM)
+  const formatTime = (time: string) => {
+    if (!time) return ''
+    const [hours, minutes] = time.split(':')
+    const h = parseInt(hours)
+    const ampm = h >= 12 ? 'PM' : 'AM'
+    const displayH = h % 12 || 12
+    return `${displayH}:${minutes} ${ampm}`
+  }
 
   if (isOpen !== false || dismissed) return null
 
@@ -102,32 +122,22 @@ export default function RestaurantStatusBanner() {
                   We&apos;re not accepting orders right now
                 </span>
                 <span className="hidden md:inline">•</span>
-                <span className="flex items-center gap-1.5">
-                  <Phone size={12} />
-                  Call us to know when we open
+                <span className="flex items-center gap-1.5 font-semibold text-yellow-200">
+                  <Clock size={12} />
+                  Opens at {formatTime(openingTime)}
                 </span>
               </p>
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
-              <a
-                href="tel:+919973318421"
-                className="hidden md:inline-flex items-center gap-1.5 bg-white text-red-600 font-bold px-4 py-2 rounded-full hover:scale-105 transition-all shadow-lg text-sm"
-              >
-                <Phone size={14} /> Call Now
-              </a>
-
-              {/* Dismiss */}
-              <button
-                onClick={() => setDismissed(true)}
-                className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur flex items-center justify-center transition-all hover:scale-110 border border-white/30"
-                aria-label="Dismiss"
-                title="Dismiss for now"
-              >
-                <X size={16} className="text-white" />
-              </button>
-            </div>
+            {/* Dismiss */}
+            <button
+              onClick={() => setDismissed(true)}
+              className="flex-shrink-0 w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur flex items-center justify-center transition-all hover:scale-110 border border-white/30 ml-auto"
+              aria-label="Dismiss"
+              title="Dismiss for now"
+            >
+              <X size={16} className="text-white" />
+            </button>
           </div>
         </div>
       </div>
