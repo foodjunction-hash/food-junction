@@ -48,6 +48,8 @@ export default function AdminOffersPage() {
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [uploadSuccess, setUploadSuccess] = useState(false)
 
   useEffect(() => {
     loadOffers()
@@ -73,6 +75,7 @@ export default function AdminOffersPage() {
 
   const handleImageUpload = async (file: File) => {
     setUploading(true)
+    setUploadSuccess(false)
     try {
       const ext = file.name.split('.').pop()
       const fileName = `offer-${Date.now()}.${ext}`
@@ -93,12 +96,29 @@ export default function AdminOffersPage() {
       if (editing) {
         setEditing({ ...editing, image_url: urlData.publicUrl })
       }
+
+      // ✅ Success feedback
+      setUploadSuccess(true)
+      setSuccess('Image uploaded successfully!')
+      setTimeout(() => {
+        setSuccess('')
+        setUploadSuccess(false)
+      }, 3500)
     } catch (err: any) {
       console.error('Upload failed:', err)
       setError('Image upload failed: ' + err.message)
       setTimeout(() => setError(''), 4000)
     }
     setUploading(false)
+  }
+
+  const handleRemoveImage = () => {
+    if (editing) {
+      setEditing({ ...editing, image_url: null })
+      setUploadSuccess(false)
+      setSuccess('Image removed')
+      setTimeout(() => setSuccess(''), 2000)
+    }
   }
 
   const handleSave = async () => {
@@ -123,6 +143,8 @@ export default function AdminOffersPage() {
       await loadOffers()
       setEditing(null)
       setIsCreating(false)
+      setSuccess(isCreating ? 'Offer created successfully!' : 'Offer updated!')
+      setTimeout(() => setSuccess(''), 2500)
     } catch (err: any) {
       console.error('Save failed:', err)
       setError('Failed to save: ' + err.message)
@@ -137,6 +159,8 @@ export default function AdminOffersPage() {
       const { error } = await supabase.from('offers').delete().eq('id', id)
       if (error) throw error
       await loadOffers()
+      setSuccess('Offer deleted')
+      setTimeout(() => setSuccess(''), 2000)
     } catch (err: any) {
       console.error('Delete failed:', err)
     }
@@ -193,6 +217,7 @@ export default function AdminOffersPage() {
             onClick={() => {
               setEditing({ ...EMPTY, id: '' } as any)
               setIsCreating(true)
+              setUploadSuccess(false)
             }}
             className="group bg-gradient-to-r from-gold to-gold-dark text-night font-bold px-5 py-2.5 rounded-full transition-all hover:scale-105 shadow-lg shadow-gold/30 flex items-center gap-2 text-sm"
           >
@@ -204,9 +229,17 @@ export default function AdminOffersPage() {
           </button>
         </div>
 
+        {/* Success Message */}
+        {success && (
+          <div className="mb-6 flex items-start gap-2 bg-fresh/10 border border-fresh/30 rounded-xl px-4 py-3 text-sm text-fresh animate-fadeIn">
+            <CheckCircle2 size={16} className="flex-shrink-0 mt-0.5" />
+            <span>{success}</span>
+          </div>
+        )}
+
         {/* Error */}
         {error && (
-          <div className="mb-6 flex items-start gap-2 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-sm text-red-300">
+          <div className="mb-6 flex items-start gap-2 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-sm text-red-300 animate-fadeIn">
             <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
@@ -291,6 +324,7 @@ export default function AdminOffersPage() {
                       onClick={() => {
                         setEditing(offer)
                         setIsCreating(false)
+                        setUploadSuccess(false)
                       }}
                       className="flex-1 text-xs bg-blue-400/10 hover:bg-blue-400/20 text-blue-400 font-semibold px-3 py-2 rounded-full transition border border-blue-400/20"
                     >
@@ -335,6 +369,7 @@ export default function AdminOffersPage() {
           onClick={() => {
             setEditing(null)
             setIsCreating(false)
+            setUploadSuccess(false)
           }}
         >
           <div
@@ -350,6 +385,7 @@ export default function AdminOffersPage() {
                 onClick={() => {
                   setEditing(null)
                   setIsCreating(false)
+                  setUploadSuccess(false)
                 }}
                 className="p-2 hover:bg-white/10 rounded-full transition"
               >
@@ -364,17 +400,19 @@ export default function AdminOffersPage() {
                   Banner Image
                 </label>
                 {editing.image_url ? (
-                  <div className="relative rounded-xl overflow-hidden border border-white/10">
+                  <div className="relative rounded-xl overflow-hidden border border-fresh/40">
                     <img
                       src={editing.image_url}
                       alt="Banner"
                       className="w-full h-40 object-cover"
                     />
+                    {/* Success Badge */}
+                    <div className="absolute top-2 left-2 bg-fresh/90 backdrop-blur text-night text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1 shadow-lg animate-fadeIn">
+                      <CheckCircle2 size={10} /> Uploaded
+                    </div>
                     <button
-                      onClick={() =>
-                        setEditing({ ...editing, image_url: null })
-                      }
-                      className="absolute top-2 right-2 p-1.5 bg-red-500/90 hover:bg-red-500 rounded-full transition"
+                      onClick={handleRemoveImage}
+                      className="absolute top-2 right-2 p-1.5 bg-red-500/90 hover:bg-red-500 rounded-full transition hover:scale-110"
                     >
                       <X size={14} className="text-white" />
                     </button>
@@ -390,7 +428,13 @@ export default function AdminOffersPage() {
                         if (file) handleImageUpload(file)
                       }}
                     />
-                    <div className="border-2 border-dashed border-white/10 hover:border-gold/50 rounded-xl p-6 text-center transition">
+                    <div
+                      className={`border-2 border-dashed rounded-xl p-6 text-center transition ${
+                        uploadSuccess
+                          ? 'border-fresh/50 bg-fresh/5'
+                          : 'border-white/10 hover:border-gold/50'
+                      }`}
+                    >
                       {uploading ? (
                         <div className="flex flex-col items-center gap-2">
                           <Loader2
@@ -398,6 +442,16 @@ export default function AdminOffersPage() {
                             className="animate-spin text-gold"
                           />
                           <p className="text-xs text-white/60">Uploading...</p>
+                        </div>
+                      ) : uploadSuccess ? (
+                        <div className="flex flex-col items-center gap-2 animate-fadeIn">
+                          <CheckCircle2 size={24} className="text-fresh" />
+                          <p className="text-xs text-fresh font-semibold">
+                            Upload Successful!
+                          </p>
+                          <p className="text-[10px] text-white/40">
+                            Click to upload another
+                          </p>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center gap-2">
@@ -544,6 +598,7 @@ export default function AdminOffersPage() {
                 onClick={() => {
                   setEditing(null)
                   setIsCreating(false)
+                  setUploadSuccess(false)
                 }}
                 className="flex-1 border border-white/10 text-white/70 hover:bg-white/5 py-3 rounded-full transition text-sm font-semibold"
               >
@@ -579,6 +634,17 @@ export default function AdminOffersPage() {
             opacity: 1;
             transform: translateY(0);
           }
+        }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
         }
       `}</style>
     </div>
