@@ -15,9 +15,7 @@ import {
   Loader2,
   Sparkles,
   Activity,
-  CheckCircle2,
   IndianRupee,
-  TrendingUp,
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -210,34 +208,40 @@ export default function ProfilePage() {
 
         <div className="relative z-10 max-w-4xl mx-auto px-4">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
             <div className="flex items-center gap-4">
+              {/* Avatar */}
               {user.avatarUrl ? (
                 <div className="relative">
-                  <div className="absolute inset-0 rounded-full bg-gold/30 blur-lg" />
+                  <div className="absolute inset-0 rounded-full bg-gold/40 blur-xl" />
                   <img
                     src={user.avatarUrl}
                     alt={user.name}
-                    className="relative w-16 h-16 rounded-full border-2 border-gold/50 object-cover shadow-lg shadow-gold/20"
+                    className="relative w-16 h-16 md:w-18 md:h-18 rounded-full border-2 border-gold/50 object-cover shadow-lg shadow-gold/20"
                   />
                 </div>
               ) : (
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center shadow-lg shadow-gold/20">
+                <div className="w-16 h-16 md:w-18 md:h-18 rounded-full bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center shadow-lg shadow-gold/20">
                   <span className="text-night font-bold text-2xl">
                     {user.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
               )}
+
+              {/* Text */}
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <Sparkles size={18} className="text-gold animate-pulse" />
-                  <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white via-gold to-white bg-clip-text text-transparent">
-                  Welcome back,{' '}
-                  <p className="text-white/50 text-sm">
-                  <span className="text-white font-semibold">{user.name}</span>!
-                </p>
-                  </h1>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Sparkles size={14} className="text-gold animate-pulse" />
+                  <span className="text-[10px] text-white/40 uppercase tracking-[0.25em] font-semibold">
+                    My Profile
+                  </span>
                 </div>
+                <p className="text-white/40 text-[11px] uppercase tracking-[0.2em] mb-0.5 font-medium">
+                  Welcome back
+                </p>
+                <p className="text-xl md:text-2xl font-bold text-gold leading-tight">
+                  {user.name}
+                </p>
               </div>
             </div>
 
@@ -407,7 +411,6 @@ export default function ProfilePage() {
                         }s both`,
                       }}
                     >
-                      {/* Hover accent */}
                       <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-gold to-gold-dark scale-y-0 group-hover/order:scale-y-100 transition-transform origin-top" />
 
                       <div className="flex-1 min-w-0 pl-2">
@@ -469,7 +472,6 @@ export default function ProfilePage() {
 
       <Footer />
 
-      {/* Animations */}
       <style jsx global>{`
         @keyframes fadeInUp {
           from {
