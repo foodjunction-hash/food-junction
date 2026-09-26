@@ -31,9 +31,6 @@ function LoginContent() {
   const [error, setError] = useState('')
   const [checkingAuth, setCheckingAuth] = useState(true)
 
-  // ============================================
-  // AUTO-REDIRECT if already logged in
-  // ============================================
   useEffect(() => {
     const checkAuth = async () => {
       if (isAdminLoggedIn()) {
