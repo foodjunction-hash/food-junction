@@ -2,11 +2,12 @@
 
 import { useState, useMemo, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Search, MessageCircle } from 'lucide-react'
+import { Search, MessageCircle, Loader2 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import FoodCard from '@/components/FoodCard'
-import { FOOD_ITEMS, CATEGORIES } from '@/lib/data'
+import { CATEGORIES, type FoodItem } from '@/lib/data'
+import { getMenuItems } from '@/lib/menuSupabase'
 
 type Filter = 'all' | 'veg' | 'nonveg' | 'bestseller'
 
@@ -16,16 +17,27 @@ function MenuPageContent() {
   const [selectedCat, setSelectedCat] = useState('all')
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
+  const [menuItems, setMenuItems] = useState<FoodItem[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Save table number to sessionStorage for checkout auto-fill
   useEffect(() => {
     if (tableNumber && typeof window !== 'undefined') {
       sessionStorage.setItem('fj-table-number', tableNumber)
     }
   }, [tableNumber])
 
+  useEffect(() => {
+    const loadMenu = async () => {
+      setLoading(true)
+      const items = await getMenuItems()
+      setMenuItems(items)
+      setLoading(false)
+    }
+    loadMenu()
+  }, [])
+
   const filtered = useMemo(() => {
-    return FOOD_ITEMS.filter((item) => {
+    return menuItems.filter((item) => {
       if (selectedCat !== 'all' && item.category !== selectedCat) return false
       if (filter === 'veg' && !item.isVeg) return false
       if (filter === 'nonveg' && item.isVeg) return false
@@ -34,16 +46,14 @@ function MenuPageContent() {
         return false
       return true
     })
-  }, [selectedCat, search, filter])
+  }, [menuItems, selectedCat, search, filter])
 
   return (
     <>
       <Header />
 
-      {/* ===== Table Banner (if scanned from QR) ===== */}
       {tableNumber && (
         <div className="bg-gradient-to-r from-gold via-gold-light to-gold text-night py-3 px-4 shadow-gold relative overflow-hidden">
-          <div className="absolute inset-0 bg-grid opacity-10" />
           <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 relative z-10">
             <span className="text-xl">🍽️</span>
             <p className="font-bold text-sm md:text-base text-center">
@@ -57,7 +67,6 @@ function MenuPageContent() {
       )}
 
       <main className="min-h-screen pb-20">
-        {/* Page Header */}
         <section className="bg-gradient-to-b from-night-soft to-night border-b border-white/5 py-10 md:py-14">
           <div className="max-w-7xl mx-auto px-4 text-center">
             <p className="text-gold tracking-[0.3em] text-sm mb-2">EXPLORE OUR</p>
@@ -70,14 +79,10 @@ function MenuPageContent() {
           </div>
         </section>
 
-        {/* Search Bar */}
         <section className="sticky top-16 md:top-20 z-40 bg-night/95 backdrop-blur-md border-b border-white/5 py-3 md:py-4">
           <div className="max-w-7xl mx-auto px-4">
             <div className="relative max-w-md mx-auto">
-              <Search
-                size={18}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40"
-              />
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
               <input
                 type="text"
                 placeholder="Search food items..."
@@ -89,7 +94,6 @@ function MenuPageContent() {
           </div>
         </section>
 
-        {/* Categories */}
         <section className="py-4 md:py-6 overflow-x-auto no-scrollbar">
           <div className="max-w-7xl mx-auto px-4 flex gap-2 md:gap-3 min-w-max">
             {CATEGORIES.map((cat) => (
@@ -109,7 +113,6 @@ function MenuPageContent() {
           </div>
         </section>
 
-        {/* Veg / Non-veg / Bestseller Filter */}
         <section className="pb-4">
           <div className="max-w-7xl mx-auto px-4 flex gap-2 flex-wrap">
             {[
@@ -134,16 +137,18 @@ function MenuPageContent() {
           </div>
         </section>
 
-        {/* Food Grid */}
         <section className="py-4 md:py-8">
           <div className="max-w-7xl mx-auto px-4">
-            {filtered.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-20">
+                <Loader2 className="animate-spin text-gold mx-auto mb-3" size={32} />
+                <p className="text-white/60 text-sm">Loading menu...</p>
+              </div>
+            ) : filtered.length === 0 ? (
               <div className="text-center py-20">
                 <p className="text-6xl mb-4">🔍</p>
                 <p className="text-xl font-bold mb-2">No items found</p>
-                <p className="text-white/60 text-sm">
-                  Try a different category or search term
-                </p>
+                <p className="text-white/60 text-sm">Try a different category or search term</p>
               </div>
             ) : (
               <>
@@ -160,7 +165,6 @@ function MenuPageContent() {
           </div>
         </section>
 
-        {/* Floating WhatsApp Button */}
         <a
           href={`https://wa.me/919973318421?text=${encodeURIComponent(
             tableNumber
@@ -169,7 +173,6 @@ function MenuPageContent() {
           )}`}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Order on WhatsApp"
           className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-40 w-14 h-14 rounded-full bg-fresh text-night flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
         >
           <MessageCircle size={26} />

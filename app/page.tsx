@@ -3,7 +3,7 @@ import Header from '@/components/Header'
 import Hero from '@/components/Hero'
 import Footer from '@/components/Footer'
 import FoodCard from '@/components/FoodCard'
-import { FOOD_ITEMS } from '@/lib/data'
+import { FOOD_ITEMS } from '@/lib/lib/menuSupabase.'
 import {
   ShoppingBag,
   Star,
