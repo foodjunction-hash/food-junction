@@ -6,6 +6,7 @@ import StickyCart from '@/components/StickyCart'
 import InstallPWA from '@/components/InstallPWA'
 import BackgroundMusic from '@/components/BackgroundMusic'
 import RestaurantStatusBanner from '@/components/RestaurantStatusBanner'
+import OfferBannerPopup from '@/components/OfferBannerPopup'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -72,6 +73,7 @@ export default function RootLayout({
         <StickyCart />
         <InstallPWA />
         <BackgroundMusic />
+        <OfferBannerPopup />
 
         {/* Service Worker Registration */}
         <Script id="service-worker-registration" strategy="afterInteractive">

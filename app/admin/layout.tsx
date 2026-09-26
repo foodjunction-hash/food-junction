@@ -16,6 +16,7 @@ import {
   QrCode,
   Briefcase,
   Sparkles,
+  Gift,
 } from 'lucide-react'
 import { isAdminLoggedIn, logoutAdmin } from '@/lib/auth'
 
@@ -60,6 +61,7 @@ export default function AdminLayout({
     { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/orders', label: 'Orders', icon: ClipboardList },
     { href: '/admin/menu', label: 'Menu', icon: UtensilsCrossed },
+    { href: '/admin/offers', label: 'Offers', icon: Gift },
     { href: '/admin/tables', label: 'Table QR', icon: QrCode },
     { href: '/admin/services', label: 'Services', icon: Briefcase },
     { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
