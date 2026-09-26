@@ -232,11 +232,10 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-2 mb-1">
                   <Sparkles size={18} className="text-gold animate-pulse" />
                   <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white via-gold to-white bg-clip-text text-transparent">
-                    My Profile
+                  Welcome back,{' '}
                   </h1>
                 </div>
                 <p className="text-white/50 text-sm">
-                  Welcome back,{' '}
                   <span className="text-white font-semibold">{user.name}</span>!
                 </p>
               </div>
