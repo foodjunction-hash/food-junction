@@ -1,175 +1,241 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Lock, User, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import {
+  User,
+  Lock,
+  Loader2,
+  AlertCircle,
+  ShieldCheck,
+  ShoppingBag,
+} from 'lucide-react'
+import Header from '@/components/Header'
+import Footer from '@/components/Footer'
+import GoogleLoginButton from '@/components/GoogleLoginButton'
+import { supabase } from '@/lib/supabase'
 import { loginAdmin, isAdminLoggedIn } from '@/lib/auth'
 
-export default function AdminLoginPage() {
+type Tab = 'customer' | 'admin'
+
+function LoginContent() {
   const router = useRouter()
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get('redirect') || '/profile'
+
+  const [tab, setTab] = useState<Tab>('customer')
+  const [adminUser, setAdminUser] = useState('')
+  const [adminPass, setAdminPass] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [checkingAuth, setCheckingAuth] = useState(true)
 
+  // ============================================
+  // AUTO-REDIRECT if already logged in
+  // ============================================
   useEffect(() => {
-    if (isAdminLoggedIn()) {
-      router.push('/admin/dashboard')
-    }
-  }, [router])
+    const checkAuth = async () => {
+      if (isAdminLoggedIn()) {
+        router.push('/admin/dashboard')
+        return
+      }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        router.push(redirectTo)
+        return
+      }
+
+      setCheckingAuth(false)
+    }
+
+    checkAuth()
+  }, [router, redirectTo])
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
 
-    // Small delay for UX
-    await new Promise((r) => setTimeout(r, 600))
+    await new Promise((r) => setTimeout(r, 500))
 
-    const result = loginAdmin(username, password)
-
-    if (result.success) {
+    const ok = loginAdmin(adminUser.trim(), adminPass)
+    if (ok) {
       router.push('/admin/dashboard')
     } else {
-      setError(result.error || 'Invalid username or password')
+      setError('Invalid admin credentials')
       setLoading(false)
-      setPassword('') // Clear password on error
     }
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-night px-4 relative overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute inset-0 bg-mesh opacity-60" />
-      <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-gold/10 rounded-full blur-[120px]" />
-      <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-fresh/5 rounded-full blur-[100px]" />
+  if (checkingAuth) {
+    return (
+      <main className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="animate-spin text-gold" size={32} />
+      </main>
+    )
+  }
 
-      <div className="w-full max-w-md relative z-10">
-        {/* Logo */}
+  return (
+    <main className="min-h-screen py-10 md:py-16">
+      <div className="max-w-md mx-auto px-4">
         <div className="text-center mb-8">
-          <div className="relative inline-block group">
-            <div className="absolute inset-0 rounded-full bg-gold/30 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <img
-              src="/food-junction-logo.png"
-              alt="Food Junction Logo"
-              className="relative w-24 h-24 mx-auto rounded-full object-cover mb-4 shadow-gold transition-transform duration-500 group-hover:scale-105"
-            />
-          </div>
-          <h1 className="text-2xl font-bold mb-1">
-            Food Junction <span className="text-shimmer">Admin</span>
+          <img
+            src="/food-junction-logo.png"
+            alt="Food Junction Logo"
+            className="w-24 h-24 mx-auto rounded-full object-cover mb-4 shadow-gold"
+          />
+          <h1 className="text-2xl md:text-3xl font-bold mb-1">
+            Welcome to{' '}
+            <span className="text-gradient-gold">Food Junction</span>
           </h1>
-          <p className="text-white/50 text-sm">Restaurant Management Panel</p>
+          <p className="text-white/50 text-sm">Login to continue</p>
         </div>
 
-        {/* Card */}
-        <div className="glass-dark border border-gold/20 rounded-2xl p-6 shadow-2xl">
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-            <Lock size={20} className="text-gold" /> Admin Login
-          </h2>
+        <div className="grid grid-cols-2 gap-2 mb-6 bg-night-card border border-white/10 rounded-full p-1.5">
+          <button
+            onClick={() => {
+              setTab('customer')
+              setError('')
+            }}
+            className={`flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-bold transition ${
+              tab === 'customer'
+                ? 'bg-gold text-night'
+                : 'text-white/60 hover:text-gold'
+            }`}
+          >
+            <ShoppingBag size={16} /> Customer
+          </button>
+          <button
+            onClick={() => {
+              setTab('admin')
+              setError('')
+            }}
+            className={`flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-bold transition ${
+              tab === 'admin'
+                ? 'bg-gold text-night'
+                : 'text-white/60 hover:text-gold'
+            }`}
+          >
+            <ShieldCheck size={16} /> Admin
+          </button>
+        </div>
 
+        <div className="bg-night-card border border-white/10 rounded-2xl p-6 shadow-card">
           {error && (
-            <div className="mb-4 flex items-start gap-2 bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2.5 text-sm text-red-300 animate-fade-in">
+            <div className="mb-4 flex items-start gap-2 bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2.5 text-sm text-red-300">
               <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Username */}
-            <div>
-              <label className="block text-sm text-white/70 mb-1.5">
-                Username
-              </label>
-              <div className="relative">
-                <User
-                  size={16}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40"
-                />
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter username"
-                  autoComplete="username"
-                  autoFocus
-                  required
-                  className="w-full bg-night/80 border border-white/10 rounded-xl pl-10 pr-3 py-3 text-sm focus:border-gold/50 focus:outline-none transition"
-                />
-              </div>
+          {tab === 'customer' && (
+            <div className="space-y-4">
+              <GoogleLoginButton />
+              <p className="text-center text-xs text-white/40 pt-2">
+                More login options coming soon
+              </p>
             </div>
+          )}
 
-            {/* Password */}
-            <div>
-              <label className="block text-sm text-white/70 mb-1.5">
-                Password
-              </label>
-              <div className="relative">
-                <Lock
-                  size={16}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40"
-                />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                  required
-                  className="w-full bg-night/80 border border-white/10 rounded-xl pl-10 pr-10 py-3 text-sm focus:border-gold/50 focus:outline-none transition"
-                />
-                {/* Show/hide password toggle */}
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-gold transition-colors"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
+          {tab === 'admin' && (
+            <form onSubmit={handleAdminLogin} className="space-y-4">
+              <div>
+                <label className="block text-sm text-white/70 mb-1.5">
+                  Username
+                </label>
+                <div className="relative">
+                  <User
+                    size={16}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40"
+                  />
+                  <input
+                    type="text"
+                    value={adminUser}
+                    onChange={(e) => setAdminUser(e.target.value)}
+                    placeholder="admin"
+                    className="w-full bg-night border border-white/10 rounded-xl pl-10 pr-3 py-3 text-sm focus:border-gold/50 focus:outline-none transition"
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full relative overflow-hidden bg-gradient-to-br from-gold to-gold-dark text-night font-bold py-3.5 rounded-full btn-premium shadow-gold hover:shadow-[0_10px_30px_rgba(245,179,1,0.4)] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <span className="relative z-10 flex items-center gap-2">
+              <div>
+                <label className="block text-sm text-white/70 mb-1.5">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock
+                    size={16}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40"
+                  />
+                  <input
+                    type="password"
+                    value={adminPass}
+                    onChange={(e) => setAdminPass(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full bg-night border border-white/10 rounded-xl pl-10 pr-3 py-3 text-sm focus:border-gold/50 focus:outline-none transition"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-gold text-night font-bold py-3.5 rounded-full hover:bg-gold-light transition flex items-center justify-center gap-2 disabled:opacity-60"
+              >
                 {loading ? (
                   <>
-                    <Loader2 size={18} className="animate-spin" />
-                    <span>Logging in...</span>
+                    <Loader2 size={18} className="animate-spin" /> Logging in...
                   </>
                 ) : (
-                  <span>Login to Dashboard</span>
+                  'Login as Admin'
                 )}
-              </span>
-            </button>
-          </form>
+              </button>
+
+              <div className="pt-3 border-t border-white/10">
+                <p className="text-xs text-white/40 text-center mb-1">
+                  Demo Admin Credentials:
+                </p>
+                <p className="text-xs text-center font-mono">
+                  <span className="text-gold">admin</span> /{' '}
+                  <span className="text-gold">foodjunction@2025</span>
+                </p>
+              </div>
+            </form>
+          )}
         </div>
 
-        {/* Back link */}
         <div className="text-center mt-6">
-          <a
+          <Link
             href="/"
-            className="text-sm text-white/40 hover:text-gold transition inline-flex items-center gap-1 group"
+            className="text-sm text-white/40 hover:text-gold transition"
           >
-            <span className="group-hover:-translate-x-1 transition-transform">
-              ←
-            </span>
-            <span>Back to Website</span>
-          </a>
-        </div>
-
-        {/* Security note */}
-        <div className="text-center mt-4">
-          <p className="text-[10px] text-white/20 tracking-wider">
-            🔒 SECURE ADMIN ACCESS
-          </p>
+            ← Back to Home
+          </Link>
         </div>
       </div>
-    </div>
+    </main>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <>
+      <Header />
+      <Suspense
+        fallback={
+          <div className="min-h-[60vh] flex items-center justify-center">
+            <Loader2 className="animate-spin text-gold" size={32} />
+          </div>
+        }
+      >
+        <LoginContent />
+      </Suspense>
+      <Footer />
+    </>
   )
 }
