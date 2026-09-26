@@ -12,7 +12,7 @@ import {
   Package,
   ChefHat,
 } from 'lucide-react'
-import { getOrders, type Order } from '@/lib/orders'
+import { type Order } from '@/lib/orders'
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([])
@@ -52,8 +52,6 @@ export default function AdminDashboard() {
         setOrders(dbOrders)
       } catch (err) {
         console.error('Failed to fetch orders from DB:', err)
-        // Fallback to localStorage
-        setOrders(getOrders())
       }
       setMounted(true)
     }
