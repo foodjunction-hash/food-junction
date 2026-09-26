@@ -18,7 +18,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import OrderTimeline from '@/components/OrderTimeline'
 import { supabase } from '@/lib/supabase'
-import { ORDER_STATUSES, type Order, type OrderStatus } from '@/lib/orders'
+import { type Order } from '@/lib/orders'
 
 function mapDbOrder(o: any): Order {
   return {
@@ -54,7 +54,6 @@ function TrackOrderContent() {
   const [order, setOrder] = useState<Order | null>(null)
   const [searchId, setSearchId] = useState('')
   const [searched, setSearched] = useState(false)
-  const [autoPlay, setAutoPlay] = useState(true)
   const [recentOrders, setRecentOrders] = useState<Order[]>([])
   const [myOrders, setMyOrders] = useState<Order[]>([])
   const [customerName, setCustomerName] = useState<string | null>(null)
@@ -62,6 +61,9 @@ function TrackOrderContent() {
 
   const initialId = searchParams.get('id')
 
+  // ============================================
+  // Initial Load: user + orders list
+  // ============================================
   useEffect(() => {
     const load = async () => {
       setLoading(true)
@@ -94,6 +96,9 @@ function TrackOrderContent() {
     load()
   }, [])
 
+  // ============================================
+  // Fetch specific order by ID
+  // ============================================
   useEffect(() => {
     const fetchOrder = async () => {
       if (!initialId) return
@@ -113,36 +118,32 @@ function TrackOrderContent() {
     fetchOrder()
   }, [initialId])
 
+  // ============================================
+  // ✅ Poll for status updates every 10s
+  // (Only reflects admin changes — no auto-advance)
+  // ============================================
   useEffect(() => {
-    if (!order || !autoPlay) return
-    if (order.status === 'delivered') {
-      setAutoPlay(false)
-      return
-    }
+    if (!order) return
+    if (order.status === 'delivered') return
 
-    const timer = setTimeout(async () => {
-      const currentIndex = ORDER_STATUSES.findIndex(
-        (s) => s.key === order.status
-      )
-      const nextIndex = Math.min(currentIndex + 1, ORDER_STATUSES.length - 1)
-      if (nextIndex === currentIndex) return
-
-      const nextStatus: OrderStatus = ORDER_STATUSES[nextIndex].key
+    const interval = setInterval(async () => {
       try {
-        await fetch(`/api/orders?id=${order.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: nextStatus }),
-        })
-        setOrder({ ...order, status: nextStatus })
-        if (nextIndex === ORDER_STATUSES.length - 1) setAutoPlay(false)
+        const res = await fetch('/api/orders', { cache: 'no-store' })
+        const data = await res.json()
+        const all: Order[] = (data.orders || []).map(mapDbOrder)
+        const found = all.find(
+          (o) => o.id === order.id || o.orderNumber === order.orderNumber
+        )
+        if (found && found.status !== order.status) {
+          setOrder(found)
+        }
       } catch (err) {
-        console.error(err)
+        console.error('Poll error:', err)
       }
-    }, 8000)
+    }, 10000)
 
-    return () => clearTimeout(timer)
-  }, [order, autoPlay])
+    return () => clearInterval(interval)
+  }, [order])
 
   const handleSearch = async () => {
     if (!searchId.trim()) return
@@ -376,7 +377,7 @@ function TrackOrderContent() {
                 <div className="flex items-center gap-2 bg-night/50 rounded-full px-3 py-1.5">
                   <span className="w-2 h-2 rounded-full bg-fresh animate-pulse" />
                   <span className="text-xs font-semibold">
-                    {autoPlay && order.status !== 'delivered'
+                    {order.status !== 'delivered'
                       ? 'Live updating'
                       : 'Up to date'}
                   </span>
