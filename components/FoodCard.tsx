@@ -2,7 +2,7 @@
 
 import { Plus, Star, Flame, Minus } from 'lucide-react'
 import { useCart } from '@/lib/store'
-import type { FoodItem } from '@/lib/lib/menuSupabase.'
+import { type FoodItem } from '@/lib/data'
 
 export default function FoodCard({ item }: { item: FoodItem }) {
   const addItem = useCart((s) => s.addItem)
