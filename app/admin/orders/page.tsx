@@ -173,8 +173,26 @@ export default function AdminOrdersPage() {
                 ? process.env.NEXT_PUBLIC_TWILIO_TEMPLATE_ORDER_ACCEPTED
                 : process.env.NEXT_PUBLIC_TWILIO_TEMPLATE_ORDER_DELIVERED
 
+            // ✅ DEBUG LOGS
+            console.log('=== WhatsApp Debug ===')
+            console.log('Status:', status)
+            console.log('Customer Mobile:', order.customer.mobile)
+            console.log('Template SID:', template)
+            console.log('Template SID Length:', template?.length)
+            console.log('Content Variables:', {
+              1: order.customer.name,
+              2: order.orderNumber,
+              3: String(order.total),
+            })
+            console.log('======================')
+
+            if (!template) {
+              console.error('❌ Template SID is missing from .env.local!')
+              return
+            }
+
             try {
-              await fetch('/api/whatsapp', {
+              const waRes = await fetch('/api/whatsapp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -188,6 +206,9 @@ export default function AdminOrdersPage() {
                   },
                 }),
               })
+
+              const waData = await waRes.json()
+              console.log('WhatsApp API Response:', waData)
             } catch (err) {
               console.error('Customer WhatsApp notification failed:', err)
             }
@@ -444,7 +465,6 @@ export default function AdminOrdersPage() {
                           >
                             💰 {order.paymentStatus}
                           </span>
-                          {/* ✅ Order Type Badge */}
                           <span
                             className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wide border flex items-center gap-1 ${typeInfo.color}`}
                           >
@@ -496,7 +516,6 @@ export default function AdminOrdersPage() {
                             </p>
                           </div>
                         </div>
-                        {/* ✅ Email */}
                         {order.customer.email && (
                           <p className="text-xs text-white/50 flex items-start gap-1 mb-1">
                             <Mail size={10} className="mt-0.5 flex-shrink-0" />
@@ -505,7 +524,6 @@ export default function AdminOrdersPage() {
                             </span>
                           </p>
                         )}
-                        {/* ✅ Address */}
                         {order.customer.address && (
                           <p className="text-xs text-white/50 flex items-start gap-1 mb-1">
                             <MapPin size={10} className="mt-0.5 flex-shrink-0" />
@@ -518,7 +536,6 @@ export default function AdminOrdersPage() {
                             </span>
                           </p>
                         )}
-                        {/* ✅ Table Number (Dine-in) */}
                         {order.customer.tableNumber && (
                           <p className="text-xs text-fresh flex items-center gap-1 mb-1">
                             <UtensilsCrossed
@@ -528,7 +545,6 @@ export default function AdminOrdersPage() {
                             <span>Table {order.customer.tableNumber}</span>
                           </p>
                         )}
-                        {/* ✅ Special Instructions */}
                         {order.customer.instructions && (
                           <p className="text-xs text-gold bg-gold/10 border border-gold/20 rounded-md px-2 py-1 flex items-start gap-1 mt-2">
                             <FileText size={10} className="mt-0.5 flex-shrink-0" />
@@ -651,7 +667,7 @@ export default function AdminOrdersPage() {
         )}
       </div>
 
-      {/* Modal - Same as before */}
+      {/* Modal */}
       {selectedOrder && (
         <div
           className="fixed inset-0 z-50 bg-night/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn"
