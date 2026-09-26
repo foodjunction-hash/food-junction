@@ -15,6 +15,7 @@ import {
   BarChart3,
   QrCode,
   Briefcase,
+  Sparkles,
 } from 'lucide-react'
 import { isAdminLoggedIn, logoutAdmin } from '@/lib/auth'
 
@@ -47,7 +48,10 @@ export default function AdminLayout({
   if (!checked) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-night">
-        <div className="text-white/60 text-sm">Loading...</div>
+        <div className="flex items-center gap-3 text-white/60 text-sm">
+          <div className="w-4 h-4 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+          Loading...
+        </div>
       </div>
     )
   }
@@ -68,25 +72,33 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-night flex">
+    <div className="min-h-screen bg-gradient-to-br from-night via-night to-night-soft flex">
       {/* Sidebar (desktop) */}
-      <aside className="hidden lg:flex flex-col w-64 bg-night-soft border-r border-white/5 fixed h-full">
+      <aside className="hidden lg:flex flex-col w-64 bg-night-soft/80 backdrop-blur-xl border-r border-white/5 fixed h-full z-20">
+        {/* Logo */}
         <div className="p-5 border-b border-white/5">
-          <Link href="/admin/dashboard" className="flex items-center gap-3">
-            <img
-              src="/food-junction-logo.png"
-              alt="Food Junction"
-              className="w-11 h-11 rounded-full object-cover"
-            />
+          <Link href="/admin/dashboard" className="flex items-center gap-3 group">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-gold/30 blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
+              <img
+                src="/food-junction-logo.png"
+                alt="Food Junction"
+                className="relative w-11 h-11 rounded-full object-cover ring-2 ring-gold/30 group-hover:ring-gold transition-all"
+              />
+            </div>
             <div className="leading-tight">
-              <p className="text-gold font-bold">Admin Panel</p>
-              <p className="text-[10px] text-white/50 tracking-widest">
+              <p className="text-gold font-bold flex items-center gap-1">
+                Admin Panel
+                <Sparkles size={12} className="text-gold/60" />
+              </p>
+              <p className="text-[10px] text-white/40 tracking-widest">
                 FOOD JUNCTION
               </p>
             </div>
           </Link>
         </div>
 
+        {/* Nav */}
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {links.map((l) => {
             const active =
@@ -95,54 +107,74 @@ export default function AdminLayout({
               <Link
                 key={l.href}
                 href={l.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium text-sm ${
+                className={`relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 font-medium text-sm group ${
                   active
-                    ? 'bg-gold text-night'
-                    : 'text-white/70 hover:bg-night-card hover:text-gold'
+                    ? 'bg-gradient-to-r from-gold to-gold-dark text-night shadow-lg shadow-gold/20'
+                    : 'text-white/70 hover:bg-night-card hover:text-gold hover:translate-x-1'
                 }`}
               >
-                <l.icon size={18} />
+                <l.icon
+                  size={18}
+                  className={
+                    active ? '' : 'group-hover:scale-110 transition-transform'
+                  }
+                />
                 {l.label}
+                {active && (
+                  <span className="absolute right-3 w-1.5 h-1.5 rounded-full bg-night animate-pulse" />
+                )}
               </Link>
             )
           })}
         </nav>
 
+        {/* Footer */}
         <div className="p-3 border-t border-white/5 space-y-1">
           <Link
             href="/"
             target="_blank"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-night-card hover:text-gold transition text-sm"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-night-card hover:text-gold transition text-sm group"
           >
-            <Home size={18} /> View Website
+            <Home
+              size={18}
+              className="group-hover:scale-110 transition-transform"
+            />
+            View Website
           </Link>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition text-sm"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition text-sm group"
           >
-            <LogOut size={18} /> Logout
+            <LogOut
+              size={18}
+              className="group-hover:scale-110 transition-transform"
+            />
+            Logout
           </button>
         </div>
       </aside>
 
       {/* Mobile topbar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-night-soft border-b border-white/5 px-4 h-16 flex items-center justify-between">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-night-soft/95 backdrop-blur-xl border-b border-white/5 px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img
             src="/food-junction-logo.png"
             alt="Food Junction"
-            className="w-10 h-10 rounded-full object-cover"
+            className="w-10 h-10 rounded-full object-cover ring-2 ring-gold/30"
           />
           <span className="text-gold font-bold text-sm">Admin</span>
         </div>
-        <button onClick={() => setOpen(!open)} className="p-2">
+        <button
+          onClick={() => setOpen(!open)}
+          className="p-2 hover:bg-white/5 rounded-xl transition"
+        >
           {open ? <X size={22} /> : <MenuIcon size={22} />}
         </button>
       </div>
 
       {/* Mobile drawer */}
       {open && (
-        <div className="lg:hidden fixed inset-0 z-30 bg-night/95 backdrop-blur pt-16">
+        <div className="lg:hidden fixed inset-0 z-30 bg-night/95 backdrop-blur-xl pt-16 animate-fade-in">
           <nav className="p-4 space-y-1">
             {links.map((l) => {
               const active =
@@ -154,7 +186,7 @@ export default function AdminLayout({
                   onClick={() => setOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition font-medium ${
                     active
-                      ? 'bg-gold text-night'
+                      ? 'bg-gradient-to-r from-gold to-gold-dark text-night'
                       : 'text-white/70 hover:bg-night-card hover:text-gold'
                   }`}
                 >
@@ -165,7 +197,7 @@ export default function AdminLayout({
             })}
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition mt-2 border-t border-white/5 pt-4"
             >
               <LogOut size={20} /> Logout
             </button>
