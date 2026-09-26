@@ -97,7 +97,6 @@ export default function AdminOffersPage() {
         setEditing({ ...editing, image_url: urlData.publicUrl })
       }
 
-      // ✅ Success feedback
       setUploadSuccess(true)
       setSuccess('Image uploaded successfully!')
       setTimeout(() => {
@@ -131,19 +130,23 @@ export default function AdminOffersPage() {
     setSaving(true)
     try {
       if (isCreating) {
-        const { error } = await supabase.from('offers').insert([editing])
+        // ✅ Naya offer: id hatao (Supabase khud generate karega)
+        const { id, ...newOffer } = editing
+        const { error } = await supabase.from('offers').insert([newOffer])
         if (error) throw error
+        setSuccess('Offer created successfully!')
       } else {
+        // Edit: id ke saath update
         const { error } = await supabase
           .from('offers')
           .update({ ...editing, updated_at: new Date().toISOString() })
           .eq('id', editing.id)
         if (error) throw error
+        setSuccess('Offer updated successfully!')
       }
       await loadOffers()
       setEditing(null)
       setIsCreating(false)
-      setSuccess(isCreating ? 'Offer created successfully!' : 'Offer updated!')
       setTimeout(() => setSuccess(''), 2500)
     } catch (err: any) {
       console.error('Save failed:', err)
@@ -215,7 +218,7 @@ export default function AdminOffersPage() {
           </div>
           <button
             onClick={() => {
-              setEditing({ ...EMPTY, id: '' } as any)
+              setEditing({ ...EMPTY, id: '' } as Offer)
               setIsCreating(true)
               setUploadSuccess(false)
             }}
@@ -255,7 +258,7 @@ export default function AdminOffersPage() {
             </p>
             <button
               onClick={() => {
-                setEditing({ ...EMPTY, id: '' } as any)
+                setEditing({ ...EMPTY, id: '' } as Offer)
                 setIsCreating(true)
               }}
               className="bg-gradient-to-r from-gold to-gold-dark text-night font-bold px-6 py-3 rounded-full text-sm hover:scale-105 transition"
@@ -406,7 +409,6 @@ export default function AdminOffersPage() {
                       alt="Banner"
                       className="w-full h-40 object-cover"
                     />
-                    {/* Success Badge */}
                     <div className="absolute top-2 left-2 bg-fresh/90 backdrop-blur text-night text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1 shadow-lg animate-fadeIn">
                       <CheckCircle2 size={10} /> Uploaded
                     </div>
