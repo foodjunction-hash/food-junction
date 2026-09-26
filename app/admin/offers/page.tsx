@@ -12,12 +12,12 @@ import {
   Save,
   Image as ImageIcon,
   Calendar,
-  AlertCircle,
   CheckCircle2,
   Sparkles,
   Gift,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useToast } from '@/components/Toast'
 
 type Offer = {
   id: string
@@ -41,14 +41,13 @@ const EMPTY: Omit<Offer, 'id'> = {
 }
 
 export default function AdminOffersPage() {
+  const toast = useToast()
   const [offers, setOffers] = useState<Offer[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<Offer | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
   const [uploadSuccess, setUploadSuccess] = useState(false)
 
   useEffect(() => {
@@ -68,7 +67,7 @@ export default function AdminOffersPage() {
       setOffers(data || [])
     } catch (err: any) {
       console.error('Failed to load offers:', err)
-      setError('Failed to load offers')
+      toast.error('Failed to load offers')
     }
     setLoading(false)
   }
@@ -98,15 +97,11 @@ export default function AdminOffersPage() {
       }
 
       setUploadSuccess(true)
-      setSuccess('Image uploaded successfully!')
-      setTimeout(() => {
-        setSuccess('')
-        setUploadSuccess(false)
-      }, 3500)
+      toast.success('Image uploaded successfully!')
+      setTimeout(() => setUploadSuccess(false), 3500)
     } catch (err: any) {
       console.error('Upload failed:', err)
-      setError('Image upload failed: ' + err.message)
-      setTimeout(() => setError(''), 4000)
+      toast.error('Image upload failed: ' + err.message)
     }
     setUploading(false)
   }
@@ -115,43 +110,38 @@ export default function AdminOffersPage() {
     if (editing) {
       setEditing({ ...editing, image_url: null })
       setUploadSuccess(false)
-      setSuccess('Image removed')
-      setTimeout(() => setSuccess(''), 2000)
+      toast.info('Image removed')
     }
   }
 
   const handleSave = async () => {
     if (!editing) return
     if (!editing.title.trim()) {
-      alert('Title required')
+      toast.error('Title required')
       return
     }
 
     setSaving(true)
     try {
       if (isCreating) {
-        // ✅ Naya offer: id hatao (Supabase khud generate karega)
         const { id, ...newOffer } = editing
         const { error } = await supabase.from('offers').insert([newOffer])
         if (error) throw error
-        setSuccess('Offer created successfully!')
+        toast.success('Offer created successfully!')
       } else {
-        // Edit: id ke saath update
         const { error } = await supabase
           .from('offers')
           .update({ ...editing, updated_at: new Date().toISOString() })
           .eq('id', editing.id)
         if (error) throw error
-        setSuccess('Offer updated successfully!')
+        toast.success('Offer updated successfully!')
       }
       await loadOffers()
       setEditing(null)
       setIsCreating(false)
-      setTimeout(() => setSuccess(''), 2500)
     } catch (err: any) {
       console.error('Save failed:', err)
-      setError('Failed to save: ' + err.message)
-      setTimeout(() => setError(''), 4000)
+      toast.error('Failed to save: ' + err.message)
     }
     setSaving(false)
   }
@@ -162,10 +152,10 @@ export default function AdminOffersPage() {
       const { error } = await supabase.from('offers').delete().eq('id', id)
       if (error) throw error
       await loadOffers()
-      setSuccess('Offer deleted')
-      setTimeout(() => setSuccess(''), 2000)
+      toast.success('Offer deleted')
     } catch (err: any) {
       console.error('Delete failed:', err)
+      toast.error('Failed to delete offer')
     }
   }
 
@@ -177,8 +167,12 @@ export default function AdminOffersPage() {
         .eq('id', offer.id)
       if (error) throw error
       await loadOffers()
+      toast.success(
+        offer.is_active ? 'Offer deactivated' : 'Offer activated'
+      )
     } catch (err) {
       console.error('Toggle failed:', err)
+      toast.error('Failed to update offer')
     }
   }
 
@@ -232,22 +226,6 @@ export default function AdminOffersPage() {
           </button>
         </div>
 
-        {/* Success Message */}
-        {success && (
-          <div className="mb-6 flex items-start gap-2 bg-fresh/10 border border-fresh/30 rounded-xl px-4 py-3 text-sm text-fresh animate-fadeIn">
-            <CheckCircle2 size={16} className="flex-shrink-0 mt-0.5" />
-            <span>{success}</span>
-          </div>
-        )}
-
-        {/* Error */}
-        {error && (
-          <div className="mb-6 flex items-start gap-2 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-sm text-red-300 animate-fadeIn">
-            <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
-            <span>{error}</span>
-          </div>
-        )}
-
         {/* Offers Grid */}
         {offers.length === 0 ? (
           <div className="bg-night-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-12 text-center">
@@ -280,7 +258,6 @@ export default function AdminOffersPage() {
                   animation: `fadeInUp 0.4s ease-out ${i * 0.05}s both`,
                 }}
               >
-                {/* Image */}
                 {offer.image_url ? (
                   <div className="relative w-full h-40 bg-night overflow-hidden">
                     <img
@@ -301,7 +278,6 @@ export default function AdminOffersPage() {
                   </div>
                 )}
 
-                {/* Content */}
                 <div className="p-4">
                   <h3 className="font-bold mb-1 line-clamp-1">{offer.title}</h3>
                   <p className="text-xs text-white/50 line-clamp-2 mb-3">
@@ -321,7 +297,6 @@ export default function AdminOffersPage() {
                     </div>
                   )}
 
-                  {/* Actions */}
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => {
@@ -397,7 +372,6 @@ export default function AdminOffersPage() {
             </div>
 
             <div className="p-5 space-y-4">
-              {/* Image Upload */}
               <div>
                 <label className="block text-xs text-white/60 mb-2 font-medium">
                   Banner Image
@@ -471,7 +445,6 @@ export default function AdminOffersPage() {
                 )}
               </div>
 
-              {/* Title */}
               <div>
                 <label className="block text-xs text-white/60 mb-1.5 font-medium">
                   Title *
@@ -487,7 +460,6 @@ export default function AdminOffersPage() {
                 />
               </div>
 
-              {/* Description */}
               <div>
                 <label className="block text-xs text-white/60 mb-1.5 font-medium">
                   Description
@@ -503,7 +475,6 @@ export default function AdminOffersPage() {
                 />
               </div>
 
-              {/* Dates */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-white/60 mb-1.5 font-medium">
@@ -549,7 +520,6 @@ export default function AdminOffersPage() {
                 </div>
               </div>
 
-              {/* Priority + Active */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-white/60 mb-1.5 font-medium">

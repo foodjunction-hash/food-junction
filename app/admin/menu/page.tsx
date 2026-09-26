@@ -18,6 +18,7 @@ import {
   Layers,
 } from 'lucide-react'
 import { CATEGORIES, type FoodItem } from '@/lib/data'
+import { useToast } from '@/components/Toast'
 import {
   getMenuItems,
   createMenuItem,
@@ -41,6 +42,7 @@ const EMPTY_FORM: FoodItem = {
 }
 
 export default function AdminMenuPage() {
+  const toast = useToast()
   const [items, setItems] = useState<FoodItem[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -48,8 +50,6 @@ export default function AdminMenuPage() {
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [editing, setEditing] = useState<FoodItem | null>(null)
   const [isCreating, setIsCreating] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
 
   const loadItems = async () => {
     setLoading(true)
@@ -88,11 +88,11 @@ export default function AdminMenuPage() {
   const handleSave = async () => {
     if (!editing) return
     if (!editing.name.trim()) {
-      alert('Name required')
+      toast.error('Name required')
       return
     }
     if (editing.price <= 0) {
-      alert('Valid price required')
+      toast.error('Valid price required')
       return
     }
 
@@ -101,20 +101,18 @@ export default function AdminMenuPage() {
       if (isCreating) {
         const result = await createMenuItem(editing)
         if (!result.success) throw new Error(result.error)
-        setSuccess('Item created successfully!')
+        toast.success('Item created successfully!')
       } else {
         const result = await updateMenuItem(editing.id, editing)
         if (!result.success) throw new Error(result.error)
-        setSuccess('Item updated!')
+        toast.success('Item updated!')
       }
       await loadItems()
       setEditing(null)
       setIsCreating(false)
-      setTimeout(() => setSuccess(''), 2500)
     } catch (err: any) {
       console.error(err)
-      setError('Failed to save: ' + err.message)
-      setTimeout(() => setError(''), 3000)
+      toast.error('Failed to save: ' + err.message)
     }
     setSaving(false)
   }
@@ -124,8 +122,9 @@ export default function AdminMenuPage() {
     const result = await deleteMenuItem(id)
     if (result.success) {
       await loadItems()
-      setSuccess('Item deleted')
-      setTimeout(() => setSuccess(''), 2000)
+      toast.success('Item deleted')
+    } else {
+      toast.error('Failed to delete item')
     }
   }
 
@@ -133,6 +132,11 @@ export default function AdminMenuPage() {
     const result = await toggleMenuItemAvailability(item.id, !item.isAvailable)
     if (result.success) {
       await loadItems()
+      toast.success(
+        item.isAvailable ? 'Marked out of stock' : 'Marked available'
+      )
+    } else {
+      toast.error('Failed to update availability')
     }
   }
 
@@ -219,22 +223,6 @@ export default function AdminMenuPage() {
             Add Item
           </button>
         </div>
-
-        {/* Success */}
-        {success && (
-          <div className="mb-6 flex items-start gap-2 bg-fresh/10 border border-fresh/30 rounded-xl px-4 py-3 text-sm text-fresh animate-fadeIn">
-            <CheckCircle2 size={16} className="flex-shrink-0 mt-0.5" />
-            <span>{success}</span>
-          </div>
-        )}
-
-        {/* Error */}
-        {error && (
-          <div className="mb-6 flex items-start gap-2 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-sm text-red-300 animate-fadeIn">
-            <XCircle size={16} className="flex-shrink-0 mt-0.5" />
-            <span>{error}</span>
-          </div>
-        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">

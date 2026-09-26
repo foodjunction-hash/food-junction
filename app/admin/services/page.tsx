@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useToast } from '@/components/Toast'
 import {
   Truck,
   ShoppingBag,
@@ -9,9 +10,6 @@ import {
   ToggleLeft,
   ToggleRight,
   Loader2,
-  Save,
-  Check,
-  AlertCircle,
   Sparkles,
   Activity,
   XCircle,
@@ -36,11 +34,10 @@ const ICONS: Record<string, any> = {
 }
 
 export default function AdminServicesPage() {
+  const toast = useToast()
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
-  const [saved, setSaved] = useState<string | null>(null)
-  const [error, setError] = useState('')
 
   useEffect(() => {
     loadServices()
@@ -58,7 +55,7 @@ export default function AdminServicesPage() {
       setServices(data || [])
     } catch (err: any) {
       console.error('Failed to load services:', err)
-      setError('Failed to load services')
+      toast.error('Failed to load services')
     }
     setLoading(false)
   }
@@ -72,27 +69,36 @@ export default function AdminServicesPage() {
 
       if (error) throw error
       await loadServices()
+      return true
     } catch (err: any) {
       console.error('Failed to update service:', err)
-      setError('Failed to update service')
-      setTimeout(() => setError(''), 3000)
+      toast.error('Failed to update service')
+      return false
     }
   }
 
   const toggleEnabled = async (service: Service) => {
     setSaving(service.id)
-    await updateService(service.id, { is_enabled: !service.is_enabled })
+    const success = await updateService(service.id, {
+      is_enabled: !service.is_enabled,
+    })
+    if (success) {
+      toast.success(
+        service.is_enabled
+          ? `${service.name} disabled`
+          : `${service.name} enabled`
+      )
+    }
     setSaving(null)
-    setSaved(service.id)
-    setTimeout(() => setSaved(null), 2000)
   }
 
   const updateMessage = async (id: string, message: string) => {
     setSaving(id)
-    await updateService(id, { coming_soon_message: message })
+    const success = await updateService(id, { coming_soon_message: message })
+    if (success) {
+      toast.success('Message updated')
+    }
     setSaving(null)
-    setSaved(id)
-    setTimeout(() => setSaved(null), 2000)
   }
 
   if (loading) {
@@ -142,7 +148,6 @@ export default function AdminServicesPage() {
 
   return (
     <div className="p-4 md:p-8 min-h-screen bg-gradient-to-br from-night via-night to-night-soft relative">
-      {/* Animated Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-gold/5 rounded-full blur-[120px] animate-pulse" />
         <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-[100px] animate-pulse" />
@@ -167,7 +172,7 @@ export default function AdminServicesPage() {
           </p>
         </div>
 
-        {/* Animated Stats */}
+        {/* Stats */}
         <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6">
           {statsData.map((s, i) => (
             <div
@@ -254,20 +259,11 @@ export default function AdminServicesPage() {
           </div>
         </div>
 
-        {/* Error */}
-        {error && (
-          <div className="mb-6 flex items-start gap-2 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-sm text-red-300 animate-fadeIn">
-            <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
-            <span>{error}</span>
-          </div>
-        )}
-
         {/* Services List */}
         <div className="space-y-4">
           {services.map((service, i) => {
             const Icon = ICONS[service.id] || UtensilsCrossed
             const isSaving = saving === service.id
-            const isSaved = saved === service.id
 
             return (
               <div
@@ -281,7 +277,6 @@ export default function AdminServicesPage() {
                   animation: `fadeInUp 0.4s ease-out ${0.4 + i * 0.06}s both`,
                 }}
               >
-                {/* Hover glow */}
                 <div
                   className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none ${
                     service.is_enabled
@@ -365,13 +360,6 @@ export default function AdminServicesPage() {
                               />
                             </div>
                           )}
-                          {isSaved && !isSaving && (
-                            <div className="flex items-center px-2 animate-fadeIn">
-                              <div className="w-7 h-7 rounded-full bg-fresh/20 border border-fresh/30 flex items-center justify-center">
-                                <Check size={14} className="text-fresh" />
-                              </div>
-                            </div>
-                          )}
                         </div>
                         <p className="text-[10px] text-white/30 mt-1.5">
                           Press Tab or click outside to save
@@ -411,7 +399,6 @@ export default function AdminServicesPage() {
         </div>
       </div>
 
-      {/* Animations */}
       <style jsx global>{`
         @keyframes fadeInUp {
           from {

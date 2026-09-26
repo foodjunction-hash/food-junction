@@ -7,6 +7,7 @@ import InstallPWA from '@/components/InstallPWA'
 import BackgroundMusic from '@/components/BackgroundMusic'
 import RestaurantStatusBanner from '@/components/RestaurantStatusBanner'
 import OfferBannerPopup from '@/components/OfferBannerPopup'
+import { ToastProvider } from '@/components/Toast'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -68,30 +69,32 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className="antialiased min-h-screen">
-        <RestaurantStatusBanner />
-        {children}
-        <StickyCart />
-        <InstallPWA />
-        <BackgroundMusic />
-        <OfferBannerPopup />
+        <ToastProvider>
+          <RestaurantStatusBanner />
+          {children}
+          <StickyCart />
+          <InstallPWA />
+          <BackgroundMusic />
+          <OfferBannerPopup />
 
-        {/* Service Worker Registration */}
-        <Script id="service-worker-registration" strategy="afterInteractive">
-          {`
-            if ('serviceWorker' in navigator) {
-              window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/sw.js').then(
-                  function(registration) {
-                    console.log('SW registered:', registration.scope);
-                  },
-                  function(err) {
-                    console.log('SW registration failed:', err);
-                  }
-                );
-              });
-            }
-          `}
-        </Script>
+          {/* Service Worker Registration */}
+          <Script id="service-worker-registration" strategy="afterInteractive">
+            {`
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(
+                    function(registration) {
+                      console.log('SW registered:', registration.scope);
+                    },
+                    function(err) {
+                      console.log('SW registration failed:', err);
+                    }
+                  );
+                });
+              }
+            `}
+          </Script>
+        </ToastProvider>
       </body>
     </html>
   )

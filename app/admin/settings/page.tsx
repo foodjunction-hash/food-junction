@@ -8,9 +8,7 @@ import {
   MapPin,
   Clock,
   Power,
-  Check,
   Loader2,
-  AlertCircle,
   Sparkles,
   IndianRupee,
   Percent,
@@ -21,6 +19,7 @@ import {
   Mail,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useToast } from '@/components/Toast'
 
 type Settings = {
   id: string
@@ -55,11 +54,10 @@ const DEFAULT_SETTINGS: Settings = {
 }
 
 export default function AdminSettingsPage() {
+  const toast = useToast()
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const [error, setError] = useState('')
 
   useEffect(() => {
     loadSettings()
@@ -78,15 +76,13 @@ export default function AdminSettingsPage() {
       if (data) setSettings(data)
     } catch (err: any) {
       console.error('Failed to load settings:', err)
-      setError('Failed to load settings')
-      setTimeout(() => setError(''), 3000)
+      toast.error('Failed to load settings')
     }
     setLoading(false)
   }
 
   const handleSave = async () => {
     setSaving(true)
-    setError('')
     try {
       const { error } = await supabase.from('settings').upsert({
         ...settings,
@@ -95,12 +91,10 @@ export default function AdminSettingsPage() {
       })
 
       if (error) throw error
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2500)
+      toast.success('Settings saved successfully!')
     } catch (err: any) {
       console.error('Failed to save settings:', err)
-      setError('Failed to save settings')
-      setTimeout(() => setError(''), 3000)
+      toast.error('Failed to save settings')
     }
     setSaving(false)
   }
@@ -109,15 +103,18 @@ export default function AdminSettingsPage() {
     const newValue = !settings.is_open
     setSettings({ ...settings, is_open: newValue })
     try {
-      await supabase.from('settings').upsert({
+      const { error } = await supabase.from('settings').upsert({
         ...settings,
         is_open: newValue,
         id: 'main',
         updated_at: new Date().toISOString(),
       })
+      if (error) throw error
+      toast.success(newValue ? 'Restaurant opened 🎉' : 'Restaurant closed')
     } catch (err) {
       console.error('Failed to toggle:', err)
       setSettings({ ...settings, is_open: !newValue })
+      toast.error('Failed to update status')
     }
   }
 
@@ -132,7 +129,6 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="p-4 md:p-8 min-h-screen bg-gradient-to-br from-night via-night to-night-soft relative">
-      {/* Animated Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-gold/5 rounded-full blur-[120px] animate-pulse" />
         <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-[100px] animate-pulse" />
@@ -156,14 +152,6 @@ export default function AdminSettingsPage() {
             <span>Changes apply to customer website instantly</span>
           </p>
         </div>
-
-        {/* Error */}
-        {error && (
-          <div className="mb-6 flex items-start gap-2 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-sm text-red-300 animate-fadeIn">
-            <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
-            <span>{error}</span>
-          </div>
-        )}
 
         {/* Restaurant Status Card */}
         <div
@@ -542,15 +530,6 @@ export default function AdminSettingsPage() {
               </>
             )}
           </button>
-
-          {saved && (
-            <div className="flex items-center gap-2 bg-fresh/20 border border-fresh/30 rounded-full px-4 py-2.5 text-sm text-fresh font-semibold animate-fadeIn">
-              <div className="w-5 h-5 rounded-full bg-fresh/30 flex items-center justify-center">
-                <Check size={12} strokeWidth={3} />
-              </div>
-              Settings saved to database!
-            </div>
-          )}
         </div>
 
         {/* Info */}
@@ -567,7 +546,6 @@ export default function AdminSettingsPage() {
         </div>
       </div>
 
-      {/* Animations */}
       <style jsx global>{`
         @keyframes fadeInUp {
           from {

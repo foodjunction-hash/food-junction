@@ -26,6 +26,7 @@ import Footer from '@/components/Footer'
 import UPIQRCode from '@/components/UPIQRCode'
 import { useCart } from '@/lib/store'
 import { supabase } from '@/lib/supabase'
+import { useToast } from '@/components/Toast'
 import {
   generateOrderId,
   generateOrderNumber,
@@ -39,6 +40,7 @@ const UPI_NAME = 'Food Junction'
 
 export default function CheckoutPage() {
   const router = useRouter()
+  const toast = useToast()
   const items = useCart((s) => s.items)
   const getSubtotal = useCart((s) => s.getSubtotal)
   const clearCart = useCart((s) => s.clear)
@@ -210,7 +212,6 @@ export default function CheckoutPage() {
   const currentServiceDisabled = !serviceStatus[orderType]?.enabled
   const isRestaurantClosed = restaurantOpen === false
 
-  // ✅ Format time (10:00 → 10:00 AM)
   const formatTime = (time: string) => {
     if (!time) return ''
     const [hours, minutes] = time.split(':')
@@ -252,18 +253,18 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     if (isRestaurantClosed) {
-      alert(
-        '🔴 Restaurant is currently CLOSED.\n\nOrders are not being accepted right now. Please try again later.'
-      )
+      toast.error('Restaurant is currently CLOSED. Please try again later.')
       return
     }
 
     if (currentServiceDisabled) {
+      toast.warning('Selected service is currently unavailable')
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
 
     if (!validate()) {
+      toast.error('Please fill all required fields correctly')
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
@@ -315,10 +316,18 @@ export default function CheckoutPage() {
         body: JSON.stringify(orderPayload),
       })
       if (!res.ok) {
-        console.error('Failed to save order to DB:', await res.text())
+        const errorText = await res.text()
+        console.error('Failed to save order to DB:', errorText)
+        toast.error('Failed to place order. Please try again.')
+        setLoading(false)
+        return
       }
+      toast.success('Order placed successfully! 🎉')
     } catch (err) {
       console.error('API error:', err)
+      toast.error('Failed to place order. Please try again.')
+      setLoading(false)
+      return
     }
 
     await new Promise((r) => setTimeout(r, 800))
@@ -368,20 +377,18 @@ export default function CheckoutPage() {
     )
   }
 
-  // ✅ Restaurant CLOSED - blocking screen with opening time
+  // Restaurant CLOSED
   if (isRestaurantClosed) {
     return (
       <>
         <Header />
         <main className="min-h-[70vh] flex items-center justify-center py-20 relative">
-          {/* Background glow */}
           <div className="fixed inset-0 pointer-events-none overflow-hidden">
             <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-red-500/10 rounded-full blur-[120px] animate-pulse" />
             <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-red-500/5 rounded-full blur-[100px] animate-pulse" />
           </div>
 
           <div className="relative z-10 text-center max-w-lg mx-auto px-4">
-            {/* Icon */}
             <div className="relative inline-block mb-6">
               <div className="absolute inset-0 bg-red-500/40 rounded-full blur-2xl animate-pulse" />
               <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-2xl shadow-red-500/40 border-4 border-red-400/30">
@@ -389,7 +396,6 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* Title */}
             <div className="mb-6">
               <span className="inline-block text-[10px] bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1 rounded-full font-bold uppercase tracking-widest mb-3">
                 ● Currently Closed
@@ -403,7 +409,6 @@ export default function CheckoutPage() {
               </p>
             </div>
 
-            {/* Opening Hours Card */}
             <div className="bg-gradient-to-br from-amber-500/20 via-yellow-500/5 to-transparent border border-amber-500/30 rounded-2xl p-5 mb-6 max-w-md mx-auto text-left">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center shadow-lg shadow-amber-500/30 flex-shrink-0">
@@ -423,7 +428,6 @@ export default function CheckoutPage() {
               </p>
             </div>
 
-            {/* Actions */}
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Link
                 href="/menu"
