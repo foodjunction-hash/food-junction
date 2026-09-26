@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { X, Sparkles } from 'lucide-react'
+import { usePathname } from 'next/navigation'
+import { X, Sparkles, ArrowRight, Clock } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 type Offer = {
@@ -13,19 +14,19 @@ type Offer = {
 }
 
 export default function OfferBannerPopup() {
+  const pathname = usePathname()
   const [offer, setOffer] = useState<Offer | null>(null)
   const [show, setShow] = useState(false)
-  const [dismissed, setDismissed] = useState(false)
 
+  // Sirf home aur offers page par dikhao
+  const showOnPages = ['/', '/offers']
+  const shouldShow = showOnPages.includes(pathname)
+
+  // ============================================
+  // LOAD OFFER
+  // ============================================
   useEffect(() => {
-    // Check if user already dismissed in this session
-    if (typeof window !== 'undefined') {
-      const dismissed = sessionStorage.getItem('fj-offer-dismissed')
-      if (dismissed === 'true') {
-        setDismissed(true)
-        return
-      }
-    }
+    if (!shouldShow) return
 
     const loadOffer = async () => {
       try {
@@ -42,146 +43,184 @@ export default function OfferBannerPopup() {
           .maybeSingle()
 
         if (error) throw error
-        if (data) {
-          setOffer(data)
-        }
+        if (data) setOffer(data)
       } catch (err) {
         console.error('Failed to load offer:', err)
       }
     }
 
     loadOffer()
-  }, [])
+  }, [shouldShow])
 
-  // Show popup after 1 second delay, auto-hide after 5 seconds
+  // ============================================
+  // SHOW AFTER 1 SEC
+  // ============================================
   useEffect(() => {
-    if (!offer || dismissed) return
+    if (!offer || !shouldShow) return
 
-    const showTimer = setTimeout(() => {
-      setShow(true)
-    }, 1000)
-
+    const showTimer = setTimeout(() => setShow(true), 1000)
     return () => clearTimeout(showTimer)
-  }, [offer, dismissed])
+  }, [offer, shouldShow])
 
-  const handleDismiss = () => {
-    setShow(false)
-    setDismissed(true)
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('fj-offer-dismissed', 'true')
-    }
-  }
-
-  // Auto-hide after 5 seconds of showing
+  // ============================================
+  // AUTO-HIDE AFTER 6 SEC
+  // ============================================
   useEffect(() => {
     if (!show) return
-
-    const hideTimer = setTimeout(() => {
-      handleDismiss()
-    }, 5000)
-
+    const hideTimer = setTimeout(() => setShow(false), 6000)
     return () => clearTimeout(hideTimer)
   }, [show])
 
-  if (!offer || !show) return null
+  // Reset on page change
+  useEffect(() => {
+    setShow(false)
+  }, [pathname])
+
+  const handleDismiss = () => setShow(false)
+  const handleClick = () => {
+    handleDismiss()
+    window.location.href = '/menu'
+  }
+
+  if (!offer || !shouldShow) return null
 
   return (
-    <div
-      className="fixed inset-0 z-[90] flex items-center justify-center p-4 animate-fadeIn"
-      onClick={handleDismiss}
-    >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-night/80 backdrop-blur-md" />
-
-      {/* Card */}
+    <>
+      {/* Backdrop blur */}
       <div
-        className="relative max-w-lg w-full bg-night-card rounded-3xl overflow-hidden border-2 border-gold/40 shadow-2xl shadow-gold/30 animate-scaleIn"
-        onClick={(e) => e.stopPropagation()}
+        className={`fixed inset-0 z-[90] bg-black/60 backdrop-blur-md transition-opacity duration-500 ${
+          show ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={handleDismiss}
+      />
+
+      {/* ============================================
+          BADA BANNER (top-center se slide-down)
+          ============================================ */}
+      <div
+        className={`fixed inset-x-0 top-0 z-[95] flex justify-center px-4 transition-all duration-700 ease-out ${
+          show
+            ? 'translate-y-0 opacity-100'
+            : '-translate-y-full opacity-0 pointer-events-none'
+        }`}
       >
-        {/* Glow */}
-        <div className="absolute -top-20 -right-20 w-40 h-40 bg-gold/30 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-pink-500/20 rounded-full blur-3xl animate-pulse" />
-
-        {/* Close */}
-        <button
-          onClick={handleDismiss}
-          className="absolute top-3 right-3 z-20 w-9 h-9 rounded-full bg-night/80 backdrop-blur hover:bg-night flex items-center justify-center transition-all border border-white/20 hover:scale-110"
+        <div
+          className="relative w-full max-w-5xl mt-4 md:mt-6 rounded-3xl overflow-hidden shadow-2xl shadow-gold/30 cursor-pointer group"
+          onClick={handleClick}
         >
-          <X size={18} className="text-white" />
-        </button>
+          {/* Gold border glow */}
+          <div className="absolute inset-0 rounded-3xl ring-2 ring-gold/50 shadow-[0_0_60px_rgba(245,179,1,0.4)]" />
 
-        {/* Badge */}
-        <div className="absolute top-3 left-3 z-20">
-          <span className="bg-gradient-to-r from-gold to-gold-dark text-night text-[10px] px-3 py-1.5 rounded-full font-bold uppercase tracking-widest shadow-lg flex items-center gap-1">
-            <Sparkles size={10} /> Special Offer
-          </span>
-        </div>
+          {/* Main card */}
+          <div className="relative bg-gradient-to-br from-night-card via-night-soft to-night-card rounded-3xl overflow-hidden">
 
-        {/* Image */}
-        {offer.image_url ? (
-          <div className="relative w-full h-56 md:h-64 overflow-hidden">
-            <img
-              src={offer.image_url}
-              alt={offer.title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-night-card via-transparent to-transparent" />
+            {/* Background glow effects */}
+            <div className="absolute -top-20 -right-20 w-60 h-60 bg-gold/20 rounded-full blur-3xl animate-pulse pointer-events-none" />
+            <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-pink-500/15 rounded-full blur-3xl animate-pulse pointer-events-none" />
+
+            {/* Close button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDismiss()
+              }}
+              className="absolute top-3 right-3 z-30 w-10 h-10 rounded-full bg-black/50 backdrop-blur-md hover:bg-black/80 flex items-center justify-center transition-all hover:scale-110 border border-white/20"
+            >
+              <X size={20} className="text-white" />
+            </button>
+
+            {/* Layout: Desktop = row, Mobile = col */}
+            <div className="relative z-10 flex flex-col md:flex-row">
+
+              {/* ============================================
+                  LEFT: IMAGE
+                  ============================================ */}
+              {offer.image_url && (
+                <div className="relative w-full md:w-2/5 h-48 md:h-auto md:min-h-[280px] overflow-hidden flex-shrink-0">
+                  <img
+                    src={offer.image_url}
+                    alt={offer.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  {/* Gradient overlay for mobile */}
+                  <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-transparent via-transparent to-night-card/60" />
+
+                  {/* Sparkle badge on image */}
+                  <div className="absolute top-3 left-3 md:top-4 md:left-4">
+                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center shadow-xl shadow-gold/50 animate-pulse">
+                      <Sparkles size={22} className="text-night" strokeWidth={2.5} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ============================================
+                  RIGHT: CONTENT
+                  ============================================ */}
+              <div className="flex-1 p-5 md:p-8 flex flex-col justify-center">
+
+                {/* Top badges */}
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                  <span className="bg-gradient-to-r from-gold to-gold-dark text-night text-[10px] md:text-xs px-3 py-1.5 rounded-full font-bold uppercase tracking-widest flex items-center gap-1 shadow-lg">
+                    <Sparkles size={11} /> Special Offer
+                  </span>
+                  <span className="text-[10px] md:text-xs bg-fresh/20 text-fresh px-2.5 py-1 rounded-full font-bold uppercase border border-fresh/40 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-fresh animate-pulse" />
+                    Live Now
+                  </span>
+                </div>
+
+                {/* Title */}
+                <h2 className="text-2xl md:text-4xl font-bold mb-3 leading-tight bg-gradient-to-r from-white via-gold to-white bg-clip-text text-transparent">
+                  {offer.title}
+                </h2>
+
+                {/* Description */}
+                {offer.description && (
+                  <p className="text-sm md:text-base text-white/70 mb-4 md:mb-6 leading-relaxed">
+                    {offer.description}
+                  </p>
+                )}
+
+                {/* CTA Button */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="inline-flex items-center gap-2 bg-gradient-to-r from-gold to-gold-dark text-night font-bold px-5 md:px-7 py-3 md:py-3.5 rounded-full shadow-lg shadow-gold/40 group-hover:scale-105 transition-all text-sm md:text-base">
+                    Order Now
+                    <ArrowRight
+                      size={18}
+                      className="group-hover:translate-x-1 transition-transform"
+                    />
+                  </div>
+
+                  {/* Timer */}
+                  <div className="flex items-center gap-1.5 text-xs md:text-sm text-white/50">
+                    <Clock size={14} className="text-gold" />
+                    <span>Limited time</span>
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                {show && (
+                  <div className="mt-5 h-1 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-gold via-yellow-400 to-gold rounded-full"
+                      style={{
+                        animation: 'progressBar 6s linear forwards',
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom gold accent line */}
+            <div className="h-1.5 bg-gradient-to-r from-gold via-yellow-400 to-gold" />
           </div>
-        ) : (
-          <div className="w-full h-56 md:h-64 bg-gradient-to-br from-gold/30 to-gold-dark/20 flex items-center justify-center">
-            <div className="text-8xl animate-bounce">🎁</div>
-          </div>
-        )}
-
-        {/* Content */}
-        <div className="relative z-10 p-5 text-center -mt-6">
-          <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-white via-gold to-white bg-clip-text text-transparent">
-            {offer.title}
-          </h3>
-          {offer.description && (
-            <p className="text-sm text-white/70 mb-4">{offer.description}</p>
-          )}
-
-          <div className="flex items-center justify-center gap-2">
-            <div className="h-1 w-8 bg-gold/30 rounded-full" />
-            <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">
-              Auto-closing in a moment
-            </p>
-            <div className="h-1 w-8 bg-gold/30 rounded-full" />
-          </div>
-        </div>
-
-        {/* Progress bar */}
-        <div className="h-1 bg-white/5">
-          <div
-            className="h-full bg-gradient-to-r from-gold to-gold-dark"
-            style={{
-              animation: 'progress 5s linear forwards',
-            }}
-          />
         </div>
       </div>
 
       <style jsx global>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-        @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.9) translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-          }
-        }
-        @keyframes progress {
+        @keyframes progressBar {
           from {
             width: 100%;
           }
@@ -189,13 +228,7 @@ export default function OfferBannerPopup() {
             width: 0%;
           }
         }
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
-        }
-        .animate-scaleIn {
-          animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
       `}</style>
-    </div>
+    </>
   )
 }
