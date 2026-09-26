@@ -7,6 +7,10 @@ import {
   ShoppingBag,
   Package,
   Calendar,
+  Sparkles,
+  Activity,
+  Loader2,
+  BarChart3,
 } from 'lucide-react'
 import {
   LineChart,
@@ -20,14 +24,12 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts'
 import { type Order, type OrderStatus } from '@/lib/orders'
 
 type TimeFilter = 'today' | 'week' | 'month' | 'all'
 
-// Map DB → frontend Order format
 function mapDbOrder(o: any): Order {
   return {
     id: o.id,
@@ -56,7 +58,6 @@ function mapDbOrder(o: any): Order {
   }
 }
 
-// Color palette
 const COLORS = {
   gold: '#F5B301',
   green: '#22C55E',
@@ -66,7 +67,13 @@ const COLORS = {
   pink: '#EC4899',
 }
 
-const PIE_COLORS = [COLORS.gold, COLORS.green, COLORS.blue, COLORS.purple, COLORS.red]
+const PIE_COLORS = [
+  COLORS.gold,
+  COLORS.green,
+  COLORS.blue,
+  COLORS.purple,
+  COLORS.red,
+]
 
 export default function AdminReportsPage() {
   const [orders, setOrders] = useState<Order[]>([])
@@ -90,7 +97,6 @@ export default function AdminReportsPage() {
     return () => clearInterval(t)
   }, [])
 
-  // Filter orders by time
   const filteredOrders = useMemo(() => {
     if (timeFilter === 'all') return orders
 
@@ -108,15 +114,21 @@ export default function AdminReportsPage() {
     return orders.filter((o) => new Date(o.createdAt) >= cutoff)
   }, [orders, timeFilter])
 
-  // Stats
   const totalOrders = filteredOrders.length
   const totalRevenue = filteredOrders.reduce((sum, o) => sum + o.total, 0)
-  const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0
-  const paidOrders = filteredOrders.filter((o) => o.paymentStatus === 'paid').length
+  const avgOrderValue =
+    totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0
+  const paidOrders = filteredOrders.filter(
+    (o) => o.paymentStatus === 'paid'
+  ).length
 
-  // Sales trend (last 7 days)
   const salesTrend = useMemo(() => {
-    const days: { date: string; label: string; revenue: number; orders: number }[] = []
+    const days: {
+      date: string
+      label: string
+      revenue: number
+      orders: number
+    }[] = []
     const today = new Date()
 
     for (let i = 6; i >= 0; i--) {
@@ -143,9 +155,11 @@ export default function AdminReportsPage() {
     return days
   }, [orders])
 
-  // Top 5 items
   const topItems = useMemo(() => {
-    const itemCounts: Record<string, { name: string; count: number; revenue: number; emoji: string }> = {}
+    const itemCounts: Record<
+      string,
+      { name: string; count: number; revenue: number; emoji: string }
+    > = {}
 
     filteredOrders.forEach((order) => {
       order.items.forEach((item) => {
@@ -166,7 +180,8 @@ export default function AdminReportsPage() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5)
       .map((item) => ({
-        name: item.name.length > 18 ? item.name.slice(0, 18) + '...' : item.name,
+        name:
+          item.name.length > 18 ? item.name.slice(0, 18) + '...' : item.name,
         fullName: item.name,
         count: item.count,
         revenue: item.revenue,
@@ -174,22 +189,38 @@ export default function AdminReportsPage() {
       }))
   }, [filteredOrders])
 
-  // Payment method breakdown
   const paymentBreakdown = useMemo(() => {
     const upi = filteredOrders.filter((o) => o.paymentMethod === 'upi')
     const cash = filteredOrders.filter((o) => o.paymentMethod === 'cash')
     const online = filteredOrders.filter((o) => o.paymentMethod === 'online')
 
     return [
-      { name: 'UPI', value: upi.length, amount: upi.reduce((s, o) => s + o.total, 0) },
-      { name: 'Cash', value: cash.length, amount: cash.reduce((s, o) => s + o.total, 0) },
-      { name: 'Online', value: online.length, amount: online.reduce((s, o) => s + o.total, 0) },
+      {
+        name: 'UPI',
+        value: upi.length,
+        amount: upi.reduce((s, o) => s + o.total, 0),
+      },
+      {
+        name: 'Cash',
+        value: cash.length,
+        amount: cash.reduce((s, o) => s + o.total, 0),
+      },
+      {
+        name: 'Online',
+        value: online.length,
+        amount: online.reduce((s, o) => s + o.total, 0),
+      },
     ].filter((x) => x.value > 0)
   }, [filteredOrders])
 
-  // Order status distribution
   const statusBreakdown = useMemo(() => {
-    const statuses: OrderStatus[] = ['placed', 'accepted', 'preparing', 'ready', 'delivered']
+    const statuses: OrderStatus[] = [
+      'placed',
+      'accepted',
+      'preparing',
+      'ready',
+      'delivered',
+    ]
     const labels: Record<OrderStatus, string> = {
       placed: 'Placed',
       accepted: 'Accepted',
@@ -207,7 +238,12 @@ export default function AdminReportsPage() {
   }, [filteredOrders])
 
   if (!mounted) {
-    return <div className="p-6 text-white/60 text-sm">Loading reports...</div>
+    return (
+      <div className="p-6 text-white/60 text-sm flex items-center gap-2">
+        <Loader2 className="animate-spin text-gold" size={16} />
+        Loading reports...
+      </div>
+    )
   }
 
   const timeFilters: { id: TimeFilter; label: string }[] = [
@@ -217,255 +253,392 @@ export default function AdminReportsPage() {
     { id: 'all', label: 'All Time' },
   ]
 
+  const statsData = [
+    {
+      label: 'Total Orders',
+      value: totalOrders,
+      icon: ShoppingBag,
+      gradient: 'from-amber-500/20 via-yellow-500/5 to-transparent',
+      border: 'border-amber-500/30',
+      iconBg: 'bg-gradient-to-br from-amber-400 to-yellow-600',
+      color: 'text-gold',
+      trend: 'in period',
+    },
+    {
+      label: 'Total Revenue',
+      value: `₹${totalRevenue}`,
+      icon: IndianRupee,
+      gradient: 'from-emerald-500/20 via-green-500/5 to-transparent',
+      border: 'border-emerald-500/30',
+      iconBg: 'bg-gradient-to-br from-emerald-400 to-green-600',
+      color: 'text-fresh',
+      trend: 'gross revenue',
+    },
+    {
+      label: 'Avg Order Value',
+      value: `₹${avgOrderValue}`,
+      icon: TrendingUp,
+      gradient: 'from-blue-500/20 via-cyan-500/5 to-transparent',
+      border: 'border-blue-500/30',
+      iconBg: 'bg-gradient-to-br from-blue-400 to-cyan-600',
+      color: 'text-blue-400',
+      trend: 'per order',
+    },
+    {
+      label: 'Paid Orders',
+      value: `${paidOrders}/${totalOrders}`,
+      icon: Package,
+      gradient: 'from-purple-500/20 via-pink-500/5 to-transparent',
+      border: 'border-purple-500/30',
+      iconBg: 'bg-gradient-to-br from-purple-400 to-pink-600',
+      color: 'text-purple-400',
+      trend: `${totalOrders > 0 ? Math.round((paidOrders / totalOrders) * 100) : 0}% paid`,
+    },
+  ]
+
+  const tooltipStyle = {
+    backgroundColor: '#1C1C24',
+    border: '1px solid #F5B301',
+    borderRadius: '12px',
+    padding: '10px',
+    boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+  }
+
   return (
-    <div className="p-4 md:p-8">
-      {/* Header */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-1">Reports</h1>
-          <p className="text-white/50 text-sm">
-            Sales analytics & business insights • Live from database
-          </p>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-white/40">
-          <Calendar size={14} />
-          <span>
-            Last updated: {new Date().toLocaleTimeString('en-IN', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </span>
-        </div>
+    <div className="p-4 md:p-8 min-h-screen bg-gradient-to-br from-night via-night to-night-soft relative">
+      {/* Animated Background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-gold/5 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-purple-500/5 rounded-full blur-[100px] animate-pulse" />
       </div>
 
-      {/* Time Filter */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {timeFilters.map((f) => (
-          <button
-            key={f.id}
-            onClick={() => setTimeFilter(f.id)}
-            className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
-              timeFilter === f.id
-                ? 'bg-gold text-night'
-                : 'bg-night-card border border-white/5 text-white/60 hover:border-gold/40 hover:text-gold'
-            }`}
+      <div className="relative z-10">
+        {/* Header */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles size={20} className="text-gold animate-pulse" />
+              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white via-gold to-white bg-clip-text text-transparent">
+                Reports
+              </h1>
+            </div>
+            <p className="text-white/50 text-sm flex items-center gap-2 flex-wrap">
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-fresh animate-pulse" />
+                Live updating
+              </span>
+              <span>•</span>
+              <span>Sales analytics & business insights</span>
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-white/40 bg-white/5 px-3 py-2 rounded-full border border-white/5">
+            <Calendar size={12} />
+            <span>
+              Last updated:{' '}
+              {new Date().toLocaleTimeString('en-IN', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </span>
+          </div>
+        </div>
+
+        {/* Time Filter Pills */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {timeFilters.map((f, i) => (
+            <button
+              key={f.id}
+              onClick={() => setTimeFilter(f.id)}
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 hover:scale-105 ${
+                timeFilter === f.id
+                  ? 'bg-gradient-to-r from-gold to-gold-dark text-night shadow-lg shadow-gold/30'
+                  : 'bg-night-card/80 backdrop-blur-xl border border-white/5 text-white/60 hover:border-gold/40 hover:text-gold'
+              }`}
+              style={{
+                animation: `fadeInUp 0.4s ease-out ${i * 0.05}s both`,
+              }}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Animated Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-6">
+          {statsData.map((s, i) => (
+            <div
+              key={s.label}
+              className={`relative group bg-gradient-to-br ${s.gradient} bg-night-card/80 backdrop-blur-xl border ${s.border} rounded-2xl p-4 md:p-5 transition-all duration-500 hover:scale-[1.05] hover:shadow-2xl hover:shadow-gold/10 overflow-hidden`}
+              style={{
+                animation: `fadeInUp 0.5s ease-out ${0.15 + i * 0.08}s both`,
+              }}
+            >
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-white/5 to-transparent" />
+
+              <div className="relative z-10">
+                <div
+                  className={`w-11 h-11 rounded-xl ${s.iconBg} flex items-center justify-center shadow-lg mb-3 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}
+                >
+                  <s.icon size={20} className="text-night" strokeWidth={2.5} />
+                </div>
+
+                <p
+                  className={`text-2xl md:text-3xl font-bold ${s.color} mb-1 tracking-tight`}
+                >
+                  {s.value}
+                </p>
+                <p className="text-xs md:text-sm text-white/60 font-medium">
+                  {s.label}
+                </p>
+                <p className="text-[10px] text-white/30 mt-1 uppercase tracking-wider">
+                  {s.trend}
+                </p>
+              </div>
+
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          ))}
+        </div>
+
+        {/* Charts Grid */}
+        <div className="grid lg:grid-cols-2 gap-5 mb-6">
+          {/* Sales Trend */}
+          <div
+            className="relative group bg-night-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-5 hover:border-gold/30 transition-all duration-300 overflow-hidden"
+            style={{ animation: 'fadeInUp 0.5s ease-out 0.5s both' }}
           >
-            {f.label}
-          </button>
-        ))}
-      </div>
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-gold/[0.02] to-transparent pointer-events-none" />
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-6">
-        <div className="bg-night-card border border-white/5 rounded-2xl p-4 md:p-5">
-          <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center mb-3">
-            <ShoppingBag size={20} className="text-gold" />
-          </div>
-          <p className="text-2xl md:text-3xl font-bold mb-1">{totalOrders}</p>
-          <p className="text-xs md:text-sm text-white/50">Total Orders</p>
-        </div>
-
-        <div className="bg-night-card border border-white/5 rounded-2xl p-4 md:p-5">
-          <div className="w-10 h-10 rounded-full bg-fresh/10 flex items-center justify-center mb-3">
-            <IndianRupee size={20} className="text-fresh" />
-          </div>
-          <p className="text-2xl md:text-3xl font-bold mb-1">₹{totalRevenue}</p>
-          <p className="text-xs md:text-sm text-white/50">Total Revenue</p>
-        </div>
-
-        <div className="bg-night-card border border-white/5 rounded-2xl p-4 md:p-5">
-          <div className="w-10 h-10 rounded-full bg-blue-400/10 flex items-center justify-center mb-3">
-            <TrendingUp size={20} className="text-blue-400" />
-          </div>
-          <p className="text-2xl md:text-3xl font-bold mb-1">₹{avgOrderValue}</p>
-          <p className="text-xs md:text-sm text-white/50">Avg Order Value</p>
-        </div>
-
-        <div className="bg-night-card border border-white/5 rounded-2xl p-4 md:p-5">
-          <div className="w-10 h-10 rounded-full bg-purple-400/10 flex items-center justify-center mb-3">
-            <Package size={20} className="text-purple-400" />
-          </div>
-          <p className="text-2xl md:text-3xl font-bold mb-1">
-            {paidOrders}/{totalOrders}
-          </p>
-          <p className="text-xs md:text-sm text-white/50">Paid Orders</p>
-        </div>
-      </div>
-
-      {/* Charts Grid */}
-      <div className="grid lg:grid-cols-2 gap-5 mb-6">
-        {/* Sales Trend Line Chart */}
-        <div className="bg-night-card border border-white/5 rounded-2xl p-5">
-          <h2 className="font-bold mb-4 flex items-center gap-2">
-            📈 Sales Trend (Last 7 Days)
-          </h2>
-          <div style={{ width: '100%', height: 280 }}>
-            <ResponsiveContainer>
-              <LineChart data={salesTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a35" />
-                <XAxis dataKey="label" stroke="#888" fontSize={12} />
-                <YAxis stroke="#888" fontSize={12} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1C1C24',
-                    border: '1px solid #F5B301',
-                    borderRadius: '12px',
-                    padding: '10px',
-                  }}
-                  labelStyle={{ color: '#F5B301', fontWeight: 'bold' }}
-                  formatter={(value: any) => [`₹${value}`, 'Revenue']}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke={COLORS.gold}
-                  strokeWidth={3}
-                  dot={{ fill: COLORS.gold, r: 5 }}
-                  activeDot={{ r: 7 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Top 5 Items Bar Chart */}
-        <div className="bg-night-card border border-white/5 rounded-2xl p-5">
-          <h2 className="font-bold mb-4 flex items-center gap-2">
-            🍕 Top 5 Items (by Quantity)
-          </h2>
-          {topItems.length === 0 ? (
-            <div className="text-center py-20 text-white/40 text-sm">
-              No data yet
-            </div>
-          ) : (
-            <div style={{ width: '100%', height: 280 }}>
+            <h2 className="font-bold mb-4 flex items-center gap-2 relative z-10">
+              <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
+                📈
+              </span>
+              Sales Trend (Last 7 Days)
+            </h2>
+            <div style={{ width: '100%', height: 280 }} className="relative z-10">
               <ResponsiveContainer>
-                <BarChart data={topItems} layout="vertical">
+                <LineChart data={salesTrend}>
+                  <defs>
+                    <linearGradient id="goldGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={COLORS.gold} stopOpacity={0.3} />
+                      <stop offset="100%" stopColor={COLORS.gold} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#2a2a35" />
-                  <XAxis type="number" stroke="#888" fontSize={12} />
-                  <YAxis
-                    dataKey="name"
-                    type="category"
+                  <XAxis
+                    dataKey="label"
                     stroke="#888"
-                    fontSize={11}
-                    width={100}
+                    fontSize={12}
+                    tickLine={false}
                   />
+                  <YAxis stroke="#888" fontSize={12} tickLine={false} />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1C1C24',
-                      border: '1px solid #F5B301',
-                      borderRadius: '12px',
-                      padding: '10px',
-                    }}
+                    contentStyle={tooltipStyle}
                     labelStyle={{ color: '#F5B301', fontWeight: 'bold' }}
-                    formatter={(value: any, name: any, props: any) => [
-                      `${value} orders (₹${props.payload.revenue})`,
-                      props.payload.fullName,
-                    ]}
+                    formatter={(value: any) => [`₹${value}`, 'Revenue']}
                   />
-                  <Bar dataKey="count" fill={COLORS.gold} radius={[0, 8, 8, 0]} />
-                </BarChart>
+                  <Line
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke={COLORS.gold}
+                    strokeWidth={3}
+                    dot={{ fill: COLORS.gold, r: 5, strokeWidth: 2, stroke: '#1C1C24' }}
+                    activeDot={{ r: 8, fill: COLORS.gold, stroke: '#1C1C24', strokeWidth: 3 }}
+                  />
+                </LineChart>
               </ResponsiveContainer>
             </div>
-          )}
+          </div>
+
+          {/* Top 5 Items */}
+          <div
+            className="relative group bg-night-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-5 hover:border-gold/30 transition-all duration-300 overflow-hidden"
+            style={{ animation: 'fadeInUp 0.5s ease-out 0.55s both' }}
+          >
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-gold/[0.02] to-transparent pointer-events-none" />
+
+            <h2 className="font-bold mb-4 flex items-center gap-2 relative z-10">
+              <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
+                🍕
+              </span>
+              Top 5 Items (by Quantity)
+            </h2>
+            {topItems.length === 0 ? (
+              <div className="text-center py-20 text-white/40 text-sm relative z-10">
+                No data yet
+              </div>
+            ) : (
+              <div
+                style={{ width: '100%', height: 280 }}
+                className="relative z-10"
+              >
+                <ResponsiveContainer>
+                  <BarChart data={topItems} layout="vertical">
+                    <defs>
+                      <linearGradient id="barGradient" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor={COLORS.gold} stopOpacity={0.7} />
+                        <stop offset="100%" stopColor={COLORS.gold} stopOpacity={1} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#2a2a35" />
+                    <XAxis type="number" stroke="#888" fontSize={12} tickLine={false} />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      stroke="#888"
+                      fontSize={11}
+                      width={100}
+                      tickLine={false}
+                    />
+                    <Tooltip
+                      contentStyle={tooltipStyle}
+                      labelStyle={{ color: '#F5B301', fontWeight: 'bold' }}
+                      formatter={(value: any, name: any, props: any) => [
+                        `${value} orders (₹${props.payload.revenue})`,
+                        props.payload.fullName,
+                      ]}
+                    />
+                    <Bar
+                      dataKey="count"
+                      fill="url(#barGradient)"
+                      radius={[0, 8, 8, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+
+          {/* Payment Methods */}
+          <div
+            className="relative group bg-night-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-5 hover:border-gold/30 transition-all duration-300 overflow-hidden"
+            style={{ animation: 'fadeInUp 0.5s ease-out 0.6s both' }}
+          >
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-gold/[0.02] to-transparent pointer-events-none" />
+
+            <h2 className="font-bold mb-4 flex items-center gap-2 relative z-10">
+              <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
+                💰
+              </span>
+              Payment Methods
+            </h2>
+            {paymentBreakdown.length === 0 ? (
+              <div className="text-center py-20 text-white/40 text-sm relative z-10">
+                No payment data yet
+              </div>
+            ) : (
+              <div
+                style={{ width: '100%', height: 280 }}
+                className="relative z-10"
+              >
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie
+                      data={paymentBreakdown}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={(entry: any) =>
+                        `${entry.name}: ${entry.value} (₹${entry.amount})`
+                      }
+                      outerRadius={90}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {paymentBreakdown.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={PIE_COLORS[index % PIE_COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={tooltipStyle} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+
+          {/* Order Status */}
+          <div
+            className="relative group bg-night-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-5 hover:border-gold/30 transition-all duration-300 overflow-hidden"
+            style={{ animation: 'fadeInUp 0.5s ease-out 0.65s both' }}
+          >
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-gold/[0.02] to-transparent pointer-events-none" />
+
+            <h2 className="font-bold mb-4 flex items-center gap-2 relative z-10">
+              <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
+                📊
+              </span>
+              Order Status Distribution
+            </h2>
+            {statusBreakdown.length === 0 ? (
+              <div className="text-center py-20 text-white/40 text-sm relative z-10">
+                No status data yet
+              </div>
+            ) : (
+              <div
+                style={{ width: '100%', height: 280 }}
+                className="relative z-10"
+              >
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie
+                      data={statusBreakdown}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={(entry: any) => `${entry.name}: ${entry.value}`}
+                      innerRadius={50}
+                      outerRadius={90}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {statusBreakdown.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={PIE_COLORS[index % PIE_COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={tooltipStyle} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Payment Methods Pie Chart */}
-        <div className="bg-night-card border border-white/5 rounded-2xl p-5">
-          <h2 className="font-bold mb-4 flex items-center gap-2">
-            💰 Payment Methods
-          </h2>
-          {paymentBreakdown.length === 0 ? (
-            <div className="text-center py-20 text-white/40 text-sm">
-              No payment data yet
-            </div>
-          ) : (
-            <div style={{ width: '100%', height: 280 }}>
-              <ResponsiveContainer>
-                <PieChart>
-                  <Pie
-                    data={paymentBreakdown}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry: any) =>
-                      `${entry.name}: ${entry.value} (₹${entry.amount})`
-                    }
-                    outerRadius={90}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {paymentBreakdown.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={PIE_COLORS[index % PIE_COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1C1C24',
-                      border: '1px solid #F5B301',
-                      borderRadius: '12px',
-                      padding: '10px',
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </div>
-
-        {/* Order Status Doughnut */}
-        <div className="bg-night-card border border-white/5 rounded-2xl p-5">
-          <h2 className="font-bold mb-4 flex items-center gap-2">
-            📊 Order Status Distribution
-          </h2>
-          {statusBreakdown.length === 0 ? (
-            <div className="text-center py-20 text-white/40 text-sm">
-              No status data yet
-            </div>
-          ) : (
-            <div style={{ width: '100%', height: 280 }}>
-              <ResponsiveContainer>
-                <PieChart>
-                  <Pie
-                    data={statusBreakdown}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry: any) => `${entry.name}: ${entry.value}`}
-                    innerRadius={50}
-                    outerRadius={90}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {statusBreakdown.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={PIE_COLORS[index % PIE_COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1C1C24',
-                      border: '1px solid #F5B301',
-                      borderRadius: '12px',
-                      padding: '10px',
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          )}
+        {/* Footer */}
+        <div
+          className="relative overflow-hidden bg-gradient-to-br from-gold/10 via-gold/5 to-transparent border border-gold/30 rounded-2xl p-5 text-center"
+          style={{ animation: 'fadeInUp 0.5s ease-out 0.7s both' }}
+        >
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gold/10 rounded-full blur-3xl" />
+          <p className="relative z-10 text-sm text-white/70 flex items-center justify-center gap-2 flex-wrap">
+            <Activity size={14} className="text-gold" />
+            <span className="text-gold font-semibold">Live data</span>
+            <span>•</span>
+            <span>Auto-refresh every 10 seconds</span>
+            <span>•</span>
+            <span>{orders.length} total orders in database</span>
+          </p>
         </div>
       </div>
 
-      {/* Footer note */}
-      <div className="bg-night-card border border-white/5 rounded-2xl p-5 text-center text-xs text-white/40">
-        💡 Data real-time hai — auto-refresh every 10 seconds
-      </div>
+      {/* Animations */}
+      <style jsx global>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   )
 }
