@@ -1,9 +1,13 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Header from '@/components/Header'
 import Hero from '@/components/Hero'
 import Footer from '@/components/Footer'
 import FoodCard from '@/components/FoodCard'
-import { FOOD_ITEMS } from '@/lib/data'
+import { type FoodItem } from '@/lib/data'
+import { getMenuItems } from '@/lib/menuSupabase'
 import {
   ShoppingBag,
   Star,
@@ -16,10 +20,23 @@ import {
   ArrowRight,
   Code2,
   Crown,
+  Loader2,
 } from 'lucide-react'
 
 export default function Home() {
-  const bestsellers = FOOD_ITEMS.filter((f) => f.isBestseller).slice(0, 4)
+  const [bestsellers, setBestsellers] = useState<FoodItem[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const loadBestsellers = async () => {
+      setLoading(true)
+      const items = await getMenuItems()
+      const best = items.filter((f) => f.isBestseller).slice(0, 4)
+      setBestsellers(best)
+      setLoading(false)
+    }
+    loadBestsellers()
+  }, [])
 
   const features = [
     {
@@ -88,7 +105,6 @@ export default function Home() {
             BEST SELLERS SECTION
             ============================================ */}
         <section className="relative py-20 md:py-28 bg-night-soft overflow-hidden">
-          {/* Background effects */}
           <div className="absolute inset-0 bg-dots opacity-20" />
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-gold/5 rounded-full blur-[120px]" />
 
@@ -109,12 +125,35 @@ export default function Home() {
               <div className="w-24 h-1 bg-gradient-to-r from-transparent via-gold to-transparent mx-auto mt-6 opacity-60" />
             </div>
 
-            {/* Grid using premium FoodCard */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-              {bestsellers.map((item) => (
-                <FoodCard key={item.id} item={item} />
-              ))}
-            </div>
+            {/* Grid */}
+            {loading ? (
+              <div className="text-center py-20">
+                <Loader2
+                  className="animate-spin text-gold mx-auto mb-3"
+                  size={32}
+                />
+                <p className="text-white/60 text-sm">Loading bestsellers...</p>
+              </div>
+            ) : bestsellers.length === 0 ? (
+              <div className="text-center py-16">
+                <p className="text-5xl mb-3">🍽️</p>
+                <p className="text-white/60 text-sm">
+                  No bestsellers available right now
+                </p>
+                <Link
+                  href="/menu"
+                  className="inline-block mt-4 text-gold hover:text-gold-light font-semibold underline"
+                >
+                  Browse full menu
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+                {bestsellers.map((item) => (
+                  <FoodCard key={item.id} item={item} />
+                ))}
+              </div>
+            )}
 
             {/* CTA */}
             <div className="text-center mt-14">
@@ -136,11 +175,9 @@ export default function Home() {
             WHY CHOOSE US SECTION
             ============================================ */}
         <section className="relative py-20 md:py-28 overflow-hidden">
-          {/* Background effects */}
           <div className="absolute inset-0 bg-mesh opacity-50" />
 
           <div className="relative max-w-7xl mx-auto px-4">
-            {/* Section Header */}
             <div className="text-center mb-14">
               <div className="inline-flex items-center gap-2 text-gold tracking-[0.3em] text-xs md:text-sm mb-3">
                 <span className="w-8 h-px bg-gradient-to-r from-transparent to-gold" />
@@ -156,7 +193,6 @@ export default function Home() {
               <div className="w-24 h-1 bg-gradient-to-r from-transparent via-gold to-transparent mx-auto mt-6 opacity-60" />
             </div>
 
-            {/* Feature cards grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
               {features.map((f, i) => (
                 <div
@@ -293,9 +329,7 @@ export default function Home() {
                 href="tel:+919973318421"
                 className="group border-2 border-gold text-gold font-bold px-10 py-4 rounded-full hover:bg-gold hover:text-night transition-all duration-300 text-base md:text-lg hover:scale-105"
               >
-                <span className="flex items-center gap-2">
-                  📞 Call Now
-                </span>
+                <span className="flex items-center gap-2">📞 Call Now</span>
               </a>
             </div>
           </div>
