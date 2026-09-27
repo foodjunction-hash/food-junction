@@ -7,6 +7,7 @@ import InstallPWA from '@/components/InstallPWA'
 import BackgroundMusic from '@/components/BackgroundMusic'
 import RestaurantStatusBanner from '@/components/RestaurantStatusBanner'
 import OfferBannerPopup from '@/components/OfferBannerPopup'
+import WelcomePopup from '@/components/WelcomePopup'
 import { ToastProvider } from '@/components/Toast'
 
 const inter = Inter({
@@ -70,6 +71,7 @@ export default function RootLayout({
       </head>
       <body className="antialiased min-h-screen">
         <ToastProvider>
+          <WelcomePopup />
           <RestaurantStatusBanner />
           {children}
           <StickyCart />

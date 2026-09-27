@@ -17,6 +17,8 @@ export default function OfferBannerPopup() {
   const pathname = usePathname()
   const [offer, setOffer] = useState<Offer | null>(null)
   const [show, setShow] = useState(false)
+  const [offerLoaded, setOfferLoaded] = useState(false)
+  const [welcomeClosed, setWelcomeClosed] = useState(false)
 
   // Sirf home aur offers page par dikhao
   const showOnPages = ['/', '/offers']
@@ -47,20 +49,54 @@ export default function OfferBannerPopup() {
       } catch (err) {
         console.error('Failed to load offer:', err)
       }
+      setOfferLoaded(true)
     }
 
     loadOffer()
   }, [shouldShow])
 
   // ============================================
-  // SHOW AFTER 1 SEC
+  // LISTEN FOR WELCOME CLOSE EVENT
   // ============================================
   useEffect(() => {
-    if (!offer || !shouldShow) return
+    if (!shouldShow) return
 
-    const showTimer = setTimeout(() => setShow(true), 1000)
-    return () => clearTimeout(showTimer)
-  }, [offer, shouldShow])
+    const handleWelcomeClosed = () => {
+      setWelcomeClosed(true)
+    }
+
+    // Check if welcome popup is even shown on this page
+    const welcomeShown = pathname === '/'
+
+    if (welcomeShown) {
+      // Wait for welcome to close
+      window.addEventListener('welcomeClosed', handleWelcomeClosed)
+      return () => {
+        window.removeEventListener('welcomeClosed', handleWelcomeClosed)
+      }
+    } else {
+      // On other pages, no welcome popup — show after 1 sec
+      const timer = setTimeout(() => {
+        setWelcomeClosed(true)
+      }, 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [shouldShow, pathname])
+
+  // ============================================
+  // SHOW OFFER AFTER WELCOME CLOSED
+  // ============================================
+  useEffect(() => {
+    if (!shouldShow || !offerLoaded || !offer) return
+    if (!welcomeClosed) return
+
+    // Small delay for smooth transition
+    const timer = setTimeout(() => {
+      setShow(true)
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [shouldShow, offerLoaded, offer, welcomeClosed])
 
   // ============================================
   // AUTO-HIDE AFTER 6 SEC
@@ -74,6 +110,7 @@ export default function OfferBannerPopup() {
   // Reset on page change
   useEffect(() => {
     setShow(false)
+    setWelcomeClosed(false)
   }, [pathname])
 
   const handleDismiss = () => setShow(false)
@@ -94,9 +131,7 @@ export default function OfferBannerPopup() {
         onClick={handleDismiss}
       />
 
-      {/* ============================================
-          BADA BANNER (top-center se slide-down)
-          ============================================ */}
+      {/* Banner */}
       <div
         className={`fixed inset-x-0 top-0 z-[95] flex justify-center px-4 transition-all duration-700 ease-out ${
           show
@@ -111,9 +146,7 @@ export default function OfferBannerPopup() {
           {/* Gold border glow */}
           <div className="absolute inset-0 rounded-3xl ring-2 ring-gold/50 shadow-[0_0_60px_rgba(245,179,1,0.4)]" />
 
-          {/* Main card */}
           <div className="relative bg-gradient-to-br from-night-card via-night-soft to-night-card rounded-3xl overflow-hidden">
-
             {/* Background glow effects */}
             <div className="absolute -top-20 -right-20 w-60 h-60 bg-gold/20 rounded-full blur-3xl animate-pulse pointer-events-none" />
             <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-pink-500/15 rounded-full blur-3xl animate-pulse pointer-events-none" />
@@ -129,12 +162,9 @@ export default function OfferBannerPopup() {
               <X size={20} className="text-white" />
             </button>
 
-            {/* Layout: Desktop = row, Mobile = col */}
+            {/* Layout */}
             <div className="relative z-10 flex flex-col md:flex-row">
-
-              {/* ============================================
-                  LEFT: IMAGE
-                  ============================================ */}
+              {/* LEFT: IMAGE */}
               {offer.image_url && (
                 <div className="relative w-full md:w-2/5 h-48 md:h-auto md:min-h-[280px] overflow-hidden flex-shrink-0">
                   <img
@@ -142,24 +172,22 @@ export default function OfferBannerPopup() {
                     alt={offer.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />
-                  {/* Gradient overlay for mobile */}
                   <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-transparent via-transparent to-night-card/60" />
 
-                  {/* Sparkle badge on image */}
                   <div className="absolute top-3 left-3 md:top-4 md:left-4">
                     <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center shadow-xl shadow-gold/50 animate-pulse">
-                      <Sparkles size={22} className="text-night" strokeWidth={2.5} />
+                      <Sparkles
+                        size={22}
+                        className="text-night"
+                        strokeWidth={2.5}
+                      />
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* ============================================
-                  RIGHT: CONTENT
-                  ============================================ */}
+              {/* RIGHT: CONTENT */}
               <div className="flex-1 p-5 md:p-8 flex flex-col justify-center">
-
-                {/* Top badges */}
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
                   <span className="bg-gradient-to-r from-gold to-gold-dark text-night text-[10px] md:text-xs px-3 py-1.5 rounded-full font-bold uppercase tracking-widest flex items-center gap-1 shadow-lg">
                     <Sparkles size={11} /> Special Offer
@@ -170,19 +198,16 @@ export default function OfferBannerPopup() {
                   </span>
                 </div>
 
-                {/* Title */}
                 <h2 className="text-2xl md:text-4xl font-bold mb-3 leading-tight bg-gradient-to-r from-white via-gold to-white bg-clip-text text-transparent">
                   {offer.title}
                 </h2>
 
-                {/* Description */}
                 {offer.description && (
                   <p className="text-sm md:text-base text-white/70 mb-4 md:mb-6 leading-relaxed">
                     {offer.description}
                   </p>
                 )}
 
-                {/* CTA Button */}
                 <div className="flex items-center gap-3 flex-wrap">
                   <div className="inline-flex items-center gap-2 bg-gradient-to-r from-gold to-gold-dark text-night font-bold px-5 md:px-7 py-3 md:py-3.5 rounded-full shadow-lg shadow-gold/40 group-hover:scale-105 transition-all text-sm md:text-base">
                     Order Now
@@ -192,14 +217,12 @@ export default function OfferBannerPopup() {
                     />
                   </div>
 
-                  {/* Timer */}
                   <div className="flex items-center gap-1.5 text-xs md:text-sm text-white/50">
                     <Clock size={14} className="text-gold" />
                     <span>Limited time</span>
                   </div>
                 </div>
 
-                {/* Progress bar */}
                 {show && (
                   <div className="mt-5 h-1 bg-white/10 rounded-full overflow-hidden">
                     <div
@@ -213,7 +236,6 @@ export default function OfferBannerPopup() {
               </div>
             </div>
 
-            {/* Bottom gold accent line */}
             <div className="h-1.5 bg-gradient-to-r from-gold via-yellow-400 to-gold" />
           </div>
         </div>
