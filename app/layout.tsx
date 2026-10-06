@@ -9,6 +9,7 @@ import RestaurantStatusBanner from '@/components/RestaurantStatusBanner'
 import OfferBannerPopup from '@/components/OfferBannerPopup'
 import WelcomePopup from '@/components/WelcomePopup'
 import { ToastProvider } from '@/components/Toast'
+import { RestaurantProvider } from '@/lib/restaurantContext'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -70,33 +71,38 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className="antialiased min-h-screen">
-        <ToastProvider>
-          <WelcomePopup />
-          <RestaurantStatusBanner />
-          {children}
-          <StickyCart />
-          <InstallPWA />
-          <BackgroundMusic />
-          <OfferBannerPopup />
+        <RestaurantProvider>
+          <ToastProvider>
+            <WelcomePopup />
+            <RestaurantStatusBanner />
+            {children}
+            <StickyCart />
+            <InstallPWA />
+            <BackgroundMusic />
+            <OfferBannerPopup />
 
-          {/* Service Worker Registration */}
-          <Script id="service-worker-registration" strategy="afterInteractive">
-            {`
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').then(
-                    function(registration) {
-                      console.log('SW registered:', registration.scope);
-                    },
-                    function(err) {
-                      console.log('SW registration failed:', err);
-                    }
-                  );
-                });
-              }
-            `}
-          </Script>
-        </ToastProvider>
+            {/* Service Worker Registration */}
+            <Script
+              id="service-worker-registration"
+              strategy="afterInteractive"
+            >
+              {`
+                if ('serviceWorker' in navigator) {
+                  window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('/sw.js').then(
+                      function(registration) {
+                        console.log('SW registered:', registration.scope);
+                      },
+                      function(err) {
+                        console.log('SW registration failed:', err);
+                      }
+                    );
+                  });
+                }
+              `}
+            </Script>
+          </ToastProvider>
+        </RestaurantProvider>
       </body>
     </html>
   )
