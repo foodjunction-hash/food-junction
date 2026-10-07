@@ -32,6 +32,8 @@ export type Restaurant = {
   youtube_url: string
   twitter_url: string
   google_business_url: string
+  copyright_text: string
+  footer_description: string
   is_active: boolean
   monthly_fee: number
 }

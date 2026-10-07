@@ -1,9 +1,11 @@
+'use client'
+
 import Link from 'next/link'
 import { MapPin, Phone, Mail, Clock } from 'lucide-react'
+import { useRestaurant } from '@/lib/restaurantContext'
 
 // ============================================
 // Custom Social Media SVG Icons
-// (lucide-react me brand icons nahi hain)
 // ============================================
 
 function InstagramIcon({
@@ -84,7 +86,7 @@ function YoutubeIcon({
   )
 }
 
-function GithubIcon({
+function TwitterIcon({
   size = 18,
   className = '',
 }: {
@@ -97,116 +99,138 @@ function GithubIcon({
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      fill="currentColor"
       className={className}
     >
-      <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
-      <path d="M9 18c-4.51 2-5-2-7-2" />
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
     </svg>
   )
 }
 
 export default function Footer() {
+  const { restaurant } = useRestaurant()
+
+  const name = restaurant?.name || 'Food Junction'
+  const tagline = restaurant?.tagline || 'The Family Restaurant'
+  const description =
+    restaurant?.footer_description ||
+    restaurant?.short_description ||
+    'Serving delicious, hygienic food to families in Amarpur. Taste that brings family together.'
+  const logoUrl = restaurant?.logo_url || '/food-junction-logo.png'
+  const phone = restaurant?.phone || '+91 99733 18421'
+  const email = restaurant?.email || 'shubhamydv9272@gmail.com'
+  const address = restaurant?.address || 'Amarpur, Bihar'
+
+  const instagramUrl = restaurant?.instagram_url || ''
+  const facebookUrl = restaurant?.facebook_url || ''
+  const youtubeUrl = restaurant?.youtube_url || ''
+  const twitterUrl = restaurant?.twitter_url || ''
+
+  const copyrightText =
+    restaurant?.copyright_text ||
+    `© ${new Date().getFullYear()} ${name} — ${tagline}. All rights reserved.`
+
+  const hasSocial =
+    instagramUrl || facebookUrl || youtubeUrl || twitterUrl
+
   return (
     <footer className="relative bg-night-soft border-t border-gold/10 mt-16 overflow-hidden">
-      {/* Background effects */}
       <div className="absolute inset-0 bg-dots opacity-20" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[200px] bg-gold/5 rounded-full blur-[100px]" />
 
-      {/* Top gold divider */}
       <div className="divider-gold" />
 
       <div className="relative max-w-7xl mx-auto px-4 py-14 md:py-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-          {/* ===== Brand ===== */}
+          {/* Brand */}
           <div>
             <div className="flex items-center gap-3 mb-5 group">
               <div className="relative">
                 <div className="absolute inset-0 rounded-full bg-gold/30 blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
                 <img
-                  src="/food-junction-logo.png"
-                  alt="Food Junction Logo"
+                  src={logoUrl}
+                  alt={name}
                   className="relative w-14 h-14 rounded-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
               </div>
               <div>
-                <p className="text-xl text-gold font-bold">Food Junction</p>
-                <p className="text-xs text-white/50 tracking-[0.2em]">
-                  THE FAMILY RESTAURANT
+                <p className="text-xl text-gold font-bold">{name}</p>
+                <p className="text-xs text-white/50 tracking-[0.2em] uppercase">
+                  {tagline}
                 </p>
               </div>
             </div>
 
             <p className="text-sm text-white/60 mb-5 leading-relaxed">
-              Serving delicious, hygienic food to families in Amarpur. Taste
-              that brings family together. 🍽️
+              {description}
             </p>
 
-            {/* Social Icons */}
-            <div className="flex flex-wrap gap-3">
-              {/* Instagram */}
-              <a
-                href="https://www.instagram.com/shubhamyadav_9272"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-                className="group w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-gradient-to-br hover:from-gold hover:to-gold-dark hover:border-gold hover:scale-110 transition-all duration-300"
-              >
-                <InstagramIcon
-                  size={18}
-                  className="text-white/70 group-hover:text-night group-hover:scale-110 transition-all"
-                />
-              </a>
+            {hasSocial && (
+              <div className="flex flex-wrap gap-3">
+                {instagramUrl && (
+                  <a
+                    href={instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Instagram"
+                    className="group w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-gradient-to-br hover:from-gold hover:to-gold-dark hover:border-gold hover:scale-110 transition-all duration-300"
+                  >
+                    <InstagramIcon
+                      size={18}
+                      className="text-white/70 group-hover:text-night group-hover:scale-110 transition-all"
+                    />
+                  </a>
+                )}
 
-              {/* Facebook */}
-              <a
-                href="https://facebook.com/YOUR_FACEBOOK_PAGE"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Facebook"
-                className="group w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-gradient-to-br hover:from-gold hover:to-gold-dark hover:border-gold hover:scale-110 transition-all duration-300"
-              >
-                <FacebookIcon
-                  size={18}
-                  className="text-white/70 group-hover:text-night group-hover:scale-110 transition-all"
-                />
-              </a>
+                {facebookUrl && (
+                  <a
+                    href={facebookUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Facebook"
+                    className="group w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-gradient-to-br hover:from-gold hover:to-gold-dark hover:border-gold hover:scale-110 transition-all duration-300"
+                  >
+                    <FacebookIcon
+                      size={18}
+                      className="text-white/70 group-hover:text-night group-hover:scale-110 transition-all"
+                    />
+                  </a>
+                )}
 
-              {/* YouTube */}
-              <a
-                href="https://youtube.com/@YOUR_YOUTUBE_CHANNEL"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="YouTube"
-                className="group w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-gradient-to-br hover:from-gold hover:to-gold-dark hover:border-gold hover:scale-110 transition-all duration-300"
-              >
-                <YoutubeIcon
-                  size={18}
-                  className="text-white/70 group-hover:text-night group-hover:scale-110 transition-all"
-                />
-              </a>
+                {youtubeUrl && (
+                  <a
+                    href={youtubeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="YouTube"
+                    className="group w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-gradient-to-br hover:from-gold hover:to-gold-dark hover:border-gold hover:scale-110 transition-all duration-300"
+                  >
+                    <YoutubeIcon
+                      size={18}
+                      className="text-white/70 group-hover:text-night group-hover:scale-110 transition-all"
+                    />
+                  </a>
+                )}
 
-              {/* GitHub */}
-              <a
-                href="https://github.com/foodjunction-hash"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="GitHub"
-                className="group w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-gradient-to-br hover:from-gold hover:to-gold-dark hover:border-gold hover:scale-110 transition-all duration-300"
-              >
-                <GithubIcon
-                  size={18}
-                  className="text-white/70 group-hover:text-night group-hover:scale-110 transition-all"
-                />
-              </a>
-            </div>
+                {twitterUrl && (
+                  <a
+                    href={twitterUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Twitter"
+                    className="group w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-gradient-to-br hover:from-gold hover:to-gold-dark hover:border-gold hover:scale-110 transition-all duration-300"
+                  >
+                    <TwitterIcon
+                      size={16}
+                      className="text-white/70 group-hover:text-night group-hover:scale-110 transition-all"
+                    />
+                  </a>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* ===== Quick Links ===== */}
+          {/* Quick Links */}
           <div>
             <h4 className="font-bold text-gold mb-5 relative inline-block">
               Quick Links
@@ -233,7 +257,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* ===== Contact ===== */}
+          {/* Contact */}
           <div>
             <h4 className="font-bold text-gold mb-5 relative inline-block">
               Contact Us
@@ -245,7 +269,7 @@ export default function Footer() {
                   size={16}
                   className="text-gold mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform"
                 />
-                <span>Amarpur, Bihar</span>
+                <span>{address}</span>
               </li>
               <li className="flex items-start gap-3 text-white/60 group">
                 <Phone
@@ -253,10 +277,10 @@ export default function Footer() {
                   className="text-gold mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform"
                 />
                 <a
-                  href="tel:+919973318421"
+                  href={`tel:${phone.replace(/\s/g, '')}`}
                   className="hover:text-gold transition-colors"
                 >
-                  +91 99733 18421
+                  {phone}
                 </a>
               </li>
               <li className="flex items-start gap-3 text-white/60 group">
@@ -265,16 +289,16 @@ export default function Footer() {
                   className="text-gold mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform"
                 />
                 <a
-                  href="mailto:shubhamydv9272@gmail.com"
+                  href={`mailto:${email}`}
                   className="hover:text-gold transition-colors break-all"
                 >
-                  shubhamydv9272@gmail.com
+                  {email}
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* ===== Hours ===== */}
+          {/* Hours */}
           <div>
             <h4 className="font-bold text-gold mb-5 relative inline-block">
               Opening Hours
@@ -301,12 +325,10 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* ===== Bottom Bar ===== */}
+        {/* Bottom Bar */}
         <div className="divider-gold mt-12 mb-6" />
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-white/40">
-          <p>
-            © 2026 Food Junction — The Family Restaurant. All rights reserved.
-          </p>
+          <p>{copyrightText}</p>
           <p className="flex items-center gap-2">
             <span className="text-white/30">Developed by</span>
             <span className="text-gold font-semibold">Shubham Yadav</span>
@@ -330,7 +352,6 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Bottom gold divider */}
       <div className="divider-gold" />
     </footer>
   )

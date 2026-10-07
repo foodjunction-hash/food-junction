@@ -434,7 +434,7 @@ export default function AdminBrandingPage() {
         </div>
 
         {/* Brand Colors */}
-        <div className="bg-night-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-5 md:p-6 mb-6">
+        <div className="bg-night-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-5 md:p-6 mb-5">
           <h2 className="font-bold mb-5 flex items-center gap-2">
             <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
               <Palette size={16} className="text-gold" />
@@ -476,6 +476,50 @@ export default function AdminBrandingPage() {
           <p className="text-xs text-white/40 mt-4">
             💡 Ye colors website ke buttons, headings aur accents mein use honge (Phase 2 mein implement hoga)
           </p>
+        </div>
+
+        {/* ✅ Footer Settings — NAYA SECTION */}
+        <div className="bg-night-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-5 md:p-6 mb-5">
+          <h2 className="font-bold mb-5 flex items-center gap-2">
+            <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
+              <Globe size={16} className="text-gold" />
+            </span>
+            Footer Settings
+          </h2>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs text-white/60 mb-1.5 font-medium">
+                Footer Description
+              </label>
+              <textarea
+                value={restaurant.footer_description}
+                onChange={(e) => update('footer_description', e.target.value)}
+                rows={2}
+                placeholder="e.g. Serving delicious, hygienic food to families in Amarpur."
+                className="w-full bg-night/60 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-gold/50 focus:outline-none transition resize-none"
+              />
+              <p className="text-[10px] text-white/40 mt-1.5">
+                💡 Ye text footer mein brand ke neeche show hoga
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs text-white/60 mb-1.5 font-medium">
+                Copyright Text
+              </label>
+              <input
+                type="text"
+                value={restaurant.copyright_text}
+                onChange={(e) => update('copyright_text', e.target.value)}
+                placeholder={`© ${new Date().getFullYear()} ${restaurant.name}. All rights reserved.`}
+                className="w-full bg-night/60 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-gold/50 focus:outline-none transition"
+              />
+              <p className="text-[10px] text-white/40 mt-1.5">
+                💡 Empty chhod do → automatic "© [Year] [Restaurant Name]. All rights reserved." show hoga
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Info */}
