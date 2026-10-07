@@ -310,7 +310,6 @@ export default function Home() {
           <div className="relative max-w-4xl mx-auto px-4 text-center">
             <div className="text-6xl mb-6 animate-bounce-soft">🍽️</div>
             <h2 className="font-display text-4xl md:text-6xl font-bold mb-4">
-              Hungry?{' '}
               <span className="text-shimmer">
                 Order from {restaurantName}!
               </span>

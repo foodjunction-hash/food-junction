@@ -1,100 +1,46 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import { useRestaurant } from '@/lib/restaurantContext'
+import {
+  getActiveOffers,
+  type HomepageOffer,
+} from '@/lib/offersSupabase'
 import {
   Tag,
-  Percent,
-  Gift,
   Clock,
-  TrendingUp,
   ShoppingBag,
   ArrowRight,
   Sparkles,
-  Copy,
+  Loader2,
 } from 'lucide-react'
 
-const OFFERS = [
-  {
-    code: 'WELCOME20',
-    title: '20% OFF on First Order',
-    description: 'New customer ho? Pehle order pe 20% discount paao!',
-    discount: '20%',
-    minOrder: 199,
-    maxDiscount: 100,
-    emoji: '🎉',
-    color: 'from-gold to-gold-dark',
-    expires: 'Limited Time',
-    highlight: true,
-  },
-  {
-    code: 'FAMILY50',
-    title: '₹50 OFF on Family Orders',
-    description: '₹500+ ke order pe ₹50 instant discount',
-    discount: '₹50 OFF',
-    minOrder: 500,
-    maxDiscount: 50,
-    emoji: '👨‍👩‍👧‍👦',
-    color: 'from-fresh to-fresh-dark',
-    expires: 'Valid Till Month End',
-    highlight: false,
-  },
-  {
-    code: 'PIZZA30',
-    title: '30% OFF on Pizza',
-    description: 'Saare pizzas pe 30% discount — aaj hi order karo!',
-    discount: '30%',
-    minOrder: 299,
-    maxDiscount: 150,
-    emoji: '🍕',
-    color: 'from-red-500 to-red-700',
-    expires: 'Today Only',
-    highlight: true,
-  },
-  {
-    code: 'FREEDEL',
-    title: 'FREE Delivery',
-    description: 'Koi bhi order karo — delivery free!',
-    discount: 'FREE',
-    minOrder: 199,
-    maxDiscount: 30,
-    emoji: '🚚',
-    color: 'from-blue-500 to-blue-700',
-    expires: 'Every Day',
-    highlight: false,
-  },
-  {
-    code: 'BIRYANI25',
-    title: '25% OFF on Biryani',
-    description: 'Hyderabadi Biryani pe special discount',
-    discount: '25%',
-    minOrder: 249,
-    maxDiscount: 100,
-    emoji: '🍚',
-    color: 'from-purple-500 to-purple-700',
-    expires: 'Weekend Special',
-    highlight: false,
-  },
-  {
-    code: 'COMBO100',
-    title: '₹100 OFF on Combos',
-    description: 'Family combo order karo, ₹100 bachao',
-    discount: '₹100 OFF',
-    minOrder: 799,
-    maxDiscount: 100,
-    emoji: '🎁',
-    color: 'from-pink-500 to-pink-700',
-    expires: 'Limited Stock',
-    highlight: true,
-  },
-]
-
 export default function OffersPage() {
+  const { restaurant } = useRestaurant()
+  const [offers, setOffers] = useState<HomepageOffer[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true)
+      const data = await getActiveOffers(restaurant?.id)
+      setOffers(data)
+      setLoading(false)
+    }
+    if (restaurant) load()
+  }, [restaurant])
+
+  const restaurantName = restaurant?.name || 'Food Junction'
+
   return (
     <>
       <Header />
 
       <main className="min-h-screen">
-        {/* ===== Hero Section ===== */}
+        {/* Hero */}
         <section className="relative overflow-hidden py-16 md:py-24 bg-mesh">
           <div className="absolute inset-0 bg-dots opacity-30" />
           <div className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full bg-gold/10 blur-[120px]" />
@@ -123,7 +69,7 @@ export default function OffersPage() {
           </div>
         </section>
 
-        {/* ===== Offers Grid ===== */}
+        {/* Offers Grid */}
         <section className="relative py-16 md:py-24 bg-night-soft">
           <div className="absolute inset-0 bg-dots opacity-20" />
 
@@ -137,135 +83,108 @@ export default function OffersPage() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {OFFERS.map((offer, i) => (
-                <div
-                  key={i}
-                  className="group relative bg-night-card rounded-2xl overflow-hidden border border-white/5 hover:border-gold/40 transition-all duration-500 card-premium"
+            {loading ? (
+              <div className="text-center py-20">
+                <Loader2 className="animate-spin text-gold mx-auto mb-3" size={32} />
+                <p className="text-white/60 text-sm">Loading offers...</p>
+              </div>
+            ) : offers.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="text-5xl mb-3">🎁</div>
+                <p className="text-white/60 text-sm mb-4">
+                  No offers available right now
+                </p>
+                <Link
+                  href="/menu"
+                  className="inline-flex bg-gold text-night font-bold px-6 py-3 rounded-full text-sm"
                 >
-                  {/* Highlight badge */}
-                  {offer.highlight && (
-                    <div className="absolute top-4 right-4 z-10">
-                      <span className="inline-flex items-center gap-1 bg-gold text-night text-[10px] font-bold px-2.5 py-1 rounded-full shadow-gold animate-pulse">
-                        🔥 HOT
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Discount badge */}
+                  Browse Menu
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {offers.map((offer, i) => (
                   <div
-                    className={`relative bg-gradient-to-br ${offer.color} p-6 text-center`}
+                    key={offer.id}
+                    className="group relative bg-night-card rounded-2xl overflow-hidden border border-white/5 hover:border-gold/40 transition-all duration-500 card-premium"
+                    style={{ animation: `fadeInUp 0.4s ease-out ${i * 0.05}s both` }}
                   >
-                    <div className="text-5xl mb-2">{offer.emoji}</div>
-                    <p className="text-3xl md:text-4xl font-bold text-white drop-shadow">
-                      {offer.discount}
-                    </p>
-                    <p className="text-white/90 text-xs tracking-wider mt-1">
-                      DISCOUNT
-                    </p>
-                  </div>
-
-                  {/* Details */}
-                  <div className="p-5">
-                    <h3 className="font-bold text-lg mb-2 group-hover:text-gold transition">
-                      {offer.title}
-                    </h3>
-                    <p className="text-sm text-white/60 mb-4 min-h-[40px]">
-                      {offer.description}
-                    </p>
-
-                    {/* Info row */}
-                    <div className="space-y-2 mb-4 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-white/40">Min Order</span>
-                        <span className="font-semibold">₹{offer.minOrder}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-white/40">Max Discount</span>
-                        <span className="font-semibold">₹{offer.maxDiscount}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-white/40">Validity</span>
-                        <span className="text-gold font-semibold">
-                          {offer.expires}
+                    {offer.is_hot && (
+                      <div className="absolute top-4 right-4 z-10">
+                        <span className="inline-flex items-center gap-1 bg-gold text-night text-[10px] font-bold px-2.5 py-1 rounded-full shadow-gold animate-pulse">
+                          🔥 HOT
                         </span>
                       </div>
+                    )}
+
+                    <div
+                      className="relative p-6 text-center"
+                      style={{
+                        background: `linear-gradient(135deg, ${offer.color} 0%, ${offer.color}dd 100%)`,
+                      }}
+                    >
+                      <div className="text-5xl mb-2">{offer.emoji}</div>
+                      <p className="text-3xl md:text-4xl font-bold text-white drop-shadow">
+                        {offer.badge}
+                      </p>
+                      <p className="text-white/90 text-xs tracking-wider mt-1">
+                        {offer.badge_label || 'DISCOUNT'}
+                      </p>
                     </div>
 
-                    {/* Coupon code */}
-                    <div className="bg-night border-2 border-dashed border-gold/40 rounded-xl p-3 flex items-center justify-between gap-2 group-hover:border-gold transition">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] text-white/40 mb-0.5">
-                          COUPON CODE
-                        </p>
-                        <p className="font-mono font-bold text-gold text-sm tracking-wider truncate">
-                          {offer.code}
-                        </p>
+                    <div className="p-5">
+                      <h3 className="font-bold text-lg mb-2 group-hover:text-gold transition">
+                        {offer.title}
+                      </h3>
+                      <p className="text-sm text-white/60 mb-4 min-h-[40px]">
+                        {offer.description}
+                      </p>
+
+                      <div className="space-y-2 mb-4 text-xs">
+                        {offer.min_order > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-white/40">Min Order</span>
+                            <span className="font-semibold">₹{offer.min_order}</span>
+                          </div>
+                        )}
+                        {offer.max_discount > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-white/40">Max Discount</span>
+                            <span className="font-semibold">₹{offer.max_discount}</span>
+                          </div>
+                        )}
+                        {offer.validity && (
+                          <div className="flex justify-between">
+                            <span className="text-white/40">Validity</span>
+                            <span className="text-gold font-semibold">
+                              {offer.validity}
+                            </span>
+                          </div>
+                        )}
                       </div>
-                      <Tag
-                        size={18}
-                        className="text-gold group-hover:scale-110 transition-transform flex-shrink-0"
-                      />
+
+                      {offer.coupon_code && (
+                        <div className="bg-night border-2 border-dashed border-gold/40 rounded-xl p-3 flex items-center justify-between gap-2 group-hover:border-gold transition">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] text-white/40 mb-0.5">
+                              COUPON CODE
+                            </p>
+                            <p className="font-mono font-bold text-gold text-sm tracking-wider truncate">
+                              {offer.coupon_code}
+                            </p>
+                          </div>
+                          <Tag size={18} className="text-gold group-hover:scale-110 transition-transform flex-shrink-0" />
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
-        {/* ===== How to Use ===== */}
-        <section className="relative py-16 md:py-24 bg-mesh">
-          <div className="absolute inset-0 bg-dots opacity-30" />
-
-          <div className="relative max-w-5xl mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
-                How to <span className="text-shimmer">Use</span> Coupons?
-              </h2>
-              <p className="text-white/60">
-                3 easy steps me paise bachao
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                {
-                  step: '1',
-                  title: 'Order Karo',
-                  desc: 'Menu se apne favourite items select karo',
-                  emoji: '🍽️',
-                },
-                {
-                  step: '2',
-                  title: 'Code Apply Karo',
-                  desc: 'Checkout pe coupon code daalo',
-                  emoji: '🎟️',
-                },
-                {
-                  step: '3',
-                  title: 'Paise Bachao',
-                  desc: 'Instant discount paao! 🎉',
-                  emoji: '💰',
-                },
-              ].map((s, i) => (
-                <div
-                  key={i}
-                  className="relative bg-night-card rounded-2xl border border-white/5 p-6 text-center card-premium"
-                >
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center text-night font-bold shadow-gold">
-                    {s.step}
-                  </div>
-                  <div className="text-5xl mb-4 mt-2">{s.emoji}</div>
-                  <h3 className="font-bold text-lg mb-2">{s.title}</h3>
-                  <p className="text-sm text-white/60">{s.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ===== Bottom CTA ===== */}
+        {/* Bottom CTA */}
         <section className="relative py-16 md:py-24 bg-gradient-to-br from-gold/10 via-night to-night">
           <div className="absolute inset-0 bg-dots opacity-30" />
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gold/20 rounded-full blur-[100px]" />
@@ -288,28 +207,16 @@ export default function OffersPage() {
             </Link>
           </div>
         </section>
-
-        {/* ===== Terms ===== */}
-        <section className="py-12 bg-night-soft">
-          <div className="max-w-4xl mx-auto px-4">
-            <div className="bg-night-card border border-white/5 rounded-2xl p-6">
-              <h3 className="font-bold text-gold mb-4 flex items-center gap-2">
-                <Clock size={16} /> Terms & Conditions
-              </h3>
-              <ul className="text-xs text-white/50 space-y-2 list-disc list-inside">
-                <li>Ek order me sirf ek coupon use ho sakta hai</li>
-                <li>Minimum order value coupon ke saath match hona chahiye</li>
-                <li>Coupons limited time ke liye valid hain</li>
-                <li>Food Junction kisi bhi coupon ko cancel karne ka adhikaar rakhta hai</li>
-                <li>Coupon code checkout pe daalna zaroori hai</li>
-                <li>Cash orders pe bhi coupons valid hain</li>
-              </ul>
-            </div>
-          </div>
-        </section>
       </main>
 
       <Footer />
+
+      <style jsx global>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </>
   )
 }
