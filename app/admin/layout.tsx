@@ -22,6 +22,7 @@ import {
   Clock,
   Camera,
   MessageSquare,
+  Layout,
 } from 'lucide-react'
 import { isAdminLoggedIn, logoutAdmin } from '@/lib/auth'
 
@@ -68,6 +69,7 @@ export default function AdminLayout({
     { href: '/admin/menu', label: 'Menu', icon: UtensilsCrossed },
     { href: '/admin/offers', label: 'Offers', icon: Gift },
     { href: '/admin/announcement', label: 'Announcement', icon: Megaphone },
+    { href: '/admin/welcome-popup', label: 'Welcome Popup', icon: Layout },
     { href: '/admin/hours', label: 'Opening Hours', icon: Clock },
     { href: '/admin/gallery', label: 'Gallery', icon: Camera },
     { href: '/admin/testimonials', label: 'Testimonials', icon: MessageSquare },
