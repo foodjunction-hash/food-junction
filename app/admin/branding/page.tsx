@@ -14,6 +14,8 @@ import {
   Building2,
   Calendar,
   CheckCircle2,
+  Upload,
+  Users,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/components/Toast'
@@ -21,6 +23,7 @@ import {
   type Restaurant,
   getDefaultRestaurant,
   updateRestaurant,
+  uploadRestaurantImage,
 } from '@/lib/restaurant'
 
 // ============================================
@@ -236,6 +239,242 @@ export default function AdminBrandingPage() {
                 placeholder="Restaurant ke baare mein kuch likho..."
                 className="w-full bg-night/60 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-gold/50 focus:outline-none transition resize-none"
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Logo & Branding */}
+        <div className="bg-night-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-5 md:p-6 mb-5">
+          <h2 className="font-bold mb-5 flex items-center gap-2">
+            <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
+              <Palette size={16} className="text-gold" />
+            </span>
+            Logo & Branding
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Main Logo */}
+            <div>
+              <label className="block text-xs text-white/60 mb-2 font-medium">
+                Main Logo
+              </label>
+              <div className="flex items-center gap-4">
+                <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-gold/40 flex-shrink-0 bg-night/60">
+                  <img
+                    src={restaurant.logo_url || '/food-junction-logo.png'}
+                    alt="Logo"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="cursor-pointer inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white/80 hover:text-gold border border-white/10 hover:border-gold/40 px-4 py-2.5 rounded-full text-sm font-semibold transition">
+                    <Upload size={14} />
+                    Upload Logo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        toast.info('Uploading...')
+                        const result = await uploadRestaurantImage(file, 'logos')
+                        if (result.success && result.url) {
+                          update('logo_url', result.url)
+                          toast.success('Logo uploaded!')
+                        } else {
+                          toast.error('Upload failed')
+                        }
+                      }}
+                    />
+                  </label>
+                  <p className="text-[10px] text-white/40 mt-2">
+                    PNG, JPG, WEBP • Max 5MB
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Favicon */}
+            <div>
+              <label className="block text-xs text-white/60 mb-2 font-medium">
+                Favicon
+              </label>
+              <div className="flex items-center gap-4">
+                <div className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-gold/40 flex-shrink-0 bg-night/60">
+                  <img
+                    src={restaurant.favicon_url || '/icon-192.png'}
+                    alt="Favicon"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="cursor-pointer inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white/80 hover:text-gold border border-white/10 hover:border-gold/40 px-4 py-2.5 rounded-full text-sm font-semibold transition">
+                    <Upload size={14} />
+                    Upload Favicon
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        toast.info('Uploading...')
+                        const result = await uploadRestaurantImage(file, 'favicons')
+                        if (result.success && result.url) {
+                          update('favicon_url', result.url)
+                          toast.success('Favicon uploaded!')
+                        } else {
+                          toast.error('Upload failed')
+                        }
+                      }}
+                    />
+                  </label>
+                  <p className="text-[10px] text-white/40 mt-2">
+                    192x192 PNG recommended
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Team Members */}
+        <div className="bg-night-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-5 md:p-6 mb-5">
+          <h2 className="font-bold mb-5 flex items-center gap-2">
+            <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
+              <Users size={16} className="text-gold" />
+            </span>
+            Team Members
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Owner */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-gold text-sm flex items-center gap-1.5">
+                👑 Owner
+              </h3>
+
+              <div className="flex items-center gap-4">
+                <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-gold/40 flex-shrink-0 bg-night/60">
+                  <img
+                    src={restaurant.owner_photo_url || '/team/owner.jpg'}
+                    alt="Owner"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <label className="cursor-pointer inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white/80 hover:text-gold border border-white/10 hover:border-gold/40 px-4 py-2.5 rounded-full text-sm font-semibold transition">
+                  <Upload size={14} />
+                  Upload Photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      toast.info('Uploading...')
+                      const result = await uploadRestaurantImage(file, 'owners')
+                      if (result.success && result.url) {
+                        update('owner_photo_url', result.url)
+                        toast.success('Owner photo uploaded!')
+                      } else {
+                        toast.error('Upload failed')
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+
+              <div>
+                <label className="block text-xs text-white/60 mb-1.5 font-medium">
+                  Owner Name
+                </label>
+                <input
+                  type="text"
+                  value={restaurant.owner_name}
+                  onChange={(e) => update('owner_name', e.target.value)}
+                  placeholder="e.g. Raj Nandni"
+                  className="w-full bg-night/60 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-gold/50 focus:outline-none transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-white/60 mb-1.5 font-medium">
+                  Owner Role
+                </label>
+                <input
+                  type="text"
+                  value={restaurant.owner_role}
+                  onChange={(e) => update('owner_role', e.target.value)}
+                  placeholder="e.g. Owner & Founder"
+                  className="w-full bg-night/60 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-gold/50 focus:outline-none transition"
+                />
+              </div>
+            </div>
+
+            {/* Developer */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-gold text-sm flex items-center gap-1.5">
+                💻 Developer
+              </h3>
+
+              <div className="flex items-center gap-4">
+                <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-gold/40 flex-shrink-0 bg-night/60">
+                  <img
+                    src={restaurant.developer_photo_url || '/team/developer-new.jpg'}
+                    alt="Developer"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <label className="cursor-pointer inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white/80 hover:text-gold border border-white/10 hover:border-gold/40 px-4 py-2.5 rounded-full text-sm font-semibold transition">
+                  <Upload size={14} />
+                  Upload Photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      toast.info('Uploading...')
+                      const result = await uploadRestaurantImage(file, 'developers')
+                      if (result.success && result.url) {
+                        update('developer_photo_url', result.url)
+                        toast.success('Developer photo uploaded!')
+                      } else {
+                        toast.error('Upload failed')
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+
+              <div>
+                <label className="block text-xs text-white/60 mb-1.5 font-medium">
+                  Developer Name
+                </label>
+                <input
+                  type="text"
+                  value={restaurant.developer_name}
+                  onChange={(e) => update('developer_name', e.target.value)}
+                  placeholder="e.g. Shubham Yadav"
+                  className="w-full bg-night/60 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-gold/50 focus:outline-none transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-white/60 mb-1.5 font-medium">
+                  Developer Role
+                </label>
+                <input
+                  type="text"
+                  value={restaurant.developer_role}
+                  onChange={(e) => update('developer_role', e.target.value)}
+                  placeholder="e.g. Web Developer"
+                  className="w-full bg-night/60 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-gold/50 focus:outline-none transition"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -478,7 +717,7 @@ export default function AdminBrandingPage() {
           </p>
         </div>
 
-        {/* ✅ Footer Settings — NAYA SECTION */}
+        {/* Footer Settings */}
         <div className="bg-night-card/80 backdrop-blur-xl border border-white/5 rounded-2xl p-5 md:p-6 mb-5">
           <h2 className="font-bold mb-5 flex items-center gap-2">
             <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
@@ -499,9 +738,6 @@ export default function AdminBrandingPage() {
                 placeholder="e.g. Serving delicious, hygienic food to families in Amarpur."
                 className="w-full bg-night/60 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-gold/50 focus:outline-none transition resize-none"
               />
-              <p className="text-[10px] text-white/40 mt-1.5">
-                💡 Ye text footer mein brand ke neeche show hoga
-              </p>
             </div>
 
             <div>

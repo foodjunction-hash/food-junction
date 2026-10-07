@@ -34,6 +34,14 @@ export type Restaurant = {
   google_business_url: string
   copyright_text: string
   footer_description: string
+  // Owner & Developer
+  owner_name: string
+  owner_role: string
+  owner_photo_url: string
+  developer_name: string
+  developer_role: string
+  developer_photo_url: string
+  // Status
   is_active: boolean
   monthly_fee: number
 }
@@ -93,4 +101,37 @@ export async function updateRestaurant(
 // ============================================
 export async function getDefaultRestaurant(): Promise<Restaurant | null> {
   return getRestaurant(DEFAULT_SLUG)
+}
+
+// ============================================
+// UPLOAD IMAGE TO SUPABASE STORAGE
+// ============================================
+export async function uploadRestaurantImage(
+  file: File,
+  folder: string = 'general'
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const ext = file.name.split('.').pop()
+    const fileName = `${folder}/${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}.${ext}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('restaurant-assets')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false,
+      })
+
+    if (uploadError) throw uploadError
+
+    const { data: urlData } = supabase.storage
+      .from('restaurant-assets')
+      .getPublicUrl(fileName)
+
+    return { success: true, url: urlData.publicUrl }
+  } catch (err: any) {
+    console.error('Upload failed:', err)
+    return { success: false, error: err.message }
+  }
 }
