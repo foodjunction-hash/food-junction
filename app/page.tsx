@@ -6,12 +6,12 @@ import Header from '@/components/Header'
 import Hero from '@/components/Hero'
 import Footer from '@/components/Footer'
 import FoodCard from '@/components/FoodCard'
+import TestimonialsSection from '@/components/TestimonialsSection'
 import { type FoodItem } from '@/lib/data'
 import { getMenuItems } from '@/lib/menuSupabase'
 import { useRestaurant } from '@/lib/restaurantContext'
 import {
   ShoppingBag,
-  Star,
   Leaf,
   Zap,
   ShieldCheck,
@@ -62,7 +62,7 @@ export default function Home() {
       icon: Code2,
       color: 'from-fresh to-fresh-dark',
     },
-  ].filter((m) => m.name) // Hide if no name
+  ].filter((m) => m.name)
 
   const features = [
     {
@@ -133,10 +133,7 @@ export default function Home() {
 
             {loading ? (
               <div className="text-center py-20">
-                <Loader2
-                  className="animate-spin text-gold mx-auto mb-3"
-                  size={32}
-                />
+                <Loader2 className="animate-spin text-gold mx-auto mb-3" size={32} />
                 <p className="text-white/60 text-sm">Loading bestsellers...</p>
               </div>
             ) : bestsellers.length === 0 ? (
@@ -166,10 +163,7 @@ export default function Home() {
                 className="group inline-flex items-center gap-2 border-2 border-gold text-gold font-bold px-8 py-4 rounded-full hover:bg-gold hover:text-night transition-all duration-300 hover:shadow-[0_10px_30px_rgba(245,179,1,0.3)] hover:scale-105"
               >
                 <span>View Full Menu</span>
-                <ArrowRight
-                  size={18}
-                  className="group-hover:translate-x-1 transition-transform"
-                />
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
           </div>
@@ -187,8 +181,7 @@ export default function Home() {
                 <span className="w-8 h-px bg-gradient-to-l from-transparent to-gold" />
               </div>
               <h2 className="font-display text-4xl md:text-6xl font-bold mb-4">
-                The <span className="text-shimmer">{restaurantName}</span>{' '}
-                Promise
+                The <span className="text-shimmer">{restaurantName}</span> Promise
               </h2>
               <p className="text-white/60 max-w-2xl mx-auto text-sm md:text-base">
                 We promise fresh, hygienic, and delicious food with every order
@@ -207,10 +200,7 @@ export default function Home() {
                   </div>
 
                   <div className="relative w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-gold/20 to-gold/5 border border-gold/30 flex items-center justify-center mb-5 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-[0_0_20px_rgba(245,179,1,0.1)] group-hover:shadow-[0_0_30px_rgba(245,179,1,0.4)]">
-                    <f.icon
-                      size={28}
-                      className="text-gold group-hover:scale-110 transition-transform"
-                    />
+                    <f.icon size={28} className="text-gold group-hover:scale-110 transition-transform" />
                     <span className="absolute -top-2 -right-2 text-2xl opacity-0 group-hover:opacity-100 group-hover:animate-bounce-soft transition-opacity">
                       {f.emoji}
                     </span>
@@ -231,7 +221,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* MEET THE TEAM — Dynamic */}
+        {/* MEET THE TEAM */}
         {team.length > 0 && (
           <section className="relative py-16 md:py-24 bg-night-soft overflow-hidden">
             <div className="absolute inset-0 bg-dots opacity-20" />
@@ -301,7 +291,10 @@ export default function Home() {
           </section>
         )}
 
-        {/* FINAL CTA — Dynamic */}
+        {/* TESTIMONIALS — Dynamic */}
+        <TestimonialsSection />
+
+        {/* FINAL CTA */}
         <section className="relative py-20 md:py-28 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-gold/10 via-night to-night" />
           <div className="absolute inset-0 bg-dots opacity-30" />
@@ -310,9 +303,7 @@ export default function Home() {
           <div className="relative max-w-4xl mx-auto px-4 text-center">
             <div className="text-6xl mb-6 animate-bounce-soft">🍽️</div>
             <h2 className="font-display text-4xl md:text-6xl font-bold mb-4">
-              <span className="text-shimmer">
-                Order from {restaurantName}!
-              </span>
+              <span className="text-shimmer">Order from {restaurantName}!</span>
             </h2>
             <p className="text-white/60 mb-10 text-base md:text-lg max-w-2xl mx-auto">
               Fresh, delicious, hygienic food delivered to your doorstep in just

@@ -20,6 +20,8 @@ import {
   Store,
   Megaphone,
   Clock,
+  Camera,
+  MessageSquare,
 } from 'lucide-react'
 import { isAdminLoggedIn, logoutAdmin } from '@/lib/auth'
 
@@ -67,6 +69,8 @@ export default function AdminLayout({
     { href: '/admin/offers', label: 'Offers', icon: Gift },
     { href: '/admin/announcement', label: 'Announcement', icon: Megaphone },
     { href: '/admin/hours', label: 'Opening Hours', icon: Clock },
+    { href: '/admin/gallery', label: 'Gallery', icon: Camera },
+    { href: '/admin/testimonials', label: 'Testimonials', icon: MessageSquare },
     { href: '/admin/tables', label: 'Table QR', icon: QrCode },
     { href: '/admin/services', label: 'Services', icon: Briefcase },
     { href: '/admin/reports', label: 'Reports', icon: BarChart3 },

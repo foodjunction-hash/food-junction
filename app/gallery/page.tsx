@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import { useRestaurant } from '@/lib/restaurantContext'
+import { getActiveGallery, type GalleryItem } from '@/lib/gallerySupabase'
 import {
   Sparkles,
   Camera,
@@ -14,67 +16,12 @@ import {
   X,
   Maximize2,
   Users,
+  Loader2,
 } from 'lucide-react'
 
-type Category = 'all' | 'food' | 'ambience' | 'moments' | 'team'
+type Category = 'all' | string
 
-type GalleryItem = {
-  id: number
-  emoji: string
-  title: string
-  category: Category
-  bgColor: string
-  image?: string
-}
-
-const GALLERY_ITEMS: GalleryItem[] = [
-  // Team
-  {
-    id: 22,
-    emoji: '👑',
-    title: 'Raj Nandni (Owner)',
-    category: 'team',
-    bgColor: 'from-gold/30 to-amber-500/30',
-    image: '/team/owner.jpg',
-  },
-  {
-    id: 23,
-    emoji: '💻',
-    title: 'Shubham Yadav (Developer)',
-    category: 'team',
-    bgColor: 'from-fresh/30 to-green-500/30',
-    image: '/team/developer-new.jpg',
-  },
-
-  // Food
-  { id: 1, emoji: '🍕', title: 'Farmhouse Pizza', category: 'food', bgColor: 'from-gold/20 to-red-500/20' },
-  { id: 2, emoji: '🍔', title: 'Chicken Zinger Burger', category: 'food', bgColor: 'from-orange-500/20 to-yellow-500/20' },
-  { id: 3, emoji: '🍚', title: 'Hyderabadi Biryani', category: 'food', bgColor: 'from-amber-500/20 to-red-500/20' },
-  { id: 4, emoji: '🍜', title: 'Hakka Noodles', category: 'food', bgColor: 'from-yellow-500/20 to-orange-500/20' },
-  { id: 5, emoji: '🍛', title: 'Paneer Butter Masala', category: 'food', bgColor: 'from-red-500/20 to-orange-500/20' },
-  { id: 6, emoji: '☕', title: 'Masala Chai', category: 'food', bgColor: 'from-amber-700/20 to-orange-500/20' },
-  { id: 7, emoji: '🍰', title: 'Chocolate Brownie', category: 'food', bgColor: 'from-pink-500/20 to-purple-500/20' },
-  { id: 8, emoji: '🥟', title: 'Chicken Momos', category: 'food', bgColor: 'from-green-500/20 to-teal-500/20' },
-  { id: 9, emoji: '🍽️', title: 'Family Thali', category: 'food', bgColor: 'from-gold/20 to-amber-500/20' },
-
-  // Ambience
-  { id: 10, emoji: '🏪', title: 'Restaurant Interior', category: 'ambience', bgColor: 'from-blue-500/20 to-purple-500/20' },
-  { id: 11, emoji: '🪑', title: 'Family Seating', category: 'ambience', bgColor: 'from-gold/20 to-fresh/20' },
-  { id: 12, emoji: '💡', title: 'Warm Lighting', category: 'ambience', bgColor: 'from-yellow-500/20 to-orange-500/20' },
-  { id: 13, emoji: '🍽️', title: 'Dining Tables', category: 'ambience', bgColor: 'from-fresh/20 to-blue-500/20' },
-  { id: 14, emoji: '🎨', title: 'Wall Decor', category: 'ambience', bgColor: 'from-purple-500/20 to-pink-500/20' },
-  { id: 15, emoji: '🌿', title: 'Green Corner', category: 'ambience', bgColor: 'from-fresh/20 to-green-500/20' },
-
-  // Moments
-  { id: 16, emoji: '👨‍👩‍👧‍👦', title: 'Family Time', category: 'moments', bgColor: 'from-gold/20 to-fresh/20' },
-  { id: 17, emoji: '🎂', title: 'Birthday Celebrations', category: 'moments', bgColor: 'from-pink-500/20 to-purple-500/20' },
-  { id: 18, emoji: '🥳', title: 'Party Moments', category: 'moments', bgColor: 'from-purple-500/20 to-blue-500/20' },
-  { id: 19, emoji: '💑', title: 'Couple Dinners', category: 'moments', bgColor: 'from-red-500/20 to-pink-500/20' },
-  { id: 20, emoji: '😊', title: 'Happy Customers', category: 'moments', bgColor: 'from-gold/20 to-orange-500/20' },
-  { id: 21, emoji: '🎉', title: 'Special Events', category: 'moments', bgColor: 'from-fresh/20 to-blue-500/20' },
-]
-
-const CATEGORIES: { id: Category; label: string; emoji: string; icon: any }[] = [
+const CATEGORIES = [
   { id: 'all', label: 'All Photos', emoji: '✨', icon: Sparkles },
   { id: 'food', label: 'Food', emoji: '🍽️', icon: Utensils },
   { id: 'ambience', label: 'Ambience', emoji: '🏪', icon: Building2 },
@@ -83,21 +30,39 @@ const CATEGORIES: { id: Category; label: string; emoji: string; icon: any }[] = 
 ]
 
 export default function GalleryPage() {
+  const { restaurant } = useRestaurant()
+  const [items, setItems] = useState<GalleryItem[]>([])
+  const [filtered, setFiltered] = useState<GalleryItem[]>([])
+  const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<Category>('all')
   const [selected, setSelected] = useState<GalleryItem | null>(null)
 
-  const filtered =
-    filter === 'all'
-      ? GALLERY_ITEMS
-      : GALLERY_ITEMS.filter((item) => item.category === filter)
+  useEffect(() => {
+    const load = async () => {
+      if (!restaurant) return
+      setLoading(true)
+      const data = await getActiveGallery(restaurant.id)
+      setItems(data)
+      setFiltered(data)
+      setLoading(false)
+    }
+    load()
+  }, [restaurant])
 
-  const counts = {
-    all: GALLERY_ITEMS.length,
-    food: GALLERY_ITEMS.filter((i) => i.category === 'food').length,
-    ambience: GALLERY_ITEMS.filter((i) => i.category === 'ambience').length,
-    moments: GALLERY_ITEMS.filter((i) => i.category === 'moments').length,
-    team: GALLERY_ITEMS.filter((i) => i.category === 'team').length,
+  useEffect(() => {
+    if (filter === 'all') setFiltered(items)
+    else setFiltered(items.filter((i) => i.category === filter))
+  }, [filter, items])
+
+  const counts: Record<string, number> = {
+    all: items.length,
+    food: items.filter((i) => i.category === 'food').length,
+    ambience: items.filter((i) => i.category === 'ambience').length,
+    moments: items.filter((i) => i.category === 'moments').length,
+    team: items.filter((i) => i.category === 'team').length,
   }
+
+  const restaurantName = restaurant?.name || 'Food Junction'
 
   return (
     <>
@@ -117,10 +82,11 @@ export default function GalleryPage() {
             </div>
 
             <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold mb-4">
-              Our <span className="text-shimmer">Gallery</span>
+              A Glimpse of{' '}
+              <span className="text-shimmer">{restaurantName}</span>
             </h1>
             <p className="text-white/60 text-lg max-w-2xl mx-auto">
-              Food, ambience, moments aur team ki ek jhalak 🎨
+              Food, ambience aur moments — sab yahan dekho 📸
             </p>
           </div>
         </section>
@@ -130,90 +96,93 @@ export default function GalleryPage() {
           <div className="absolute inset-0 bg-dots opacity-20" />
 
           <div className="relative max-w-7xl mx-auto px-4">
-            {/* Filter Tabs */}
-            <div className="flex flex-wrap justify-center gap-3 mb-12">
-              {CATEGORIES.map((cat) => {
-                const isActive = filter === cat.id
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => setFilter(cat.id)}
-                    className={`flex items-center gap-2 px-5 py-3 rounded-full text-sm font-semibold transition-all duration-300 ${
-                      isActive
-                        ? 'bg-gradient-to-br from-gold to-gold-dark text-night shadow-gold scale-105'
-                        : 'bg-night-card border border-white/10 text-white/70 hover:border-gold/40 hover:text-gold hover:scale-105'
-                    }`}
-                  >
-                    <span>{cat.emoji}</span>
-                    <span>{cat.label}</span>
-                    <span
-                      className={`text-[10px] px-2 py-0.5 rounded-full ${
-                        isActive ? 'bg-night/20' : 'bg-white/5'
-                      }`}
-                    >
-                      {counts[cat.id]}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* Gallery Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-              {filtered.map((item, i) => (
-                <button
-                  key={item.id}
-                  onClick={() => setSelected(item)}
-                  className="group relative aspect-square rounded-2xl overflow-hidden border border-white/5 hover:border-gold/40 transition-all duration-500 card-premium animate-fade-up"
-                  style={{ animationDelay: `${i * 30}ms` }}
-                >
-                  {/* Background gradient */}
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-br ${item.bgColor}`}
-                  />
-
-                  {/* IMAGE or EMOJI */}
-                  {item.image ? (
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-6xl md:text-7xl group-hover:scale-125 group-hover:rotate-6 transition-all duration-500 select-none">
-                        {item.emoji}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-night via-night/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                  {/* Title */}
-                  <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                    <p className="text-sm font-bold text-white truncate">
-                      {item.title}
-                    </p>
-                    <p className="text-[10px] text-gold capitalize">
-                      {item.category}
-                    </p>
-                  </div>
-
-                  {/* Expand icon */}
-                  <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-night/60 backdrop-blur border border-gold/40 flex items-center justify-center opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 transition-all duration-300">
-                    <Maximize2 size={14} className="text-gold" />
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {/* Empty state */}
-            {filtered.length === 0 && (
+            {loading ? (
               <div className="text-center py-20">
-                <div className="text-6xl mb-4">📷</div>
-                <p className="text-white/60">No photos in this category yet</p>
+                <Loader2 className="animate-spin text-gold mx-auto mb-3" size={32} />
+                <p className="text-white/60 text-sm">Loading gallery...</p>
               </div>
+            ) : items.length === 0 ? (
+              <div className="text-center py-20 bg-night-card/80 border border-white/5 rounded-2xl">
+                <Camera size={48} className="text-gold/40 mx-auto mb-3" />
+                <p className="text-white/60 text-sm">
+                  No photos yet. Come back soon! 🍽️
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Filter Tabs */}
+                <div className="flex flex-wrap justify-center gap-3 mb-12">
+                  {CATEGORIES.map((cat) => {
+                    const isActive = filter === cat.id
+                    const count = counts[cat.id] || 0
+                    if (cat.id !== 'all' && count === 0) return null
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => setFilter(cat.id)}
+                        className={`flex items-center gap-2 px-5 py-3 rounded-full text-sm font-semibold transition-all duration-300 ${
+                          isActive
+                            ? 'bg-gradient-to-br from-gold to-gold-dark text-night shadow-gold scale-105'
+                            : 'bg-night-card border border-white/10 text-white/70 hover:border-gold/40 hover:text-gold hover:scale-105'
+                        }`}
+                      >
+                        <span>{cat.emoji}</span>
+                        <span>{cat.label}</span>
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded-full ${
+                            isActive ? 'bg-night/20' : 'bg-white/5'
+                          }`}
+                        >
+                          {count}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* Gallery Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+                  {filtered.map((item, i) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setSelected(item)}
+                      className="group relative aspect-square rounded-2xl overflow-hidden border border-white/5 hover:border-gold/40 transition-all duration-500 card-premium animate-fade-up"
+                      style={{ animationDelay: `${i * 30}ms` }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-gold/20 to-fresh/20" />
+                      <img
+                        src={item.image_url}
+                        alt={item.caption || 'Gallery'}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+
+                      <div className="absolute inset-0 bg-gradient-to-t from-night via-night/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                      {item.caption && (
+                        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                          <p className="text-sm font-bold text-white truncate">
+                            {item.caption}
+                          </p>
+                          <p className="text-[10px] text-gold capitalize">
+                            {item.category}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-night/60 backdrop-blur border border-gold/40 flex items-center justify-center opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 transition-all duration-300">
+                        <Maximize2 size={14} className="text-gold" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {filtered.length === 0 && (
+                  <div className="text-center py-20">
+                    <div className="text-6xl mb-4">📷</div>
+                    <p className="text-white/60">No photos in this category yet</p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </section>
@@ -248,7 +217,6 @@ export default function GalleryPage() {
           className="fixed inset-0 z-50 bg-night/95 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
           onClick={() => setSelected(null)}
         >
-          {/* Close button */}
           <button
             onClick={() => setSelected(null)}
             className="absolute top-4 right-4 w-12 h-12 rounded-full bg-night-card border border-gold/40 flex items-center justify-center hover:bg-gold hover:text-night transition z-10"
@@ -257,38 +225,28 @@ export default function GalleryPage() {
             <X size={20} />
           </button>
 
-          {/* Content */}
           <div
             className="relative max-w-3xl w-full"
             onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className={`aspect-square rounded-3xl overflow-hidden border-2 border-gold/40 bg-gradient-to-br ${selected.bgColor} relative`}
-            >
-              {/* IMAGE or EMOJI in Modal */}
-              {selected.image ? (
-                <img
-                  src={selected.image}
-                  alt={selected.title}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[240px] animate-float select-none">
-                    {selected.emoji}
-                  </span>
-                </div>
-              )}
+            <div className="aspect-square rounded-3xl overflow-hidden border-2 border-gold/40 bg-night relative">
+              <img
+                src={selected.image_url}
+                alt={selected.caption || 'Gallery'}
+                className="absolute inset-0 w-full h-full object-contain"
+              />
             </div>
 
-            <div className="mt-5 text-center">
-              <p className="font-display text-3xl font-bold text-gold mb-1">
-                {selected.title}
-              </p>
-              <p className="text-white/50 capitalize text-sm">
-                {selected.category}
-              </p>
-            </div>
+            {selected.caption && (
+              <div className="mt-5 text-center">
+                <p className="font-display text-2xl font-bold text-gold mb-1">
+                  {selected.caption}
+                </p>
+                <p className="text-white/50 capitalize text-sm">
+                  {selected.category}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
