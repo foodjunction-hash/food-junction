@@ -8,6 +8,7 @@ import Footer from '@/components/Footer'
 import FoodCard from '@/components/FoodCard'
 import { type FoodItem } from '@/lib/data'
 import { getMenuItems } from '@/lib/menuSupabase'
+import { useRestaurant } from '@/lib/restaurantContext'
 import {
   ShoppingBag,
   Star,
@@ -24,6 +25,7 @@ import {
 } from 'lucide-react'
 
 export default function Home() {
+  const { restaurant } = useRestaurant()
   const [bestsellers, setBestsellers] = useState<FoodItem[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -37,6 +39,30 @@ export default function Home() {
     }
     loadBestsellers()
   }, [])
+
+  // Dynamic values
+  const restaurantName = restaurant?.name || 'Food Junction'
+  const city = restaurant?.city || 'Amarpur'
+  const phone = restaurant?.phone || '+91 99733 18421'
+  const callLink = `tel:${phone.replace(/\s/g, '')}`
+
+  // Dynamic Team
+  const team = [
+    {
+      name: restaurant?.owner_name || 'Owner',
+      role: restaurant?.owner_role || 'Owner & Founder',
+      photo: restaurant?.owner_photo_url || '/team/owner.jpg',
+      icon: Crown,
+      color: 'from-gold to-gold-dark',
+    },
+    {
+      name: restaurant?.developer_name || 'Developer',
+      role: restaurant?.developer_role || 'Web Developer',
+      photo: restaurant?.developer_photo_url || '/team/developer-new.jpg',
+      icon: Code2,
+      color: 'from-fresh to-fresh-dark',
+    },
+  ].filter((m) => m.name) // Hide if no name
 
   const features = [
     {
@@ -60,7 +86,7 @@ export default function Home() {
     {
       icon: Award,
       title: 'Premium Quality',
-      desc: 'Best taste in Amarpur guaranteed',
+      desc: `Best taste in ${city} guaranteed`,
       emoji: '🏆',
     },
     {
@@ -77,23 +103,6 @@ export default function Home() {
     },
   ]
 
-  const team = [
-    {
-      name: 'Raj Nandni',
-      role: 'Owner & Founder',
-      photo: '/team/owner.jpg',
-      icon: Crown,
-      color: 'from-gold to-gold-dark',
-    },
-    {
-      name: 'Shubham Yadav',
-      role: 'Web Developer',
-      photo: '/team/developer-new.jpg',
-      icon: Code2,
-      color: 'from-fresh to-fresh-dark',
-    },
-  ]
-
   return (
     <>
       <Header />
@@ -101,15 +110,12 @@ export default function Home() {
       <main className="min-h-screen">
         <Hero />
 
-        {/* ============================================
-            BEST SELLERS SECTION
-            ============================================ */}
+        {/* BEST SELLERS */}
         <section className="relative py-20 md:py-28 bg-night-soft overflow-hidden">
           <div className="absolute inset-0 bg-dots opacity-20" />
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-gold/5 rounded-full blur-[120px]" />
 
           <div className="relative max-w-7xl mx-auto px-4">
-            {/* Section Header */}
             <div className="text-center mb-14">
               <div className="inline-flex items-center gap-2 text-gold tracking-[0.3em] text-xs md:text-sm mb-3">
                 <span className="w-8 h-px bg-gradient-to-r from-transparent to-gold" />
@@ -125,7 +131,6 @@ export default function Home() {
               <div className="w-24 h-1 bg-gradient-to-r from-transparent via-gold to-transparent mx-auto mt-6 opacity-60" />
             </div>
 
-            {/* Grid */}
             {loading ? (
               <div className="text-center py-20">
                 <Loader2
@@ -155,7 +160,6 @@ export default function Home() {
               </div>
             )}
 
-            {/* CTA */}
             <div className="text-center mt-14">
               <Link
                 href="/menu"
@@ -171,9 +175,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ============================================
-            WHY CHOOSE US SECTION
-            ============================================ */}
+        {/* WHY CHOOSE US */}
         <section className="relative py-20 md:py-28 overflow-hidden">
           <div className="absolute inset-0 bg-mesh opacity-50" />
 
@@ -185,7 +187,8 @@ export default function Home() {
                 <span className="w-8 h-px bg-gradient-to-l from-transparent to-gold" />
               </div>
               <h2 className="font-display text-4xl md:text-6xl font-bold mb-4">
-                The <span className="text-shimmer">Food Junction</span> Promise
+                The <span className="text-shimmer">{restaurantName}</span>{' '}
+                Promise
               </h2>
               <p className="text-white/60 max-w-2xl mx-auto text-sm md:text-base">
                 We promise fresh, hygienic, and delicious food with every order
@@ -228,79 +231,77 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ============================================
-            MEET THE TEAM SECTION
-            ============================================ */}
-        <section className="relative py-16 md:py-24 bg-night-soft overflow-hidden">
-          <div className="absolute inset-0 bg-dots opacity-20" />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gold/10 rounded-full blur-[100px]" />
+        {/* MEET THE TEAM — Dynamic */}
+        {team.length > 0 && (
+          <section className="relative py-16 md:py-24 bg-night-soft overflow-hidden">
+            <div className="absolute inset-0 bg-dots opacity-20" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gold/10 rounded-full blur-[100px]" />
 
-          <div className="relative max-w-4xl mx-auto px-4">
-            <div className="text-center mb-12">
-              <p className="text-gold tracking-[0.3em] text-xs md:text-sm mb-3">
-                MEET THE TEAM
-              </p>
-              <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
-                The <span className="text-shimmer">People</span> Behind
-              </h2>
-              <p className="text-white/60 max-w-2xl mx-auto text-sm md:text-base">
-                The duo who built this dream — from food to code
-              </p>
-            </div>
+            <div className="relative max-w-4xl mx-auto px-4">
+              <div className="text-center mb-12">
+                <p className="text-gold tracking-[0.3em] text-xs md:text-sm mb-3">
+                  MEET THE TEAM
+                </p>
+                <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
+                  The <span className="text-shimmer">People</span> Behind
+                </h2>
+                <p className="text-white/60 max-w-2xl mx-auto text-sm md:text-base">
+                  The duo who built this dream — from food to code
+                </p>
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {team.map((member, i) => (
-                <div
-                  key={i}
-                  className="group relative bg-night-card border border-white/5 rounded-3xl p-6 text-center card-premium overflow-hidden"
-                >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {team.map((member, i) => (
                   <div
-                    className={`absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-gradient-to-br ${member.color} rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity`}
-                  />
-
-                  <div className="relative mx-auto mb-5">
-                    <div
-                      className={`absolute inset-0 rounded-full bg-gradient-to-br ${member.color} blur-lg opacity-40 group-hover:opacity-70 transition-opacity`}
-                    />
-                    <div className="relative w-24 h-24 md:w-28 md:h-28 mx-auto rounded-full overflow-hidden border-4 border-gold/30 group-hover:border-gold transition-all duration-500 group-hover:scale-105">
-                      <img
-                        src={member.photo}
-                        alt={member.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
-
-                  <h3 className="font-display text-xl font-bold mb-1 group-hover:text-gold transition-colors">
-                    {member.name}
-                  </h3>
-                  <span
-                    className={`inline-flex items-center gap-1 bg-gradient-to-br ${member.color} text-night text-xs font-bold px-3 py-1 rounded-full shadow-gold mb-3`}
+                    key={i}
+                    className="group relative bg-night-card border border-white/5 rounded-3xl p-6 text-center card-premium overflow-hidden"
                   >
-                    <member.icon size={12} />
-                    <span>{member.role}</span>
-                  </span>
+                    <div
+                      className={`absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-gradient-to-br ${member.color} rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity`}
+                    />
 
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 group-hover:w-3/4 h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent transition-all duration-500" />
-                </div>
-              ))}
+                    <div className="relative mx-auto mb-5">
+                      <div
+                        className={`absolute inset-0 rounded-full bg-gradient-to-br ${member.color} blur-lg opacity-40 group-hover:opacity-70 transition-opacity`}
+                      />
+                      <div className="relative w-24 h-24 md:w-28 md:h-28 mx-auto rounded-full overflow-hidden border-4 border-gold/30 group-hover:border-gold transition-all duration-500 group-hover:scale-105">
+                        <img
+                          src={member.photo}
+                          alt={member.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+
+                    <h3 className="font-display text-xl font-bold mb-1 group-hover:text-gold transition-colors">
+                      {member.name}
+                    </h3>
+                    <span
+                      className={`inline-flex items-center gap-1 bg-gradient-to-br ${member.color} text-night text-xs font-bold px-3 py-1 rounded-full shadow-gold mb-3`}
+                    >
+                      <member.icon size={12} />
+                      <span>{member.role}</span>
+                    </span>
+
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 group-hover:w-3/4 h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent transition-all duration-500" />
+                  </div>
+                ))}
+              </div>
+
+              <div className="text-center mt-10">
+                <Link
+                  href="/about"
+                  className="inline-flex items-center gap-2 border-2 border-gold text-gold font-bold px-6 py-3 rounded-full hover:bg-gold hover:text-night transition"
+                >
+                  <span>Read Full Story</span>
+                  <ArrowRight size={16} />
+                </Link>
+              </div>
             </div>
+          </section>
+        )}
 
-            <div className="text-center mt-10">
-              <Link
-                href="/about"
-                className="inline-flex items-center gap-2 border-2 border-gold text-gold font-bold px-6 py-3 rounded-full hover:bg-gold hover:text-night transition"
-              >
-                <span>Read Full Story</span>
-                <ArrowRight size={16} />
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* ============================================
-            FINAL CTA SECTION
-            ============================================ */}
+        {/* FINAL CTA — Dynamic */}
         <section className="relative py-20 md:py-28 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-gold/10 via-night to-night" />
           <div className="absolute inset-0 bg-dots opacity-30" />
@@ -309,7 +310,10 @@ export default function Home() {
           <div className="relative max-w-4xl mx-auto px-4 text-center">
             <div className="text-6xl mb-6 animate-bounce-soft">🍽️</div>
             <h2 className="font-display text-4xl md:text-6xl font-bold mb-4">
-              Hungry? <span className="text-shimmer">Order Now!</span>
+              Hungry?{' '}
+              <span className="text-shimmer">
+                Order from {restaurantName}!
+              </span>
             </h2>
             <p className="text-white/60 mb-10 text-base md:text-lg max-w-2xl mx-auto">
               Fresh, delicious, hygienic food delivered to your doorstep in just
@@ -326,7 +330,7 @@ export default function Home() {
                 </span>
               </Link>
               <a
-                href="tel:+919973318421"
+                href={callLink}
                 className="group border-2 border-gold text-gold font-bold px-10 py-4 rounded-full hover:bg-gold hover:text-night transition-all duration-300 text-base md:text-lg hover:scale-105"
               >
                 <span className="flex items-center gap-2">📞 Call Now</span>

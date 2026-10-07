@@ -10,17 +10,29 @@ import {
   Sparkles,
 } from 'lucide-react'
 import InstallAppButton from '@/components/InstallAppButton'
+import { useRestaurant } from '@/lib/restaurantContext'
 
 export default function Hero() {
   const [mounted, setMounted] = useState(false)
+  const { restaurant } = useRestaurant()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  // Dynamic data with fallbacks
+  const restaurantName = restaurant?.name || 'Food Junction'
+  const tagline = restaurant?.tagline || 'The Family Restaurant'
+  const city = restaurant?.city || 'Amarpur'
+  const phone = restaurant?.phone || '+91 99733 18421'
+  const category = restaurant?.category || 'Family Restaurant'
+
+  const badgeText = `${city}'s Favorite ${category}`
+  const callLink = `tel:${phone.replace(/\s/g, '')}`
+
   return (
     <section className="relative overflow-hidden min-h-[90vh] flex items-center">
-      {/* ===== Video Background ===== */}
+      {/* Video Background */}
       <div className="absolute inset-0 overflow-hidden">
         <video
           autoPlay
@@ -33,19 +45,17 @@ export default function Hero() {
           <source src="/hero-video.mp4" type="video/mp4" />
         </video>
 
-        {/* Dark overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-br from-night/70 via-night/60 to-night/80" />
       </div>
 
-      {/* ===== Multi-Layer Background ===== */}
+      {/* Multi-Layer Background */}
       <div className="absolute inset-0 bg-mesh opacity-30" />
       <div className="absolute inset-0 bg-dots opacity-20" />
 
-      {/* Radial glow */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full bg-gold/10 blur-[120px] animate-pulse-glow pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full bg-fresh/10 blur-[100px] pointer-events-none" />
 
-      {/* Floating emojis (decorative) */}
+      {/* Floating emojis */}
       <div className="absolute top-20 left-10 text-6xl opacity-[0.07] animate-float select-none pointer-events-none">
         🍕
       </div>
@@ -70,53 +80,49 @@ export default function Hero() {
 
       <div className="relative max-w-7xl mx-auto px-4 py-20 w-full z-10">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* ==================== LEFT CONTENT ==================== */}
+          {/* LEFT CONTENT */}
           <div className="text-center lg:text-left">
-            {/* Top Badge */}
+            {/* Top Badge — Dynamic */}
             <div
               className={`inline-flex items-center gap-2 glass-gold border border-gold/30 text-gold px-4 py-2 rounded-full text-sm mb-6 transition-all duration-700 ${
                 mounted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
               }`}
             >
               <Star size={14} fill="currentColor" className="animate-pulse" />
-              <span className="font-semibold">
-                Amarpur&apos;s Favorite Family Restaurant
-              </span>
+              <span className="font-semibold">{badgeText}</span>
               <Sparkles size={12} className="opacity-70" />
             </div>
 
-            {/* Heading */}
+            {/* Heading — Dynamic Restaurant Name */}
             <h1
               className={`font-display text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-[1.1] transition-all duration-700 delay-100 ${
                 mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
               }`}
             >
-              Taste That Brings
+              Welcome to
               <br />
               <span className="text-shimmer relative">
-                Family
+                {restaurantName}
                 <span className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gold to-transparent opacity-60 blur-sm" />
-              </span>{' '}
-              Together
+              </span>
             </h1>
 
-            {/* Subtext */}
+            {/* Tagline — Dynamic */}
             <p
               className={`text-xl md:text-2xl text-white/85 mb-3 tracking-wide transition-all duration-700 delay-200 ${
                 mounted ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
               }`}
             >
-              Fresh <span className="text-gold mx-1">•</span> Delicious{' '}
-              <span className="text-gold mx-1">•</span> Hygienic
+              {tagline}
             </p>
             <p
               className={`text-white/50 mb-10 text-sm md:text-base transition-all duration-700 delay-300 ${
                 mounted ? 'opacity-100' : 'opacity-0'
               }`}
             >
-              Order online <span className="text-gold/50 mx-1">•</span> Home
-              delivery <span className="text-gold/50 mx-1">•</span> Takeaway{' '}
-              <span className="text-gold/50 mx-1">•</span> Dine-in
+              Fresh <span className="text-gold/50 mx-1">•</span> Delicious{' '}
+              <span className="text-gold/50 mx-1">•</span> Hygienic{' '}
+              <span className="text-gold/50 mx-1">•</span> Family Friendly
             </p>
 
             {/* CTA Buttons */}
@@ -125,7 +131,6 @@ export default function Hero() {
                 mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
               }`}
             >
-              {/* Order Now */}
               <Link
                 href="/menu"
                 className="group relative bg-gradient-to-br from-gold to-gold-dark text-night font-bold px-7 md:px-9 py-4 rounded-full btn-premium shadow-gold hover:shadow-[0_15px_40px_rgba(245,179,1,0.5)] transition-all duration-300"
@@ -139,7 +144,6 @@ export default function Hero() {
                 </span>
               </Link>
 
-              {/* View Menu */}
               <Link
                 href="/menu"
                 className="group relative border-2 border-gold/60 text-gold font-bold px-7 md:px-9 py-4 rounded-full hover:bg-gold hover:text-night transition-all duration-300 hover:border-gold hover:shadow-[0_10px_30px_rgba(245,179,1,0.3)] overflow-hidden"
@@ -153,9 +157,8 @@ export default function Hero() {
                 </span>
               </Link>
 
-              {/* Call Now */}
               <a
-                href="tel:+919973318421"
+                href={callLink}
                 className="group relative border-2 border-fresh/60 text-fresh font-bold px-7 md:px-9 py-4 rounded-full hover:bg-fresh hover:text-night transition-all duration-300 hover:border-fresh hover:shadow-[0_10px_30px_rgba(34,197,94,0.3)]"
               >
                 <span className="flex items-center gap-2">
@@ -167,7 +170,6 @@ export default function Hero() {
                 </span>
               </a>
 
-              {/* Install App Button */}
               <InstallAppButton />
             </div>
 
@@ -198,7 +200,7 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* ==================== RIGHT VISUAL ==================== */}
+          {/* RIGHT VISUAL */}
           <div
             className={`relative hidden lg:block transition-all duration-1000 delay-300 ${
               mounted ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
@@ -264,10 +266,10 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* ===== Bottom Fade ===== */}
+      {/* Bottom Fade */}
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-night to-transparent pointer-events-none" />
 
-      {/* ===== Scroll Indicator ===== */}
+      {/* Scroll Indicator */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2 animate-fade-in">
         <span className="text-[10px] text-white/40 tracking-[0.3em]">
           SCROLL
