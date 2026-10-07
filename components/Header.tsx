@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useCart } from '@/lib/store'
 import { supabase } from '@/lib/supabase'
+import { useRestaurant } from '@/lib/restaurantContext'
 
 type HeaderUser = {
   name: string
@@ -23,6 +24,7 @@ type HeaderUser = {
 export default function Header() {
   const pathname = usePathname()
   const router = useRouter()
+  const { restaurant } = useRestaurant()
   const [open, setOpen] = useState(false)
   const [userMenu, setUserMenu] = useState(false)
   const [user, setUser] = useState<HeaderUser | null>(null)
@@ -43,9 +45,11 @@ export default function Header() {
     { href: '/track-order', label: 'Track Order' },
   ]
 
-  // Auth user ko load karo
+  // Load user (Google login)
   const loadUser = async () => {
-    const { data: { user: authUser } } = await supabase.auth.getUser()
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser()
 
     if (!authUser) {
       setUser(null)
@@ -58,19 +62,6 @@ export default function Header() {
       email: authUser.email || '',
       mobile: meta.phone || '',
       avatarUrl: meta.avatar_url || meta.picture,
-    }
-
-    // customers table se mobile/name try karo
-    const { data: customerRow } = await supabase
-      .from('customers')
-      .select('name, mobile, email')
-      .eq('auth_user_id', authUser.id)
-      .single()
-
-    if (customerRow) {
-      profileData.name = customerRow.name || profileData.name
-      profileData.mobile = customerRow.mobile || profileData.mobile
-      profileData.email = customerRow.email || profileData.email
     }
 
     setUser(profileData)
@@ -86,14 +77,17 @@ export default function Header() {
 
     window.addEventListener('scroll', handleScroll, { passive: true })
 
-    // Auth state change sun lo
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event) => {
-        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
-          loadUser()
-        }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (
+        event === 'SIGNED_IN' ||
+        event === 'SIGNED_OUT' ||
+        event === 'USER_UPDATED'
+      ) {
+        loadUser()
       }
-    )
+    })
 
     return () => {
       window.removeEventListener('scroll', handleScroll)
@@ -107,6 +101,12 @@ export default function Header() {
     setUserMenu(false)
     router.push('/')
   }
+
+  // Restaurant data (with fallbacks)
+  const restaurantName = restaurant?.name || 'Food Junction'
+  const restaurantTagline = restaurant?.tagline || 'The Family Restaurant'
+  const restaurantLogo = restaurant?.logo_url || '/food-junction-logo.png'
+  const restaurantCity = restaurant?.city || 'Amarpur'
 
   return (
     <header
@@ -125,13 +125,13 @@ export default function Header() {
         <Link
           href="/"
           className="flex items-center gap-2 md:gap-3 group"
-          aria-label="Food Junction Home"
+          aria-label={`${restaurantName} Home`}
         >
           <div className="relative">
             <div className="absolute inset-0 rounded-full bg-gold/30 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <img
-              src="/food-junction-logo.png"
-              alt="Food Junction Logo"
+              src={restaurantLogo}
+              alt={restaurantName}
               className={`relative rounded-full object-cover transition-all duration-500 group-hover:scale-110 ${
                 scrolled
                   ? 'w-10 h-10 md:w-12 md:h-12'
@@ -141,10 +141,10 @@ export default function Header() {
           </div>
           <div className="leading-tight">
             <p className="text-lg md:text-xl text-gold font-bold group-hover:text-shimmer transition-all">
-              Food Junction
+              {restaurantName}
             </p>
-            <p className="text-[10px] md:text-xs text-white/50 tracking-[0.2em] group-hover:text-gold/70 transition-colors">
-              THE FAMILY RESTAURANT
+            <p className="text-[10px] md:text-xs text-white/50 tracking-[0.2em] group-hover:text-gold/70 transition-colors uppercase">
+              {restaurantTagline}
             </p>
           </div>
         </Link>
