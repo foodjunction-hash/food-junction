@@ -2,15 +2,24 @@ import { supabase } from '@/lib/supabase'
 import type { FoodItem } from '@/lib/data'
 
 // ============================================
-// GET ALL MENU ITEMS
+// GET ALL MENU ITEMS (with optional restaurant filter)
 // ============================================
-export async function getMenuItems(): Promise<FoodItem[]> {
+export async function getMenuItems(
+  restaurantId?: string
+): Promise<FoodItem[]> {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('menu_items')
       .select('*')
       .order('category', { ascending: true })
       .order('name', { ascending: true })
+
+    // Filter by restaurant if provided
+    if (restaurantId) {
+      query = query.eq('restaurant_id', restaurantId)
+    }
+
+    const { data, error } = await query
 
     if (error) throw error
 
@@ -34,9 +43,12 @@ export async function getMenuItems(): Promise<FoodItem[]> {
 }
 
 // ============================================
-// CREATE NEW MENU ITEM
+// CREATE NEW MENU ITEM (with restaurant_id)
 // ============================================
-export async function createMenuItem(item: FoodItem) {
+export async function createMenuItem(
+  item: FoodItem,
+  restaurantId?: string
+) {
   try {
     const newId = `p_${Date.now()}`
     const { data, error } = await supabase
@@ -54,6 +66,7 @@ export async function createMenuItem(item: FoodItem) {
           is_bestseller: item.isBestseller || false,
           is_spicy: item.isSpicy || false,
           is_available: item.isAvailable,
+          restaurant_id: restaurantId || null,
         },
       ])
       .select()

@@ -25,6 +25,14 @@ const playfair = Playfair_Display({
 })
 
 // ============================================
+// BASE URL FOR METADATA
+// ============================================
+const baseUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+  'http://localhost:3000'
+
+// ============================================
 // DYNAMIC METADATA (Server-side)
 // ============================================
 export async function generateMetadata(): Promise<Metadata> {
@@ -40,8 +48,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const faviconUrl = restaurant?.favicon_url || '/icon-192.png'
 
   return {
+    metadataBase: new URL(baseUrl),
     title: `${name} – ${tagline} | ${city}`,
     description,
+    applicationName: name,
     manifest: '/manifest.json',
     appleWebApp: {
       capable: true,
@@ -51,6 +61,7 @@ export async function generateMetadata(): Promise<Metadata> {
     icons: {
       icon: faviconUrl,
       apple: logoUrl,
+      shortcut: faviconUrl,
     },
     formatDetection: {
       telephone: true,
@@ -58,8 +69,32 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: `${name} – ${tagline}`,
       description,
-      images: [logoUrl],
+      url: baseUrl,
+      siteName: name,
+      images: [
+        {
+          url: logoUrl,
+          width: 1200,
+          height: 630,
+          alt: name,
+        },
+      ],
       type: 'website',
+      locale: 'en_IN',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${name} – ${tagline}`,
+      description,
+      images: [logoUrl],
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+      },
     },
   }
 }
@@ -77,6 +112,7 @@ export async function generateViewport(): Promise<Viewport> {
     initialScale: 1,
     maximumScale: 1,
     userScalable: false,
+    colorScheme: 'dark',
   }
 }
 
