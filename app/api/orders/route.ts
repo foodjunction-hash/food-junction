@@ -25,6 +25,26 @@ async function getSupabase() {
 }
 
 // ============================================
+// Helper: Get restaurant ID from slug
+// ============================================
+async function getRestaurantIdFromSlug(
+  supabase: any,
+  slug: string
+): Promise<string | null> {
+  if (!slug) return null
+  try {
+    const { data } = await supabase
+      .from('restaurants')
+      .select('id')
+      .eq('slug', slug)
+      .maybeSingle()
+    return data?.id || null
+  } catch {
+    return null
+  }
+}
+
+// ============================================
 // POST /api/orders — Create new order
 // ============================================
 export async function POST(req: NextRequest) {
@@ -35,6 +55,17 @@ export async function POST(req: NextRequest) {
     const {
       data: { user },
     } = await supabase.auth.getUser()
+
+    // Get restaurant_id from slug (body.slug or query)
+    let restaurantId: string | null = null
+    if (body.slug) {
+      restaurantId = await getRestaurantIdFromSlug(supabase, body.slug)
+    }
+
+    // Fallback: use default food-junction
+    if (!restaurantId) {
+      restaurantId = await getRestaurantIdFromSlug(supabase, 'food-junction')
+    }
 
     const dbOrder = {
       order_number: body.orderNumber,
@@ -57,6 +88,7 @@ export async function POST(req: NextRequest) {
       customer_instructions: body.customer.instructions || null,
       customer_table_number: body.customer.tableNumber || null,
       auth_user_id: user?.id || null,
+      restaurant_id: restaurantId,
     }
 
     const { data, error } = await supabase
@@ -82,12 +114,13 @@ export async function POST(req: NextRequest) {
 
 // ============================================
 // GET /api/orders — Fetch orders
-// Query params: ?status=placed  ?mobile=9876543210  ?email=x  ?mine=true
+// Query params: ?slug=xxx  ?status=placed  ?mobile=  ?email=  ?mine=true
 // ============================================
 export async function GET(req: NextRequest) {
   try {
     const supabase = await getSupabase()
     const { searchParams } = new URL(req.url)
+    const slug = searchParams.get('slug')
     const status = searchParams.get('status')
     const mobile = searchParams.get('mobile')
     const email = searchParams.get('email')
@@ -97,6 +130,25 @@ export async function GET(req: NextRequest) {
       .from('orders')
       .select('*')
       .order('created_at', { ascending: false })
+
+    // 🔒 CRITICAL: Filter by restaurant_id
+    // If slug provided, filter by that restaurant
+    // If NO slug and NO mine → filter by default food-junction
+    if (slug) {
+      const restaurantId = await getRestaurantIdFromSlug(supabase, slug)
+      if (restaurantId) {
+        query = query.eq('restaurant_id', restaurantId)
+      } else {
+        // Slug not found — return empty
+        return NextResponse.json({ orders: [] }, { status: 200 })
+      }
+    } else if (mine !== 'true') {
+      // No slug, no mine → default to food-junction (backward compat)
+      const defaultId = await getRestaurantIdFromSlug(supabase, 'food-junction')
+      if (defaultId) {
+        query = query.eq('restaurant_id', defaultId)
+      }
+    }
 
     if (status) query = query.eq('status', status)
     if (mobile) query = query.eq('customer_mobile', mobile)

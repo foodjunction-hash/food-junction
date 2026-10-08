@@ -1,120 +1,129 @@
 // ============================================================
-// ADMIN AUTHENTICATION
+// MULTI-ROLE AUTHENTICATION
 // ============================================================
+// Roles:
+// 1. Super Admin — platform owner (tumhare liye)
+// 2. Restaurant Admin — har restaurant ka owner
+//
 // Security Notes:
-// - Credentials are loaded from environment variables
-// - Session is stored in localStorage (client-side)
-// - In production, replace this with proper backend auth
-//   (bcrypt + JWT + httpOnly cookies)
+// - For production, replace with bcrypt + JWT + httpOnly cookies
+// - Current implementation uses plain text (demo/MVP)
 // ============================================================
 
-const SESSION_KEY = 'fj-admin-session'
+import { supabase } from '@/lib/supabase'
+
+// ============================================================
+// Constants
+// ============================================================
+const SUPER_ADMIN_SESSION_KEY = 'fj-super-admin-session'
+const RESTAURANT_ADMIN_SESSION_KEY = 'fj-restaurant-admin-session'
+const LEGACY_SESSION_KEY = 'fj-admin-session'
 const SESSION_DURATION = 1000 * 60 * 60 * 8 // 8 hours
 const MAX_LOGIN_ATTEMPTS = 5
 const LOCKOUT_DURATION = 1000 * 60 * 15 // 15 minutes
-const ATTEMPTS_KEY = 'fj-admin-attempts'
-const LOCKOUT_KEY = 'fj-admin-lockout'
-
-// ============================================================
-// Admin Credentials
-// ============================================================
-// ⚠️ IMPORTANT: These come from .env.local
-// ⚠️ If .env.local is missing, defaults are used (for local dev only)
-// ============================================================
-
-const ADMIN_USERNAME =
-  process.env.NEXT_PUBLIC_ADMIN_USERNAME || 'admin'
-const ADMIN_PASSWORD =
-  process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'fj@Admin#2025!'
 
 // ============================================================
 // Types
 // ============================================================
-
-export type AdminSession = {
+export type SuperAdminSession = {
   username: string
+  fullName: string
   loginAt: number
   expiresAt: number
+  role: 'super_admin'
+}
+
+export type RestaurantAdminSession = {
+  username: string
+  restaurantId: string
+  restaurantSlug: string
+  restaurantName: string
+  loginAt: number
+  expiresAt: number
+  role: 'restaurant_admin'
+}
+
+export type LoginResult = {
+  success: boolean
+  error?: string
+  lockedUntil?: number
+  session?: SuperAdminSession | RestaurantAdminSession
 }
 
 // ============================================================
-// Brute-force protection helpers
+// Helper — Lockout
 // ============================================================
+function getAttemptsKey(identifier: string) {
+  return `fj-attempts-${identifier}`
+}
+function getLockoutKey(identifier: string) {
+  return `fj-lockout-${identifier}`
+}
 
-function getAttempts(): { count: number; timestamp: number } {
+function getAttempts(identifier: string): { count: number; timestamp: number } {
   if (typeof window === 'undefined') return { count: 0, timestamp: 0 }
   try {
-    const data = localStorage.getItem(ATTEMPTS_KEY)
+    const data = localStorage.getItem(getAttemptsKey(identifier))
     return data ? JSON.parse(data) : { count: 0, timestamp: 0 }
   } catch {
     return { count: 0, timestamp: 0 }
   }
 }
 
-function incrementAttempts(): number {
+function incrementAttempts(identifier: string): number {
   if (typeof window === 'undefined') return 0
-  const attempts = getAttempts()
+  const attempts = getAttempts(identifier)
   const newCount = attempts.count + 1
   localStorage.setItem(
-    ATTEMPTS_KEY,
+    getAttemptsKey(identifier),
     JSON.stringify({ count: newCount, timestamp: Date.now() })
   )
   return newCount
 }
 
-function resetAttempts() {
+function resetAttempts(identifier: string) {
   if (typeof window === 'undefined') return
-  localStorage.removeItem(ATTEMPTS_KEY)
+  localStorage.removeItem(getAttemptsKey(identifier))
 }
 
-function isLockedOut(): { locked: boolean; remainingMs: number } {
+function isLockedOut(identifier: string): { locked: boolean; remainingMs: number } {
   if (typeof window === 'undefined') return { locked: false, remainingMs: 0 }
-
-  const lockoutData = localStorage.getItem(LOCKOUT_KEY)
+  const lockoutData = localStorage.getItem(getLockoutKey(identifier))
   if (!lockoutData) return { locked: false, remainingMs: 0 }
-
   try {
     const { until } = JSON.parse(lockoutData)
     if (until > Date.now()) {
       return { locked: true, remainingMs: until - Date.now() }
     }
-    // Lockout expired
-    localStorage.removeItem(LOCKOUT_KEY)
-    resetAttempts()
+    localStorage.removeItem(getLockoutKey(identifier))
+    resetAttempts(identifier)
     return { locked: false, remainingMs: 0 }
   } catch {
     return { locked: false, remainingMs: 0 }
   }
 }
 
-function setLockout() {
+function setLockout(identifier: string) {
   if (typeof window === 'undefined') return
   localStorage.setItem(
-    LOCKOUT_KEY,
+    getLockoutKey(identifier),
     JSON.stringify({ until: Date.now() + LOCKOUT_DURATION })
   )
 }
 
 // ============================================================
-// Login
+// SUPER ADMIN LOGIN
 // ============================================================
-
-export type LoginResult = {
-  success: boolean
-  error?: string
-  lockedUntil?: number
-}
-
-export function loginAdmin(
+export async function loginSuperAdmin(
   username: string,
   password: string
-): LoginResult {
+): Promise<LoginResult> {
   if (typeof window === 'undefined') {
     return { success: false, error: 'Server error' }
   }
 
-  // Check lockout
-  const lockout = isLockedOut()
+  const identifier = `super-${username.trim()}`
+  const lockout = isLockedOut(identifier)
   if (lockout.locked) {
     const mins = Math.ceil(lockout.remainingMs / 60000)
     return {
@@ -122,106 +131,223 @@ export function loginAdmin(
       error: `Too many failed attempts. Try again in ${mins} minute${
         mins > 1 ? 's' : ''
       }.`,
-      lockedUntil: Date.now() + lockout.remainingMs,
     }
   }
 
-  // Validate credentials
-  const trimmedUsername = username.trim()
+  try {
+    const { data, error } = await supabase
+      .from('super_admins')
+      .select('*')
+      .eq('username', username.trim())
+      .eq('is_active', true)
+      .maybeSingle()
 
-  if (trimmedUsername !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
-    const attempts = incrementAttempts()
+    if (error) throw error
 
-    if (attempts >= MAX_LOGIN_ATTEMPTS) {
-      setLockout()
+    if (!data || data.password_hash !== password) {
+      const attempts = incrementAttempts(identifier)
+      if (attempts >= MAX_LOGIN_ATTEMPTS) {
+        setLockout(identifier)
+        return {
+          success: false,
+          error: 'Too many failed attempts. Account locked for 15 minutes.',
+        }
+      }
       return {
         success: false,
-        error: `Too many failed attempts. Account locked for 15 minutes.`,
-        lockedUntil: Date.now() + LOCKOUT_DURATION,
+        error: `Invalid credentials. ${
+          MAX_LOGIN_ATTEMPTS - attempts
+        } attempt${MAX_LOGIN_ATTEMPTS - attempts > 1 ? 's' : ''} remaining.`,
       }
     }
 
-    return {
-      success: false,
-      error: `Invalid credentials. ${MAX_LOGIN_ATTEMPTS - attempts} attempt${
-        MAX_LOGIN_ATTEMPTS - attempts > 1 ? 's' : ''
-      } remaining.`,
+    const now = Date.now()
+    const session: SuperAdminSession = {
+      username: data.username,
+      fullName: data.full_name || 'Super Admin',
+      loginAt: now,
+      expiresAt: now + SESSION_DURATION,
+      role: 'super_admin',
     }
+
+    localStorage.setItem(SUPER_ADMIN_SESSION_KEY, JSON.stringify(session))
+    resetAttempts(identifier)
+    localStorage.removeItem(getLockoutKey(identifier))
+
+    await supabase
+      .from('super_admins')
+      .update({ last_login: new Date().toISOString() })
+      .eq('id', data.id)
+
+    return { success: true, session }
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Login failed' }
   }
-
-  // Success — create session
-  const now = Date.now()
-  const session: AdminSession = {
-    username: trimmedUsername,
-    loginAt: now,
-    expiresAt: now + SESSION_DURATION,
-  }
-
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session))
-  resetAttempts()
-  localStorage.removeItem(LOCKOUT_KEY)
-
-  return { success: true }
 }
 
-// ============================================================
-// Session management
-// ============================================================
-
-export function getAdminSession(): AdminSession | null {
+export function getSuperAdminSession(): SuperAdminSession | null {
   if (typeof window === 'undefined') return null
   try {
-    const data = localStorage.getItem(SESSION_KEY)
+    const data = localStorage.getItem(SUPER_ADMIN_SESSION_KEY)
     if (!data) return null
-
-    const session: AdminSession = JSON.parse(data)
-
-    // Check expiry
+    const session: SuperAdminSession = JSON.parse(data)
     if (session.expiresAt < Date.now()) {
-      localStorage.removeItem(SESSION_KEY)
+      localStorage.removeItem(SUPER_ADMIN_SESSION_KEY)
       return null
     }
-
     return session
   } catch {
     return null
   }
 }
 
-export function logoutAdmin() {
+export function logoutSuperAdmin() {
   if (typeof window === 'undefined') return
-  localStorage.removeItem(SESSION_KEY)
+  localStorage.removeItem(SUPER_ADMIN_SESSION_KEY)
 }
 
-export function isAdminLoggedIn(): boolean {
-  return getAdminSession() !== null
+export function isSuperAdminLoggedIn(): boolean {
+  return getSuperAdminSession() !== null
 }
 
 // ============================================================
-// Session extension (optional — extends on activity)
+// RESTAURANT ADMIN LOGIN
 // ============================================================
-
-export function extendAdminSession(): boolean {
-  if (typeof window === 'undefined') return false
-
-  const session = getAdminSession()
-  if (!session) return false
-
-  const extendedSession: AdminSession = {
-    ...session,
-    expiresAt: Date.now() + SESSION_DURATION,
+export async function loginRestaurantAdmin(
+  slug: string,
+  username: string,
+  password: string
+): Promise<LoginResult> {
+  if (typeof window === 'undefined') {
+    return { success: false, error: 'Server error' }
   }
 
-  localStorage.setItem(SESSION_KEY, JSON.stringify(extendedSession))
-  return true
+  const identifier = `restaurant-${slug}-${username.trim()}`
+  const lockout = isLockedOut(identifier)
+  if (lockout.locked) {
+    const mins = Math.ceil(lockout.remainingMs / 60000)
+    return {
+      success: false,
+      error: `Too many failed attempts. Try again in ${mins} minute${
+        mins > 1 ? 's' : ''
+      }.`,
+    }
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('restaurants')
+      .select('*')
+      .eq('slug', slug)
+      .eq('is_active', true)
+      .maybeSingle()
+
+    if (error) throw error
+
+    if (
+      !data ||
+      data.admin_username !== username.trim() ||
+      data.admin_password !== password
+    ) {
+      const attempts = incrementAttempts(identifier)
+      if (attempts >= MAX_LOGIN_ATTEMPTS) {
+        setLockout(identifier)
+        return {
+          success: false,
+          error: 'Too many failed attempts. Account locked for 15 minutes.',
+        }
+      }
+      return {
+        success: false,
+        error: `Invalid credentials. ${
+          MAX_LOGIN_ATTEMPTS - attempts
+        } attempt${MAX_LOGIN_ATTEMPTS - attempts > 1 ? 's' : ''} remaining.`,
+      }
+    }
+
+    if (
+      data.subscription_status === 'expired' ||
+      data.subscription_status === 'suspended'
+    ) {
+      return {
+        success: false,
+        error: `Subscription ${data.subscription_status}. Contact platform admin.`,
+      }
+    }
+
+    const now = Date.now()
+    const session: RestaurantAdminSession = {
+      username: data.admin_username,
+      restaurantId: data.id,
+      restaurantSlug: data.slug,
+      restaurantName: data.name,
+      loginAt: now,
+      expiresAt: now + SESSION_DURATION,
+      role: 'restaurant_admin',
+    }
+
+    localStorage.setItem(RESTAURANT_ADMIN_SESSION_KEY, JSON.stringify(session))
+    resetAttempts(identifier)
+    localStorage.removeItem(getLockoutKey(identifier))
+
+    await supabase
+      .from('restaurants')
+      .update({ last_login: new Date().toISOString() })
+      .eq('id', data.id)
+
+    return { success: true, session }
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Login failed' }
+  }
+}
+
+export function getRestaurantAdminSession(): RestaurantAdminSession | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const data = localStorage.getItem(RESTAURANT_ADMIN_SESSION_KEY)
+    if (!data) return null
+    const session: RestaurantAdminSession = JSON.parse(data)
+    if (session.expiresAt < Date.now()) {
+      localStorage.removeItem(RESTAURANT_ADMIN_SESSION_KEY)
+      return null
+    }
+    return session
+  } catch {
+    return null
+  }
+}
+
+export function logoutRestaurantAdmin() {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem(RESTAURANT_ADMIN_SESSION_KEY)
+}
+
+export function isRestaurantAdminLoggedIn(): boolean {
+  return getRestaurantAdminSession() !== null
 }
 
 // ============================================================
-// Get remaining session time
+// LEGACY SUPPORT — Puraana `/admin` (Food Junction)
 // ============================================================
+export function isAdminLoggedIn(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    const data = localStorage.getItem(LEGACY_SESSION_KEY)
+    if (data) {
+      const session = JSON.parse(data)
+      if (session.expiresAt > Date.now()) return true
+      localStorage.removeItem(LEGACY_SESSION_KEY)
+    }
+  } catch {}
+  const restaurantSession = getRestaurantAdminSession()
+  if (restaurantSession && restaurantSession.restaurantSlug === 'food-junction') {
+    return true
+  }
+  return false
+}
 
-export function getSessionRemainingMs(): number {
-  const session = getAdminSession()
-  if (!session) return 0
-  return Math.max(0, session.expiresAt - Date.now())
+export function logoutAdmin() {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem(LEGACY_SESSION_KEY)
+  logoutRestaurantAdmin()
 }

@@ -27,6 +27,7 @@ import UPIQRCode from '@/components/UPIQRCode'
 import { useCart } from '@/lib/store'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/components/Toast'
+import { useRestaurant } from '@/lib/restaurantContext'
 import {
   generateOrderId,
   generateOrderNumber,
@@ -35,15 +36,21 @@ import {
   type PaymentMethod,
 } from '@/lib/orders'
 
-const UPI_ID = '9973318421@ibl'
-const UPI_NAME = 'Food Junction'
-
 export default function CheckoutPage() {
   const router = useRouter()
   const toast = useToast()
+  const { restaurant, slug } = useRestaurant()
   const items = useCart((s) => s.items)
   const getSubtotal = useCart((s) => s.getSubtotal)
   const clearCart = useCart((s) => s.clear)
+
+  // Dynamic values
+  const basePath = !slug || slug === 'food-junction' ? '' : `/${slug}`
+  const restaurantName = restaurant?.name || 'Food Junction'
+  const UPI_ID = restaurant?.phone
+    ? `${restaurant.phone.replace(/\D/g, '')}@ibl`
+    : '9973318421@ibl'
+  const UPI_NAME = restaurantName
 
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [restaurantOpen, setRestaurantOpen] = useState<boolean | null>(null)
@@ -83,7 +90,8 @@ export default function CheckoutPage() {
       } = await supabase.auth.getUser()
 
       if (!user) {
-        router.push('/login?redirect=/checkout')
+        const loginRedirect = basePath ? `${basePath}/login?redirect=${basePath}/checkout` : '/login?redirect=/checkout'
+        router.push(loginRedirect)
         return
       }
 
@@ -102,14 +110,16 @@ export default function CheckoutPage() {
     }
 
     checkAuth()
-  }, [router])
+  }, [router, basePath])
 
   // ============================================
-  // LOAD RESTAURANT STATUS + TIMES
+  // LOAD RESTAURANT STATUS + TIMES (from restaurant data)
   // ============================================
   useEffect(() => {
     const loadRestaurantStatus = async () => {
+      if (!restaurant) return
       try {
+        // Use restaurant's opening hours from DB, fallback to settings
         const { data, error } = await supabase
           .from('settings')
           .select('is_open, opening_time, closing_time')
@@ -153,7 +163,7 @@ export default function CheckoutPage() {
       clearInterval(interval)
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [restaurant])
 
   // ============================================
   // LOAD SERVICES STATUS
@@ -313,7 +323,10 @@ export default function CheckoutPage() {
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderPayload),
+        body: JSON.stringify({
+          ...orderPayload,
+          slug: slug || 'food-junction',
+        }),
       })
       if (!res.ok) {
         const errorText = await res.text()
@@ -333,11 +346,12 @@ export default function CheckoutPage() {
     await new Promise((r) => setTimeout(r, 800))
 
     try {
+      const adminPhone = restaurant?.whatsapp || restaurant?.phone || '9973318421'
       await fetch('/api/whatsapp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to: '9973318421',
+          to: adminPhone.replace(/\D/g, ''),
           contentType: 'template',
           contentSid: process.env.NEXT_PUBLIC_TWILIO_TEMPLATE_ORDER_PLACED,
           contentVariables: {
@@ -359,7 +373,7 @@ export default function CheckoutPage() {
     }
 
     clearCart()
-    router.push(`/order-success?id=${orderNumber}`)
+    router.push(`${basePath}/order-success?id=${orderNumber}`)
   }
 
   if (checkingAuth || servicesLoading || restaurantOpen === null) {
@@ -401,7 +415,7 @@ export default function CheckoutPage() {
                 ● Currently Closed
               </span>
               <h1 className="text-3xl md:text-4xl font-bold mb-2">
-                Restaurant is <span className="text-red-400">Closed</span>
+                {restaurantName} is <span className="text-red-400">Closed</span>
               </h1>
               <p className="text-white/60 text-sm md:text-base">
                 We&apos;re not accepting orders right now. Please come back
@@ -430,13 +444,13 @@ export default function CheckoutPage() {
 
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Link
-                href="/menu"
+                href={`${basePath}/menu`}
                 className="inline-flex items-center gap-2 bg-gradient-to-r from-gold to-gold-dark text-night font-bold px-6 py-3.5 rounded-full hover:scale-105 transition-all shadow-lg shadow-gold/20"
               >
                 <ShoppingBag size={18} /> Browse Menu
               </Link>
               <Link
-                href="/"
+                href={basePath || '/'}
                 className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white/80 font-semibold px-6 py-3.5 rounded-full transition-all border border-white/10 hover:border-white/20"
               >
                 <ArrowLeft size={18} /> Back to Home
@@ -459,7 +473,7 @@ export default function CheckoutPage() {
             <h1 className="text-2xl md:text-3xl font-bold mb-3">Cart is Empty</h1>
             <p className="text-white/60 mb-6">Add items before checkout</p>
             <Link
-              href="/menu"
+              href={`${basePath}/menu`}
               className="inline-flex bg-gold text-night font-bold px-6 py-3 rounded-full hover:bg-gold-light transition"
             >
               Browse Menu
@@ -479,7 +493,7 @@ export default function CheckoutPage() {
         <div className="max-w-6xl mx-auto px-4">
           <div className="mb-6 md:mb-8">
             <Link
-              href="/cart"
+              href={`${basePath}/cart`}
               className="inline-flex items-center gap-1 text-sm text-white/60 hover:text-gold mb-2 transition"
             >
               <ArrowLeft size={16} /> Back to Cart
@@ -488,7 +502,7 @@ export default function CheckoutPage() {
               <span className="text-gradient-gold">Checkout</span>
             </h1>
             <p className="text-white/50 text-sm mt-1">
-              Fill your details to place the order
+              {restaurantName} — Fill your details to place the order
             </p>
           </div>
 
@@ -832,7 +846,7 @@ export default function CheckoutPage() {
                   upiId={UPI_ID}
                   name={UPI_NAME}
                   amount={total}
-                  note={`Order from Food Junction`}
+                  note={`Order from ${restaurantName}`}
                 />
               )}
 

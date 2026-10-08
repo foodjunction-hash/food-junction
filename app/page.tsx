@@ -25,20 +25,24 @@ import {
 } from 'lucide-react'
 
 export default function Home() {
-  const { restaurant } = useRestaurant()
+  const { restaurant, slug } = useRestaurant()
   const [bestsellers, setBestsellers] = useState<FoodItem[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Base path for multi-tenant links
+  const basePath = !slug || slug === 'food-junction' ? '' : `/${slug}`
+
   useEffect(() => {
     const loadBestsellers = async () => {
+      if (!restaurant) return
       setLoading(true)
-      const items = await getMenuItems()
+      const items = await getMenuItems(restaurant.id)
       const best = items.filter((f) => f.isBestseller).slice(0, 4)
       setBestsellers(best)
       setLoading(false)
     }
     loadBestsellers()
-  }, [])
+  }, [restaurant])
 
   // Dynamic values
   const restaurantName = restaurant?.name || 'Food Junction'
@@ -143,7 +147,7 @@ export default function Home() {
                   No bestsellers available right now
                 </p>
                 <Link
-                  href="/menu"
+                  href={`${basePath}/menu`}
                   className="inline-block mt-4 text-gold hover:text-gold-light font-semibold underline"
                 >
                   Browse full menu
@@ -159,7 +163,7 @@ export default function Home() {
 
             <div className="text-center mt-14">
               <Link
-                href="/menu"
+                href={`${basePath}/menu`}
                 className="group inline-flex items-center gap-2 border-2 border-gold text-gold font-bold px-8 py-4 rounded-full hover:bg-gold hover:text-night transition-all duration-300 hover:shadow-[0_10px_30px_rgba(245,179,1,0.3)] hover:scale-105"
               >
                 <span>View Full Menu</span>
@@ -280,7 +284,7 @@ export default function Home() {
 
               <div className="text-center mt-10">
                 <Link
-                  href="/about"
+                  href={`${basePath}/about`}
                   className="inline-flex items-center gap-2 border-2 border-gold text-gold font-bold px-6 py-3 rounded-full hover:bg-gold hover:text-night transition"
                 >
                   <span>Read Full Story</span>
@@ -291,7 +295,7 @@ export default function Home() {
           </section>
         )}
 
-        {/* TESTIMONIALS — Dynamic */}
+        {/* TESTIMONIALS */}
         <TestimonialsSection />
 
         {/* FINAL CTA */}
@@ -311,7 +315,7 @@ export default function Home() {
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Link
-                href="/menu"
+                href={`${basePath}/menu`}
                 className="group relative bg-gradient-to-br from-gold to-gold-dark text-night font-bold px-10 py-4 rounded-full btn-premium text-base md:text-lg shadow-gold hover:shadow-[0_15px_40px_rgba(245,179,1,0.5)]"
               >
                 <span className="relative z-10 flex items-center gap-2">
