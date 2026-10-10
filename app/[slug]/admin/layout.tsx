@@ -11,7 +11,6 @@ import {
   LogOut,
   Menu as MenuIcon,
   X,
-  Home,
   BarChart3,
   QrCode,
   Briefcase,
@@ -62,7 +61,6 @@ export default function RestaurantAdminLayout({
     }
   }, [pathname, router, slug])
 
-  // Login page directly render
   if (pathname === `/${slug}/admin/login`) {
     return <>{children}</>
   }
@@ -106,7 +104,9 @@ export default function RestaurantAdminLayout({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-night via-night to-night-soft flex">
-      {/* Desktop Sidebar */}
+      {/* ============================================
+          DESKTOP SIDEBAR
+          ============================================ */}
       <aside className="hidden lg:flex flex-col w-64 bg-night-soft/80 backdrop-blur-xl border-r border-white/5 fixed h-full z-20">
         <div className="p-5 border-b border-white/5">
           <Link href={`${basePath}/admin/dashboard`} className="flex items-center gap-3 group">
@@ -149,7 +149,8 @@ export default function RestaurantAdminLayout({
           })}
         </nav>
 
-        <div className="p-3 border-t border-white/5 space-y-1">
+        {/* Only "View Live Site" in sidebar footer — Logout moved to top */}
+        <div className="p-3 border-t border-white/5">
           <Link
             href={`/${slug}`}
             target="_blank"
@@ -158,35 +159,52 @@ export default function RestaurantAdminLayout({
             <ExternalLink size={18} className="group-hover:scale-110 transition-transform" />
             View Live Site
           </Link>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition text-sm group"
-          >
-            <LogOut size={18} className="group-hover:scale-110 transition-transform" />
-            Logout
-          </button>
         </div>
       </aside>
 
-      {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-night-soft/95 backdrop-blur-xl border-b border-white/5 px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      {/* ============================================
+          MOBILE + DESKTOP HEADER (TOP BAR)
+          ============================================ */}
+      <div className="fixed top-0 left-0 right-0 lg:left-64 z-40 bg-night-soft/95 backdrop-blur-xl border-b border-white/5 px-4 h-16 flex items-center justify-between">
+        {/* Left: Logo + Name (mobile) / Empty (desktop) */}
+        <div className="flex items-center gap-2 lg:hidden">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold to-gold-dark flex items-center justify-center ring-2 ring-gold/30">
             <Store size={18} className="text-night" />
           </div>
           <div className="leading-tight">
-            <span className="text-gold font-bold text-sm block truncate max-w-[150px]">
+            <span className="text-gold font-bold text-sm block truncate max-w-[130px]">
               {restaurantName}
             </span>
             <span className="text-[9px] text-white/40 tracking-widest">ADMIN</span>
           </div>
         </div>
-        <button onClick={() => setOpen(!open)} className="p-2 hover:bg-white/5 rounded-xl transition">
-          {open ? <X size={22} /> : <MenuIcon size={22} />}
-        </button>
+
+        {/* Right: Logout + Menu toggle */}
+        <div className="flex items-center gap-2 ml-auto">
+          {/* Logout button - visible on ALL sizes */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/40 transition-all text-xs md:text-sm font-semibold"
+            aria-label="Logout"
+          >
+            <LogOut size={14} />
+            <span className="hidden md:inline">Logout</span>
+          </button>
+
+          {/* Mobile menu toggle */}
+          <button
+            onClick={() => setOpen(!open)}
+            className="lg:hidden p-2 hover:bg-white/5 rounded-xl transition"
+            aria-label="Menu"
+          >
+            {open ? <X size={22} /> : <MenuIcon size={22} />}
+          </button>
+        </div>
       </div>
 
-      {/* Mobile Nav */}
+      {/* ============================================
+          MOBILE NAV DRAWER
+          ============================================ */}
       {open && (
         <div className="lg:hidden fixed inset-0 z-30 bg-night/95 backdrop-blur-xl pt-16 animate-fade-in overflow-y-auto">
           <nav className="p-4 space-y-1">
@@ -208,18 +226,26 @@ export default function RestaurantAdminLayout({
                 </Link>
               )
             })}
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition mt-2 border-t border-white/5 pt-4"
+
+            {/* View Live Site - mobile drawer */}
+            <Link
+              href={`/${slug}`}
+              target="_blank"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-night-card hover:text-gold transition border-t border-white/5 mt-2 pt-4"
             >
-              <LogOut size={20} /> Logout
-            </button>
+              <ExternalLink size={20} />
+              View Live Site
+            </Link>
           </nav>
         </div>
       )}
 
+      {/* ============================================
+          MAIN CONTENT
+          ============================================ */}
       <div className="flex-1 lg:ml-64">
-        <div className="pt-16 lg:pt-0">{children}</div>
+        <div className="pt-16">{children}</div>
       </div>
     </div>
   )
