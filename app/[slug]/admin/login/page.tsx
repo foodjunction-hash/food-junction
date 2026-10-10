@@ -273,7 +273,7 @@ export default function RestaurantAdminLoginPage() {
         {/* Footer */}
         <footer className="fj-footer">
           <span>© {year} {restaurantName}. All rights reserved.</span>
-          <span>Made with care for your restaurant</span>
+          <span>Made with care for {restaurantName}</span>
         </footer>
       </div>
 
