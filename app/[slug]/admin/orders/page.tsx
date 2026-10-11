@@ -240,12 +240,7 @@ export default function AdminOrdersPage() {
   }
 
   if (!mounted) {
-    return (
-      <div className="p-6 text-white/60 text-sm flex items-center gap-2">
-        <Loader2 className="animate-spin text-gold" size={16} />
-        Loading orders...
-      </div>
-    )
+    return <AdminLoading message="Loading Orders" />
   }
 
   const statsData = [
