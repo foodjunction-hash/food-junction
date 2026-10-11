@@ -72,7 +72,7 @@ const EMPTY_HOMEPAGE: Omit<HomepageOffer, 'id'> = {
 
 export default function AdminOffersPage() {
   const toast = useToast()
-  const { restaurant } = useRestaurant()
+  const { restaurant, loading: contextLoading } = useRestaurant()
   const [activeTab, setActiveTab] = useState<'banner' | 'homepage'>('homepage')
 
   // Banner popup state
@@ -115,7 +115,6 @@ export default function AdminOffersPage() {
       if (error) throw error
       setOffers(data || [])
     } catch (err: any) {
-      
       toast.error('Failed to load offers')
     }
     setLoading(false)
@@ -291,6 +290,11 @@ export default function AdminOffersPage() {
     setEditingHp({ ...editingHp, [key]: value })
   }
 
+  // 🚨 KHATARNAK LOADING SCREEN
+  if (contextLoading || !restaurant || loading) {
+    return <AdminLoading message="Loading Offers" />
+  }
+
   return (
     <div className="p-4 md:p-8 min-h-screen bg-gradient-to-br from-night via-night to-night-soft relative">
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
@@ -336,9 +340,7 @@ export default function AdminOffersPage() {
           </button>
         </div>
 
-        {/* ============================================
-            TAB 1: HOMEPAGE OFFERS
-            ============================================ */}
+        {/* TAB 1: HOMEPAGE OFFERS */}
         {activeTab === 'homepage' && (
           <>
             <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
@@ -449,9 +451,7 @@ export default function AdminOffersPage() {
           </>
         )}
 
-        {/* ============================================
-            TAB 2: BANNER POPUP
-            ============================================ */}
+        {/* TAB 2: BANNER POPUP */}
         {activeTab === 'banner' && (
           <>
             <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
@@ -563,9 +563,7 @@ export default function AdminOffersPage() {
         )}
       </div>
 
-      {/* ============================================
-          BANNER POPUP EDIT MODAL
-          ============================================ */}
+      {/* BANNER POPUP EDIT MODAL */}
       {editing && (
         <div
           className="fixed inset-0 z-50 bg-night/80 backdrop-blur-md flex items-center justify-center p-4"
@@ -732,9 +730,7 @@ export default function AdminOffersPage() {
         </div>
       )}
 
-      {/* ============================================
-          HOMEPAGE OFFER EDIT MODAL
-          ============================================ */}
+      {/* HOMEPAGE OFFER EDIT MODAL */}
       {editingHp && (
         <div
           className="fixed inset-0 z-50 bg-night/80 backdrop-blur-md flex items-center justify-center p-4"
