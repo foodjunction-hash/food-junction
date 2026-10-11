@@ -1,278 +1,192 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useParams } from 'next/navigation'
-import {
-  ClipboardList,
-  IndianRupee,
-  TrendingUp,
-  ArrowRight,
-  Package,
-  ChefHat,
-  Loader2,
-  Sparkles,
-  Users,
-  Activity,
-  CheckCircle2,
-  Clock,
-} from 'lucide-react'
-import { getRestaurantAdminSession } from '@/lib/auth'
-import AdminLoading from '@/components/AdminLoading'
-
-export default function RestaurantAdminDashboard() {
-  const params = useParams()
-  const slug = (params?.slug as string) || ''
-  const [orders, setOrders] = useState<any[]>([])
-  const [mounted, setMounted] = useState(false)
-  const [refreshing, setRefreshing] = useState(false)
-  const [session, setSession] = useState<any>(null)
-
-  useEffect(() => {
-    setSession(getRestaurantAdminSession())
-    fetchOrders()
-    const interval = setInterval(fetchOrders, 10000)
-    return () => clearInterval(interval)
-  }, [slug])
-
-  const fetchOrders = async () => {
-    try {
-      const res = await fetch(`/api/orders?slug=${slug}`, { cache: 'no-store' })
-      const data = await res.json()
-      setOrders(data.orders || [])
-    } catch (err) {
-      console.error('Failed to fetch orders:', err)
-    }
-    setMounted(true)
-  }
-
-  const handleRefresh = async () => {
-    setRefreshing(true)
-    await fetchOrders()
-    setRefreshing(false)
-  }
-
-  // 🚨 KHATARNAK LOADING SCREEN
-  if (!mounted) {
-    return <AdminLoading message="Initializing Dashboard" />
-  }
-
-  const today = new Date().toDateString()
-  const todayOrders = orders.filter(
-    (o) => new Date(o.created_at).toDateString() === today
-  )
-  const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0)
-  const todayRevenue = todayOrders.reduce((sum, o) => sum + (o.total || 0), 0)
-
-  const stats = [
-    {
-      label: "Today's Orders",
-      value: todayOrders.length,
-      icon: ClipboardList,
-      gradient: 'from-amber-500/20 via-yellow-500/5 to-transparent',
-      border: 'border-amber-500/30',
-      iconBg: 'bg-gradient-to-br from-amber-400 to-yellow-600',
-    },
-    {
-      label: "Today's Revenue",
-      value: `₹${todayRevenue}`,
-      icon: IndianRupee,
-      gradient: 'from-emerald-500/20 via-green-500/5 to-transparent',
-      border: 'border-emerald-500/30',
-      iconBg: 'bg-gradient-to-br from-emerald-400 to-green-600',
-    },
-    {
-      label: 'Total Orders',
-      value: orders.length,
-      icon: TrendingUp,
-      gradient: 'from-blue-500/20 via-cyan-500/5 to-transparent',
-      border: 'border-blue-500/30',
-      iconBg: 'bg-gradient-to-br from-blue-400 to-cyan-600',
-    },
-    {
-      label: 'Total Revenue',
-      value: `₹${totalRevenue}`,
-      icon: Package,
-      gradient: 'from-purple-500/20 via-pink-500/5 to-transparent',
-      border: 'border-purple-500/30',
-      iconBg: 'bg-gradient-to-br from-purple-400 to-pink-600',
-    },
-  ]
-
-  const statusCount = {
-    placed: orders.filter((o) => o.status === 'placed').length,
-    accepted: orders.filter((o) => o.status === 'accepted').length,
-    preparing: orders.filter((o) => o.status === 'preparing').length,
-    ready: orders.filter((o) => o.status === 'ready').length,
-    delivered: orders.filter((o) => o.status === 'delivered').length,
-  }
-
-  const statusData = [
-    { label: 'Placed', value: statusCount.placed, emoji: '📝', color: 'text-gold' },
-    { label: 'Accepted', value: statusCount.accepted, emoji: '✅', color: 'text-blue-400' },
-    { label: 'Preparing', value: statusCount.preparing, emoji: '👨‍🍳', color: 'text-purple-400' },
-    { label: 'Ready', value: statusCount.ready, emoji: '🍽️', color: 'text-fresh' },
-    { label: 'Delivered', value: statusCount.delivered, emoji: '🎉', color: 'text-white/70' },
-  ]
-
-  const restaurantName = session?.restaurantName || 'Restaurant'
-
+export default function AdminLoading({ message = 'Loading' }: { message?: string }) {
   return (
-    <div className="p-4 md:p-8 min-h-screen bg-gradient-to-br from-night via-night to-night-soft">
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gold/5 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-500/5 rounded-full blur-[100px] animate-pulse" />
-      </div>
+    <div className="fixed inset-0 z-50 bg-[#030308] flex items-center justify-center overflow-hidden">
+      {/* Hexagon grid background */}
+      <div
+        className="absolute inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l25.98 15v30L30 60 4.02 45V15z' fill='none' stroke='%23ffbd00' stroke-width='0.5'/%3E%3C/svg%3E")`,
+          backgroundSize: '60px 60px',
+        }}
+      />
 
-      <div className="relative z-10">
-        {/* Header */}
-        <div className="mb-6 md:mb-8 flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Sparkles size={20} className="text-gold animate-pulse" />
-              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white via-gold to-white bg-clip-text text-transparent">
-                {restaurantName}
-              </h1>
-            </div>
-            <p className="text-white/50 text-sm flex items-center gap-2">
-              <Activity size={14} className="text-fresh" />
-              Welcome back, {session?.username || 'Admin'}! Here&apos;s your dashboard.
-            </p>
+      {/* Radial energy pulses */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full border border-gold/20 animate-pulse-ring-1" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border border-gold/10 animate-pulse-ring-2" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full border border-gold/[0.05] animate-pulse-ring-3" />
+
+      {/* Floating particles */}
+      {Array.from({ length: 20 }).map((_, i) => (
+        <div
+          key={i}
+          className="absolute w-1 h-1 rounded-full bg-gold/60 animate-particle"
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 3}s`,
+            animationDuration: `${3 + Math.random() * 3}s`,
+          }}
+        />
+      ))}
+
+      {/* Main content */}
+      <div className="relative z-10 flex flex-col items-center gap-8">
+        {/* 3D Rotating Rings + Logo */}
+        <div className="relative w-40 h-40 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full border-2 border-dashed border-gold/40 animate-spin-slow" />
+
+          <div
+            className="absolute inset-3 rounded-full animate-spin-reverse"
+            style={{
+              background:
+                'conic-gradient(from 0deg, transparent 0%, #ffbd00 15%, transparent 30%, #ffbd00 50%, transparent 65%, #ffbd00 80%, transparent 100%)',
+              maskImage:
+                'radial-gradient(circle, transparent 55%, black 57%, black 63%, transparent 65%)',
+              WebkitMaskImage:
+                'radial-gradient(circle, transparent 55%, black 57%, black 63%, transparent 65%)',
+            }}
+          />
+
+          <div className="absolute inset-6 rounded-full border border-gold/60 shadow-[0_0_30px_rgba(255,189,0,0.6),inset_0_0_30px_rgba(255,189,0,0.4)] animate-pulse-glow" />
+
+          <div className="absolute inset-0 animate-spin-slow" style={{ animationDuration: '5s' }}>
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-gold shadow-[0_0_15px_rgba(255,189,0,1)]" />
           </div>
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="flex items-center gap-2 bg-night-card border border-white/10 hover:border-gold/50 px-4 py-2.5 rounded-full text-sm font-semibold transition-all hover:scale-105 disabled:opacity-50"
-          >
-            <Loader2 size={14} className={refreshing ? 'animate-spin text-gold' : 'text-gold'} />
-            Refresh
-          </button>
+          <div className="absolute inset-0 animate-spin-reverse" style={{ animationDuration: '7s' }}>
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-gold-light shadow-[0_0_12px_rgba(255,189,0,1)]" />
+          </div>
+
+          {/* Center core */}
+          <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-gold via-gold-light to-gold-dark flex items-center justify-center shadow-[0_0_60px_rgba(255,189,0,0.8)]">
+            <svg
+              className="w-10 h-10 text-night"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M4 3v7M7 3v7M4 7h3M5.5 10v11M14 3v18M14 3c4 2 4 7 0 9" />
+            </svg>
+          </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 mb-6 md:mb-8">
-          {stats.map((s, i) => (
+        {/* Glitch loading text */}
+        <div className="relative">
+          <h1 className="font-mono text-3xl md:text-4xl font-bold tracking-[0.4em] text-gold glitch-text">
+            LOADING
+          </h1>
+        </div>
+
+        {/* Progress scanner */}
+        <div className="w-80 h-1 bg-white/5 rounded-full overflow-hidden relative">
+          <div className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-gold to-transparent animate-scanner" />
+        </div>
+
+        {/* Status text */}
+        <div className="flex items-center gap-3 text-[10px] tracking-[0.3em] text-white/40 uppercase font-mono">
+          <span className="w-1.5 h-1.5 rounded-full bg-fresh animate-pulse" />
+          <span className="animate-typing">{message}...</span>
+        </div>
+
+        {/* Data stream */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 overflow-hidden opacity-20">
+          {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
-              className={`relative group bg-gradient-to-br ${s.gradient} bg-night-card border ${s.border} rounded-2xl p-5 overflow-hidden transition-all duration-500 hover:scale-[1.03]`}
-              style={{ animation: `fadeInUp 0.5s ease-out ${i * 0.1}s both` }}
+              className="absolute font-mono text-[10px] text-gold animate-data-stream"
+              style={{ left: `${i * 12.5}%`, animationDelay: `${i * 0.3}s` }}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className={`w-12 h-12 rounded-xl ${s.iconBg} flex items-center justify-center shadow-lg group-hover:scale-110 transition-all`}>
-                  <s.icon size={22} className="text-night" strokeWidth={2.5} />
-                </div>
-              </div>
-              <p className="text-3xl md:text-4xl font-bold mb-1 tracking-tight">{s.value}</p>
-              <p className="text-xs md:text-sm text-white/60 font-medium">{s.label}</p>
+              {Array.from({ length: 15 })
+                .map(() => Math.round(Math.random()))
+                .join('')}
             </div>
           ))}
-        </div>
-
-        {/* Status */}
-        <div className="bg-night-card border border-white/5 rounded-2xl p-5 md:p-6 mb-6 md:mb-8">
-          <h2 className="font-bold flex items-center gap-2 text-lg mb-5">
-            <Activity size={18} className="text-gold" />
-            Order Status
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {statusData.map((s, i) => (
-              <div key={i} className="text-center p-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] transition">
-                <div className="text-3xl mb-2">{s.emoji}</div>
-                <p className={`text-2xl font-bold ${s.color} mb-1`}>{s.value}</p>
-                <p className="text-xs text-white/50">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Orders */}
-        <div className="bg-night-card border border-white/5 rounded-2xl p-5 md:p-6 mb-6 md:mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold flex items-center gap-2 text-lg">
-              <Clock size={18} className="text-gold" /> Recent Orders
-            </h2>
-            <Link
-              href={`/${slug}/admin/orders`}
-              className="text-sm text-gold hover:text-gold-light transition flex items-center gap-1 group"
-            >
-              View All
-              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-
-          {orders.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-5xl mb-3">📭</div>
-              <p className="text-white/60 text-sm mb-2">No orders yet</p>
-              <p className="text-white/40 text-xs">
-                Orders will appear here when customers place them
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {orders.slice(0, 5).map((order: any) => (
-                <div
-                  key={order.id}
-                  className="flex items-center justify-between p-3.5 rounded-xl bg-night border border-white/5 hover:border-gold/50 transition"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <p className="font-bold text-sm text-gold truncate">
-                        #{order.order_number}
-                      </p>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase bg-gold/20 text-gold">
-                        {order.status}
-                      </span>
-                    </div>
-                    <p className="text-xs text-white/60 truncate flex items-center gap-2">
-                      <Users size={11} className="text-gold/60" />
-                      {order.customer_name} • {order.customer_mobile}
-                    </p>
-                  </div>
-                  <p className="font-bold text-sm ml-3">₹{order.total}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid md:grid-cols-2 gap-3 md:gap-5">
-          <Link
-            href={`/${slug}/admin/menu`}
-            className="relative group bg-night-card border border-white/5 rounded-2xl p-5 hover:border-gold/50 transition-all flex items-center gap-4"
-          >
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-gold/30 to-gold/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <ChefHat size={24} className="text-gold" />
-            </div>
-            <div className="flex-1">
-              <p className="font-bold mb-0.5 text-lg">Manage Menu</p>
-              <p className="text-xs text-white/50">Add, edit, delete food items</p>
-            </div>
-            <ArrowRight size={18} className="text-white/40 group-hover:text-gold group-hover:translate-x-1 transition-all" />
-          </Link>
-
-          <Link
-            href={`/${slug}/admin/orders`}
-            className="relative group bg-night-card border border-white/5 rounded-2xl p-5 hover:border-fresh/50 transition-all flex items-center gap-4"
-          >
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-fresh/30 to-fresh/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <CheckCircle2 size={24} className="text-fresh" />
-            </div>
-            <div className="flex-1">
-              <p className="font-bold mb-0.5 text-lg">Manage Orders</p>
-              <p className="text-xs text-white/50">Accept, reject, track orders</p>
-            </div>
-            <ArrowRight size={18} className="text-white/40 group-hover:text-fresh group-hover:translate-x-1 transition-all" />
-          </Link>
         </div>
       </div>
 
       <style jsx global>{`
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
+        .animate-spin-slow { animation: spin-slow 8s linear infinite; }
+        .animate-spin-reverse { animation: spin-slow 6s linear infinite reverse; }
+
+        @keyframes pulse-glow {
+          0%, 100% {
+            box-shadow: 0 0 30px rgba(255, 189, 0, 0.6), inset 0 0 30px rgba(255, 189, 0, 0.4);
+            opacity: 1;
+          }
+          50% {
+            box-shadow: 0 0 60px rgba(255, 189, 0, 1), inset 0 0 50px rgba(255, 189, 0, 0.8);
+            opacity: 0.8;
+          }
+        }
+        .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+        @keyframes pulse-ring-1 {
+          0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.5; }
+          100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; }
+        }
+        .animate-pulse-ring-1 { animation: pulse-ring-1 3s ease-out infinite; }
+        .animate-pulse-ring-2 { animation: pulse-ring-1 3s ease-out infinite; animation-delay: 1s; }
+        .animate-pulse-ring-3 { animation: pulse-ring-1 3s ease-out infinite; animation-delay: 2s; }
+
+        @keyframes particle {
+          0% { transform: translateY(0) scale(1); opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { transform: translateY(-100vh) scale(0); opacity: 0; }
+        }
+        .animate-particle { animation: particle 5s linear infinite; }
+
+        @keyframes scanner {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(400%); }
+        }
+        .animate-scanner { animation: scanner 2s ease-in-out infinite; }
+
+        @keyframes glitch {
+          0%, 100% {
+            text-shadow: 0 0 10px rgba(255, 189, 0, 0.5);
+            transform: translateX(0);
+          }
+          20% {
+            text-shadow: 2px 0 10px #ff0080, -2px 0 10px #00ffff;
+            transform: translateX(-2px);
+          }
+          40% {
+            text-shadow: -2px 0 10px #ff0080, 2px 0 10px #00ffff;
+            transform: translateX(2px);
+          }
+          60% {
+            text-shadow: 1px 0 10px #ff0080, -1px 0 10px #00ffff;
+            transform: translateX(-1px);
+          }
+          80% {
+            text-shadow: -1px 0 10px #ff0080, 1px 0 10px #00ffff;
+            transform: translateX(1px);
+          }
+        }
+        .glitch-text { animation: glitch 2s infinite; }
+
+        @keyframes typing {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+        .animate-typing { animation: typing 1.5s ease-in-out infinite; }
+
+        @keyframes data-stream {
+          0% { transform: translateY(-100%); opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { transform: translateY(100%); opacity: 0; }
+        }
+        .animate-data-stream { animation: data-stream 3s linear infinite; }
       `}</style>
     </div>
   )

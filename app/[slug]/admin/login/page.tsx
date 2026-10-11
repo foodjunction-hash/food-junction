@@ -243,7 +243,7 @@ export default function RestaurantAdminLoginPage() {
                   ) : (
                     <>
                       <svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5M15 12H3M13 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" /></svg>
-                      Sign in to Dashboard
+                      Login in to Dashboard
                       <span aria-hidden="true">→</span>
                     </>
                   )}
