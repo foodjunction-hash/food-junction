@@ -1,5 +1,6 @@
 'use client'
 
+import AdminLoading from '@/components/AdminLoading'
 import { useEffect, useState, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import {

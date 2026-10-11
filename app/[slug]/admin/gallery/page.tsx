@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { useToast } from '@/components/Toast'
 import { useRestaurant } from '@/lib/restaurantContext'
+import AdminLoading from '@/components/AdminLoading'
 import {
   getGallery, createGalleryItem, updateGalleryItem, deleteGalleryItem,
   uploadGalleryImage, type GalleryItem,
@@ -76,11 +77,7 @@ export default function AdminGalleryPage() {
   }
 
   if (loading) {
-    return (
-      <div className="p-6 text-white/60 text-sm flex items-center gap-2">
-        <Loader2 className="animate-spin text-gold" size={16} /> Loading...
-      </div>
-    )
+    return <AdminLoading message="Loading Gallery" />
   }
 
   return (

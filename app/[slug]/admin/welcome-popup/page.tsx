@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { useToast } from '@/components/Toast'
 import { useRestaurant } from '@/lib/restaurantContext'
+import AdminLoading from '@/components/AdminLoading'
 import {
   getWelcomePopup,
   saveWelcomePopup,

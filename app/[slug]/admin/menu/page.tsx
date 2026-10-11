@@ -20,6 +20,7 @@ import {
 import { CATEGORIES, type FoodItem } from '@/lib/data'
 import { useToast } from '@/components/Toast'
 import { useRestaurant } from '@/lib/restaurantContext'
+import AdminLoading from '@/components/AdminLoading'
 import {
   getMenuItems,
   createMenuItem,
@@ -149,15 +150,10 @@ export default function AdminMenuPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="p-6 text-white/60 text-sm flex items-center gap-2">
-        <Loader2 className="animate-spin text-gold" size={16} />
-        Loading menu...
-      </div>
-    )
+  
+  if (loading || !restaurant) {
+    return <AdminLoading message="Loading Menu" />
   }
-
   const statsData = [
     {
       label: 'Total Items',

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { useToast } from '@/components/Toast'
 import { useRestaurant } from '@/lib/restaurantContext'
+import AdminLoading from '@/components/AdminLoading'
 import {
   getOpeningHours,
   updateOpeningHour,
@@ -51,12 +52,7 @@ export default function AdminHoursPage() {
   }
 
   if (loading) {
-    return (
-      <div className="p-6 text-white/60 text-sm flex items-center gap-2">
-        <Loader2 className="animate-spin text-gold" size={16} />
-        Loading...
-      </div>
-    )
+    return <AdminLoading message="Loading Opening Hours" />
   }
 
   return (
