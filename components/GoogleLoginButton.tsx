@@ -2,20 +2,41 @@
 
 import { supabase } from '@/lib/supabase'
 import { useState } from 'react'
+import { useToast } from '@/components/Toast'
+import { useRestaurant } from '@/lib/restaurantContext'
 
 export default function GoogleLoginButton() {
+  const toast = useToast()
+  const { restaurant } = useRestaurant()
   const [loading, setLoading] = useState(false)
 
+  // 🔑 Check if Google login is enabled for this restaurant
+  const isEnabled = restaurant?.google_login_enabled ?? false
+
   const handleGoogleLogin = async () => {
+    // 🚨 If Google login is disabled → Coming Soon
+    if (!isEnabled) {
+      toast.info(
+        `Google login ${restaurant?.name || 'is restaurant'} ke liye abhi available nahi hai.`
+      )
+      return
+    }
+
+    // ✅ If enabled → Actual Google OAuth
     setLoading(true)
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-    if (error) {
-      alert('Google login failed: ' + error.message)
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+      if (error) {
+        toast.error('Google login failed: ' + error.message)
+        setLoading(false)
+      }
+    } catch (err: any) {
+      toast.error('Google login failed')
       setLoading(false)
     }
   }
@@ -25,7 +46,9 @@ export default function GoogleLoginButton() {
       type="button"
       onClick={handleGoogleLogin}
       disabled={loading}
-      className="w-full flex items-center justify-center gap-3 bg-white border border-white/20 text-gray-800 font-semibold py-3 rounded-full hover:bg-gray-100 transition disabled:opacity-50"
+      className={`w-full flex items-center justify-center gap-3 bg-white border border-white/20 text-gray-800 font-semibold py-3 rounded-full hover:bg-gray-100 transition disabled:opacity-50 relative group ${
+        !isEnabled ? 'opacity-70 hover:opacity-90' : ''
+      }`}
     >
       <svg className="w-5 h-5" viewBox="0 0 24 24">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -34,6 +57,13 @@ export default function GoogleLoginButton() {
         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
       </svg>
       {loading ? 'Loading...' : 'Continue with Google'}
+
+      {/* 🚨 "COMING SOON" badge — if disabled */}
+      {!isEnabled && (
+        <span className="absolute -top-2 -right-2 bg-gold text-night text-[9px] font-bold px-2 py-0.5 rounded-full border border-night shadow-lg animate-pulse">
+          COMING SOON 
+        </span>
+      )}
     </button>
   )
 }

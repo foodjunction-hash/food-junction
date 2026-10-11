@@ -44,6 +44,8 @@ export type Restaurant = {
   // Status
   is_active: boolean
   monthly_fee: number
+  // 🔑 Google Login Toggle
+  google_login_enabled: boolean
 }
 
 const DEFAULT_SLUG = 'food-junction'

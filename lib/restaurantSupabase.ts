@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 
 export type RestaurantAdmin = {
+  google_login_enabled: boolean
   id: string
   slug: string
   name: string

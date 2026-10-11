@@ -1,6 +1,4 @@
 'use client'
-import AdminLoading from '@/components/AdminLoading'
-import { useRestaurant } from '@/lib/restaurantContext'
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -9,13 +7,20 @@ import { Loader2 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import GoogleLoginButton from '@/components/GoogleLoginButton'
+import AdminLoading from '@/components/AdminLoading'
 import { supabase } from '@/lib/supabase'
+import { useRestaurant } from '@/lib/restaurantContext'
 
 function LoginContent() {
-  
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirect') || '/profile'
+  const { restaurant, slug } = useRestaurant()
+  const redirectTo = searchParams.get('redirect') || `/${slug}/profile`
+
+  // 🔑 Multi-tenant base path
+  const basePath = !slug || slug === 'food-junction' ? '' : `/${slug}`
+  const restaurantName = restaurant?.name || 'Food Junction'
+  const restaurantLogo = restaurant?.logo_url || '/food-junction-logo.png'
 
   const [checkingAuth, setCheckingAuth] = useState(true)
 
@@ -36,12 +41,9 @@ function LoginContent() {
     checkAuth()
   }, [router, redirectTo])
 
+  // 🚨 KHATARNAK LOADING
   if (checkingAuth) {
-    return (
-      <main className="min-h-[60vh] flex items-center justify-center">
-        <Loader2 className="animate-spin text-gold" size={32} />
-      </main>
-    )
+    return <AdminLoading message="Loading Login" />
   }
 
   return (
@@ -49,13 +51,13 @@ function LoginContent() {
       <div className="max-w-md mx-auto px-4">
         <div className="text-center mb-8">
           <img
-            src="/food-junction-logo.png"
-            alt="Food Junction Logo"
-            className="w-24 h-24 mx-auto rounded-full object-cover mb-4 shadow-gold"
+            src={restaurantLogo}
+            alt={restaurantName}
+            className="w-24 h-24 mx-auto rounded-full object-cover mb-4 shadow-gold ring-4 ring-gold/30"
           />
           <h1 className="text-2xl md:text-3xl font-bold mb-1">
             Welcome to{' '}
-            <span className="text-gradient-gold">Food Junction</span>
+            <span className="text-gradient-gold">{restaurantName}</span>
           </h1>
           <p className="text-white/50 text-sm">Login to continue</p>
         </div>
@@ -71,10 +73,10 @@ function LoginContent() {
 
         <div className="text-center mt-6">
           <Link
-            href="/"
+            href={basePath || '/'}
             className="text-sm text-white/40 hover:text-gold transition"
           >
-            ← Back to Home
+            ← Back to {restaurantName}
           </Link>
         </div>
       </div>
@@ -83,18 +85,10 @@ function LoginContent() {
 }
 
 export default function LoginPage() {
-  const { restaurant } = useRestaurant()
-  
   return (
     <>
       <Header />
-      <Suspense
-        fallback={
-          <div className="min-h-[60vh] flex items-center justify-center">
-            <Loader2 className="animate-spin text-gold" size={32} />
-          </div>
-        }
-      >
+      <Suspense fallback={<AdminLoading message="Loading Login" />}>
         <LoginContent />
       </Suspense>
       <Footer />
