@@ -39,7 +39,10 @@ function TwitterIcon({ size = 18, className = '' }: { size?: number; className?:
 }
 
 export default function Footer() {
-  const { restaurant } = useRestaurant()
+  const { restaurant, slug } = useRestaurant()
+
+  // ?? Multi-tenant base path
+  const basePath = !slug || slug === 'food-junction' ? '' : `/`
   const [hours, setHours] = useState<OpeningHour[]>([])
   const [openStatus, setOpenStatus] = useState<{ isOpen: boolean; todayHours: OpeningHour | null }>({ isOpen: false, todayHours: null })
 

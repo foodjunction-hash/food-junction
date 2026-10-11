@@ -14,7 +14,10 @@ import { useRestaurant } from '@/lib/restaurantContext'
 
 export default function Hero() {
   const [mounted, setMounted] = useState(false)
-  const { restaurant } = useRestaurant()
+  const { restaurant, slug } = useRestaurant()
+
+  // ?? Multi-tenant base path
+  const basePath = !slug || slug === 'food-junction' ? '' : `/`
 
   useEffect(() => {
     setMounted(true)
@@ -132,7 +135,7 @@ export default function Hero() {
               }`}
             >
               <Link
-                href="/menu"
+                href={`/menu`}
                 className="group relative bg-gradient-to-br from-gold to-gold-dark text-night font-bold px-7 md:px-9 py-4 rounded-full btn-premium shadow-gold hover:shadow-[0_15px_40px_rgba(245,179,1,0.5)] transition-all duration-300"
               >
                 <span className="relative z-10 flex items-center gap-2">
@@ -145,7 +148,7 @@ export default function Hero() {
               </Link>
 
               <Link
-                href="/menu"
+                href={`/menu`}
                 className="group relative border-2 border-gold/60 text-gold font-bold px-7 md:px-9 py-4 rounded-full hover:bg-gold hover:text-night transition-all duration-300 hover:border-gold hover:shadow-[0_10px_30px_rgba(245,179,1,0.3)] overflow-hidden"
               >
                 <span className="relative z-10 flex items-center gap-2">

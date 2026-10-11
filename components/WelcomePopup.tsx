@@ -8,7 +8,10 @@ import { getWelcomePopup, type WelcomePopup as WelcomePopupType } from '@/lib/we
 import { getOpeningHours, getCurrentOpenStatus } from '@/lib/hoursSupabase'
 
 export default function WelcomePopup() {
-  const { restaurant } = useRestaurant()
+  const { restaurant, slug } = useRestaurant()
+
+  // ?? Multi-tenant base path
+  const basePath = !slug || slug === 'food-junction' ? '' : `/`
   const [popup, setPopup] = useState<WelcomePopupType | null>(null)
   const [open, setOpen] = useState(false)
   const [openStatus, setOpenStatus] = useState<{ isOpen: boolean; todayHours: any }>({

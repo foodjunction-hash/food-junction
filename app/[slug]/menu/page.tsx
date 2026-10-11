@@ -1,0 +1,203 @@
+'use client'
+
+import { useState, useMemo, useEffect, Suspense } from 'react'
+import { useRestaurant } from '@/lib/restaurantContext'
+import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { Search, MessageCircle, Loader2, Crown, Code2, ArrowRight } from 'lucide-react'
+import Header from '@/components/Header'
+import Footer from '@/components/Footer'
+import FoodCard from '@/components/FoodCard'
+import AdminLoading from '@/components/AdminLoading'
+import { CATEGORIES, type FoodItem } from '@/lib/data'
+import { getMenuItems } from '@/lib/menuSupabase'
+
+type Filter = 'all' | 'veg' | 'nonveg' | 'bestseller'
+
+function MenuPageContent() {
+  const searchParams = useSearchParams()
+  const tableNumber = searchParams.get('table')
+  const { restaurant } = useRestaurant()  // ✅ HOOK TOP PE
+  const [selectedCat, setSelectedCat] = useState('all')
+  const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState<Filter>('all')
+  const [menuItems, setMenuItems] = useState<FoodItem[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (tableNumber && typeof window !== 'undefined') {
+      sessionStorage.setItem('fj-table-number', tableNumber)
+    }
+  }, [tableNumber])
+
+  useEffect(() => {
+    const loadMenu = async () => {
+      if (!restaurant) return
+      setLoading(true)
+      const items = await getMenuItems(restaurant.id)  // ✅ restaurant.id
+      setMenuItems(items)
+      setLoading(false)
+    }
+    loadMenu()
+  }, [restaurant])  // ✅ dependency
+
+  const filtered = useMemo(() => {
+    return menuItems.filter((item) => {
+      if (selectedCat !== 'all' && item.category !== selectedCat) return false
+      if (filter === 'veg' && !item.isVeg) return false
+      if (filter === 'nonveg' && item.isVeg) return false
+      if (filter === 'bestseller' && !item.isBestseller) return false
+      if (search && !item.name.toLowerCase().includes(search.toLowerCase()))
+        return false
+      return true
+    })
+  }, [menuItems, selectedCat, search, filter])
+
+  // 🚨 KHATARNAK LOADING SCREEN
+  if (loading) {
+    return <AdminLoading message="Loading Menu" />
+  }
+
+  return (
+    <>
+      <Header />
+
+      {tableNumber && (
+        <div className="bg-gradient-to-r from-gold via-gold-light to-gold text-night py-3 px-4 shadow-gold relative overflow-hidden">
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 relative z-10">
+            <span className="text-xl">🍽️</span>
+            <p className="font-bold text-sm md:text-base text-center">
+              Welcome! You are ordering for{' '}
+              <span className="bg-night text-gold px-3 py-1 rounded-full font-bold inline-block">
+                Table {tableNumber}
+              </span>
+            </p>
+          </div>
+        </div>
+      )}
+
+      <main className="min-h-screen pb-20">
+        <section className="bg-gradient-to-b from-night-soft to-night border-b border-white/5 py-10 md:py-14">
+          <div className="max-w-7xl mx-auto px-4 text-center">
+            <p className="text-gold tracking-[0.3em] text-sm mb-2">EXPLORE OUR</p>
+            <h1 className="text-4xl md:text-6xl font-bold mb-4">
+              Our <span className="text-gradient-gold">Menu</span>
+            </h1>
+            <p className="text-white/60 max-w-xl mx-auto">
+              {restaurant?.name || 'Delicious food'} — crafted with love • Fresh ingredients
+            </p>
+          </div>
+        </section>
+
+        <section className="sticky top-16 md:top-20 z-40 bg-night/95 backdrop-blur-md border-b border-white/5 py-3 md:py-4">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="relative max-w-md mx-auto">
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+              <input
+                type="text"
+                placeholder="Search food items..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full bg-night-card border border-white/10 rounded-full pl-11 pr-4 py-3 text-sm focus:border-gold/50 focus:outline-none transition"
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="py-4 md:py-6 overflow-x-auto no-scrollbar">
+          <div className="max-w-7xl mx-auto px-4 flex gap-2 md:gap-3 min-w-max">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCat(cat.id)}
+                className={`flex items-center gap-1.5 px-4 md:px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition ${
+                  selectedCat === cat.id
+                    ? 'bg-gold text-night'
+                    : 'bg-night-card text-white/70 border border-white/10 hover:border-gold/50 hover:text-gold'
+                }`}
+              >
+                <span>{cat.emoji}</span>
+                <span>{cat.name}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="pb-4">
+          <div className="max-w-7xl mx-auto px-4 flex gap-2 flex-wrap">
+            {[
+              { id: 'all', label: 'All Items', emoji: '🍽️' },
+              { id: 'veg', label: 'Veg Only', emoji: '🟢' },
+              { id: 'nonveg', label: 'Non-Veg', emoji: '🔴' },
+              { id: 'bestseller', label: 'Bestseller', emoji: '⭐' },
+            ].map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFilter(f.id as Filter)}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition ${
+                  filter === f.id
+                    ? 'bg-fresh text-night'
+                    : 'bg-night-card text-white/60 border border-white/10 hover:border-fresh/50 hover:text-fresh'
+                }`}
+              >
+                <span>{f.emoji}</span>
+                <span>{f.label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="py-4 md:py-8">
+          <div className="max-w-7xl mx-auto px-4">
+            {filtered.length === 0 ? (
+              <div className="text-center py-20">
+                <p className="text-6xl mb-4">🔍</p>
+                <p className="text-xl font-bold mb-2">No items found</p>
+                <p className="text-white/60 text-sm">
+                  {menuItems.length === 0
+                    ? `${restaurant?.name || 'Restaurant'} ka menu abhi add nahi hua`
+                    : 'Try a different category or search term'}
+                </p>
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-white/50 mb-4">
+                  Showing <span className="text-gold font-bold">{filtered.length}</span> items
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
+                  {filtered.map((item) => (
+                    <FoodCard key={item.id} item={item} />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </section>
+
+        {/* WhatsApp Float */}
+        <a
+          href={`https://wa.me/${(restaurant?.whatsapp || '919973318421').replace(/\D/g, '')}?text=${encodeURIComponent(
+            tableNumber
+              ? `Hi ${restaurant?.name || 'Restaurant'}! I'm ordering from Table ${tableNumber}. Can you help?`
+              : `Hi ${restaurant?.name || 'Restaurant'}! I want to place an order. Can you help?`
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-40 w-14 h-14 rounded-full bg-fresh text-night flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+        >
+          <MessageCircle size={26} />
+        </a>
+      </main>
+
+      <Footer />
+    </>
+  )
+}
+
+export default function MenuPage() {
+  return (
+    <Suspense fallback={<AdminLoading message="Loading Menu" />}>
+      <MenuPageContent />
+    </Suspense>
+  )
+}

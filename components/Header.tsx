@@ -19,7 +19,7 @@ type HeaderUser = {
 export default function Header() {
   const pathname = usePathname()
   const router = useRouter()
-  const { restaurant } = useRestaurant()
+  const { restaurant, slug } = useRestaurant()
   const [open, setOpen] = useState(false)
   const [userMenu, setUserMenu] = useState(false)
   const [user, setUser] = useState<HeaderUser | null>(null)
@@ -28,14 +28,17 @@ export default function Header() {
 
   const cartCount = useCart((s) => s.items.reduce((sum, i) => sum + i.quantity, 0))
 
+  // 🔑 Base path for multi-tenant routing
+  const basePath = !slug || slug === 'food-junction' ? '' : `/${slug}`
+
   const links = [
-    { href: '/', label: 'Home' },
-    { href: '/menu', label: 'Menu' },
-    { href: '/offers', label: 'Offers' },
-    { href: '/about', label: 'About' },
-    { href: '/gallery', label: 'Gallery' },
-    { href: '/contact', label: 'Contact' },
-    { href: '/track-order', label: 'Track Order' },
+    { href: basePath || '/', label: 'Home' },
+    { href: `${basePath}/menu`, label: 'Menu' },
+    { href: `${basePath}/offers`, label: 'Offers' },
+    { href: `${basePath}/about`, label: 'About' },
+    { href: `${basePath}/gallery`, label: 'Gallery' },
+    { href: `${basePath}/contact`, label: 'Contact' },
+    { href: `${basePath}/track-order`, label: 'Track Order' },
   ]
 
   const loadUser = async () => {
@@ -68,7 +71,7 @@ export default function Header() {
     await supabase.auth.signOut()
     setUser(null)
     setUserMenu(false)
-    router.push('/')
+    router.push(basePath || '/')
   }
 
   const restaurantName = restaurant?.name || 'Food Junction'
@@ -86,7 +89,7 @@ export default function Header() {
         }`}
       >
         <div className={`max-w-7xl mx-auto px-4 flex items-center justify-between transition-all duration-300 ${scrolled ? 'h-16 md:h-18' : 'h-16 md:h-20'}`}>
-          <Link href="/" className="flex items-center gap-2 md:gap-3 group" aria-label={`${restaurantName} Home`}>
+          <Link href={basePath || '/'} className="flex items-center gap-2 md:gap-3 group" aria-label={`${restaurantName} Home`}>
             <div className="relative">
               <div className="absolute inset-0 rounded-full bg-gold/30 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <img
@@ -119,7 +122,7 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-1 md:gap-2">
-            <Link href="/cart" className="relative p-2 hover:text-gold transition-all duration-300 hover:scale-110" aria-label="Cart">
+            <Link href={`${basePath}/cart`} className="relative p-2 hover:text-gold transition-all duration-300 hover:scale-110" aria-label="Cart">
               <ShoppingCart size={22} />
               {cartCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 bg-gradient-to-br from-gold to-gold-dark text-night text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center animate-bounce-soft shadow-gold">
@@ -152,11 +155,11 @@ export default function Header() {
                         <p className="text-sm font-bold truncate text-gold">{user.name}</p>
                         <p className="text-xs text-white/50 truncate">{user.mobile || user.email}</p>
                       </div>
-                      <Link href="/profile" onClick={() => setUserMenu(false)} className="flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-gold/10 hover:text-gold transition-all duration-200 group">
+                      <Link href={`${basePath}/profile`} onClick={() => setUserMenu(false)} className="flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-gold/10 hover:text-gold transition-all duration-200 group">
                         <User size={16} className="group-hover:scale-110 transition-transform" />
                         <span>My Profile</span>
                       </Link>
-                      <Link href="/track-order" onClick={() => setUserMenu(false)} className="flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-gold/10 hover:text-gold transition-all duration-200 group">
+                      <Link href={`${basePath}/track-order`} onClick={() => setUserMenu(false)} className="flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-gold/10 hover:text-gold transition-all duration-200 group">
                         <span className="group-hover:scale-110 transition-transform">📍</span>
                         <span>My Orders</span>
                       </Link>
@@ -169,12 +172,12 @@ export default function Header() {
                 )}
               </div>
             ) : (
-              <Link href="/login" className="p-2 hover:text-gold transition-all duration-300 hover:scale-110" aria-label="Login">
+              <Link href={`${basePath}/login`} className="p-2 hover:text-gold transition-all duration-300 hover:scale-110" aria-label="Login">
                 <User size={22} />
               </Link>
             )}
 
-            <Link href="/menu" className="hidden md:inline-flex relative overflow-hidden bg-gradient-to-r from-gold to-gold-dark text-night font-bold text-sm px-5 py-2.5 rounded-full btn-premium group">
+            <Link href={`${basePath}/menu`} className="hidden md:inline-flex relative overflow-hidden bg-gradient-to-r from-gold to-gold-dark text-night font-bold text-sm px-5 py-2.5 rounded-full btn-premium group">
               <span className="relative z-10 flex items-center gap-1.5">
                 Order Now
                 <span className="group-hover:translate-x-1 transition-transform">→</span>
@@ -191,7 +194,7 @@ export default function Header() {
           <div className="lg:hidden glass-dark border-t border-gold/10 animate-slide-down">
             <nav className="px-4 py-4 space-y-1">
               {links.map((l, i) => {
-                const isActive = pathname === l.href
+                const isActive = pathname === l.href || (l.href !== '/' && pathname.startsWith(l.href))
                 return (
                   <Link
                     key={l.href}
@@ -207,11 +210,11 @@ export default function Header() {
                 )
               })}
               {user && (
-                <Link href="/profile" onClick={() => setOpen(false)} className="block py-3 px-4 rounded-xl hover:bg-night-card hover:text-gold transition-all duration-200 animate-fade-up" style={{ animationDelay: '350ms' }}>
+                <Link href={`${basePath}/profile`} onClick={() => setOpen(false)} className="block py-3 px-4 rounded-xl hover:bg-night-card hover:text-gold transition-all duration-200 animate-fade-up" style={{ animationDelay: '350ms' }}>
                   My Profile
                 </Link>
               )}
-              <Link href="/menu" onClick={() => setOpen(false)} className="block mt-3 text-center bg-gradient-to-r from-gold to-gold-dark text-night font-bold py-3 rounded-full btn-premium animate-fade-up" style={{ animationDelay: '400ms' }}>
+              <Link href={`${basePath}/menu`} onClick={() => setOpen(false)} className="block mt-3 text-center bg-gradient-to-r from-gold to-gold-dark text-night font-bold py-3 rounded-full btn-premium animate-fade-up" style={{ animationDelay: '400ms' }}>
                 <span className="relative z-10">ORDER NOW</span>
               </Link>
             </nav>
