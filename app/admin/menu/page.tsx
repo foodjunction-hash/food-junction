@@ -16,6 +16,8 @@ import {
   XCircle,
   Sparkles,
   Layers,
+  Image as ImageIcon,
+  Upload,
 } from 'lucide-react'
 import { CATEGORIES, type FoodItem } from '@/lib/data'
 import { useToast } from '@/components/Toast'
@@ -26,6 +28,7 @@ import {
   deleteMenuItem,
   toggleMenuItemAvailability,
 } from '@/lib/menuSupabase'
+import AdminLoading from '@/components/AdminLoading'
 
 const EMPTY_FORM: FoodItem = {
   id: '',
@@ -41,6 +44,36 @@ const EMPTY_FORM: FoodItem = {
   isAvailable: true,
 }
 
+// ============================================
+// Available menu images (from public/menu-images/)
+// ============================================
+const MENU_IMAGES = [
+  { file: 'biryani.jpg', label: 'Biryani' },
+  { file: 'pizza.jpg', label: 'Pizza' },
+  { file: 'burger.jpg', label: 'Burger' },
+  { file: 'chicken.jpg', label: 'Chicken' },
+  { file: 'paneer.jpg', label: 'Paneer' },
+  { file: 'noodles.jpg', label: 'Noodles' },
+  { file: 'dosa.jpg', label: 'Dosa' },
+  { file: 'samosa.jpg', label: 'Samosa' },
+  { file: 'chai.jpg', label: 'Chai' },
+  { file: 'coffee.jpg', label: 'Coffee' },
+  { file: 'cake.jpg', label: 'Cake' },
+  { file: 'icecream.jpg', label: 'Ice Cream' },
+  { file: 'sandwich.jpg', label: 'Sandwich' },
+  { file: 'pasta.jpg', label: 'Pasta' },
+  { file: 'momos.jpg', label: 'Momos' },
+  { file: 'tandoori.jpg', label: 'Tandoori' },
+  { file: 'roll.jpg', label: 'Roll' },
+  { file: 'soup.jpg', label: 'Soup' },
+  { file: 'salad.jpg', label: 'Salad' },
+  { file: 'thali.jpg', label: 'Thali' },
+  { file: 'shakes.jpg', label: 'Shakes' },
+  { file: 'kebab.jpg', label: 'Kebab' },
+  { file: 'fries.jpg', label: 'Fries' },
+  { file: 'pavbhaji.jpg', label: 'Pav Bhaji' },
+]
+
 export default function AdminMenuPage() {
   const toast = useToast()
   const [items, setItems] = useState<FoodItem[]>([])
@@ -50,6 +83,7 @@ export default function AdminMenuPage() {
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [editing, setEditing] = useState<FoodItem | null>(null)
   const [isCreating, setIsCreating] = useState(false)
+  const [showImagePicker, setShowImagePicker] = useState(false)
 
   const loadItems = async () => {
     setLoading(true)
@@ -140,13 +174,26 @@ export default function AdminMenuPage() {
     }
   }
 
+  const handleUploadImage = async (file: File) => {
+    if (!editing) return
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File too large (max 5MB)')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      setEditing({ ...editing, emoji: reader.result as string })
+      toast.success('Image uploaded!')
+    }
+    reader.readAsDataURL(file)
+  }
+
   if (loading) {
-    return (
-      <div className="p-6 text-white/60 text-sm flex items-center gap-2">
-        <Loader2 className="animate-spin text-gold" size={16} />
-        Loading menu...
-      </div>
-    )
+    return <AdminLoading message="Loading Menu" />
+  }
+
+  const isImageUrl = (str: string) => {
+    return str.startsWith('http') || str.startsWith('/') || str.startsWith('data:')
   }
 
   const statsData = [
@@ -320,12 +367,20 @@ export default function AdminMenuPage() {
                 style={{ animation: `fadeInUp 0.4s ease-out ${i * 0.04}s both` }}
               >
                 <div className="flex items-start gap-3 mb-3">
-                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 ${
+                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 overflow-hidden ${
                     item.isAvailable
                       ? 'bg-gradient-to-br from-gold/20 via-gold/10 to-transparent'
                       : 'bg-gradient-to-br from-gray-500/20 to-transparent'
                   }`}>
-                    {item.emoji}
+                    {isImageUrl(item.emoji) ? (
+                      <img
+                        src={item.emoji}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span>{item.emoji}</span>
+                    )}
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -397,7 +452,7 @@ export default function AdminMenuPage() {
         )}
       </div>
 
-      {/* Modal */}
+      {/* EDIT MODAL */}
       {editing && (
         <div
           className="fixed inset-0 z-50 bg-night/80 backdrop-blur-md flex items-center justify-center p-4"
@@ -418,26 +473,50 @@ export default function AdminMenuPage() {
             </div>
 
             <div className="p-5 space-y-4">
-              <div className="grid grid-cols-4 gap-3">
-                <div className="col-span-1">
-                  <label className="block text-xs text-white/60 mb-1.5">Emoji</label>
-                  <input
-                    type="text"
-                    value={editing.emoji}
-                    onChange={(e) => setEditing({ ...editing, emoji: e.target.value.slice(0, 4) })}
-                    className="w-full bg-night border border-white/10 rounded-xl px-3 py-3 text-2xl text-center focus:border-gold/50 focus:outline-none"
-                  />
+              {/* Image Preview */}
+              <div>
+                <label className="block text-xs text-white/60 mb-2 font-medium">Image</label>
+                <div className="flex items-center gap-3">
+                  <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-gold/30 flex items-center justify-center bg-night text-4xl flex-shrink-0">
+                    {isImageUrl(editing.emoji) ? (
+                      <img src={editing.emoji} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{editing.emoji || '🍽️'}</span>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowImagePicker(true)}
+                      className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-gold to-gold-dark text-night font-bold py-2.5 rounded-full text-xs hover:scale-105 transition"
+                    >
+                      <ImageIcon size={14} /> Pick Image
+                    </button>
+                    <label className="w-full flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white/70 font-semibold py-2 rounded-full text-xs cursor-pointer">
+                      <Upload size={12} /> Upload Custom
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) handleUploadImage(file)
+                        }}
+                      />
+                    </label>
+                  </div>
                 </div>
-                <div className="col-span-3">
-                  <label className="block text-xs text-white/60 mb-1.5">Name *</label>
-                  <input
-                    type="text"
-                    value={editing.name}
-                    onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-                    placeholder="e.g. Chicken Biryani"
-                    className="w-full bg-night border border-white/10 rounded-xl px-3 py-3 text-sm focus:border-gold/50 focus:outline-none"
-                  />
-                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs text-white/60 mb-1.5">Name *</label>
+                <input
+                  type="text"
+                  value={editing.name}
+                  onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                  placeholder="e.g. Chicken Biryani"
+                  className="w-full bg-night border border-white/10 rounded-xl px-3 py-3 text-sm focus:border-gold/50 focus:outline-none"
+                />
               </div>
 
               <div>
@@ -461,7 +540,7 @@ export default function AdminMenuPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-white/60 mb-1.5">Discount Price (₹)</label>
+                  <label className="block text-xs text-white/60 mb-1.5">Discount (₹)</label>
                   <input
                     type="number"
                     value={editing.discountPrice || ''}
@@ -532,16 +611,69 @@ export default function AdminMenuPage() {
         </div>
       )}
 
+      {/* IMAGE PICKER MODAL */}
+      {showImagePicker && editing && (
+        <div
+          className="fixed inset-0 z-[60] bg-night/90 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setShowImagePicker(false)}
+        >
+          <div
+            className="bg-night-card border border-gold/20 rounded-2xl max-w-3xl w-full max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 z-10 bg-night-card/95 backdrop-blur-xl border-b border-white/10 p-5 flex items-center justify-between">
+              <h2 className="font-bold text-lg flex items-center gap-2">
+                <ImageIcon size={18} className="text-gold" />
+                Pick Image ({MENU_IMAGES.length} available)
+              </h2>
+              <button onClick={() => setShowImagePicker(false)} className="p-2 hover:bg-white/10 rounded-full">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-5">
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+                {MENU_IMAGES.map((img) => (
+                  <button
+                    key={img.file}
+                    onClick={() => {
+                      setEditing({ ...editing, emoji: `/menu-images/${img.file}` })
+                      setShowImagePicker(false)
+                      toast.success(`✅ ${img.label} selected!`)
+                    }}
+                    className={`group relative aspect-square rounded-xl overflow-hidden border-2 transition-all hover:scale-105 ${
+                      editing.emoji === `/menu-images/${img.file}`
+                        ? 'border-gold ring-2 ring-gold/50'
+                        : 'border-white/10 hover:border-gold/50'
+                    }`}
+                  >
+                    <img
+                      src={`/menu-images/${img.file}`}
+                      alt={img.label}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-night/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-xs font-bold text-white text-center">{img.label}</p>
+                    </div>
+                    {editing.emoji === `/menu-images/${img.file}` && (
+                      <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-gold text-night flex items-center justify-center">
+                        <CheckCircle2 size={14} strokeWidth={3} />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style jsx global>{`
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
       `}</style>
     </div>
   )
