@@ -11,19 +11,27 @@ export default function CartItem({ item }: { item: CartItemType }) {
 
   return (
     <div className="bg-night-card rounded-2xl border border-white/5 hover:border-gold/30 transition p-4 flex gap-4 items-start">
-      {/* Image / Emoji */}
       <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl bg-gradient-to-br from-gold/10 to-fresh/10 flex items-center justify-center text-3xl md:text-4xl flex-shrink-0">
         {item.image}
       </div>
 
-      {/* Details */}
       <div className="flex-1 min-w-0">
-        <h3 className="font-bold text-sm md:text-base mb-1 truncate">{item.name}</h3>
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
+          <h3 className="font-bold text-sm md:text-base truncate">{item.name}</h3>
+          {item.portion && (
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              item.portion === 'half'
+                ? 'bg-fresh/20 text-fresh border border-fresh/30'
+                : 'bg-gold/20 text-gold border border-gold/30'
+            }`}>
+              {item.portion === 'half' ? 'HALF' : 'FULL'}
+            </span>
+          )}
+        </div>
         <p className="text-gold font-semibold text-sm mb-2">
           ₹{item.price} <span className="text-white/40 text-xs font-normal">each</span>
         </p>
 
-        {/* Quantity controls + Total */}
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-1 bg-night rounded-full border border-gold/40 p-0.5">
             <button
@@ -46,9 +54,7 @@ export default function CartItem({ item }: { item: CartItemType }) {
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-white font-bold text-base">
-              ₹{itemTotal}
-            </span>
+            <span className="text-white font-bold text-base">₹{itemTotal}</span>
             <button
               onClick={() => removeItem(item.id)}
               className="text-red-400 hover:text-red-300 hover:bg-red-500/10 p-1.5 rounded-full transition"

@@ -1,12 +1,15 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+export type PortionType = 'full' | 'half'
+
 export type CartItem = {
   id: string
   name: string
   price: number
   image: string
   quantity: number
+  portion?: PortionType  // 'full' or 'half'
 }
 
 type CartState = {

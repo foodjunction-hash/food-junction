@@ -29,12 +29,14 @@ export async function getMenuItems(
       description: row.description || '',
       price: Number(row.price),
       discountPrice: row.discount_price ? Number(row.discount_price) : undefined,
-      emoji: row.emoji || '🍽️',
+      emoji: row.emoji || 'ðŸ½ï¸',
       category: row.category,
       isVeg: row.is_veg,
       isBestseller: row.is_bestseller,
       isSpicy: row.is_spicy,
       isAvailable: row.is_available,
+      halfPrice: row.half_price ? Number(row.half_price) : undefined,
+      halfAvailable: row.half_available !== false,
     }))
   } catch (err) {
     console.error('Failed to fetch menu items:', err)
@@ -66,6 +68,8 @@ export async function createMenuItem(
           is_bestseller: item.isBestseller || false,
           is_spicy: item.isSpicy || false,
           is_available: item.isAvailable,
+          half_price: item.halfPrice || null,
+          half_available: item.halfAvailable !== false,
           restaurant_id: restaurantId || null,
         },
       ])
@@ -101,6 +105,8 @@ export async function updateMenuItem(id: string, item: Partial<FoodItem>) {
       updateData.is_bestseller = item.isBestseller
     if (item.isSpicy !== undefined) updateData.is_spicy = item.isSpicy
     if (item.isAvailable !== undefined) updateData.is_available = item.isAvailable
+    if (item.halfPrice !== undefined) updateData.half_price = item.halfPrice || null
+    if (item.halfAvailable !== undefined) updateData.half_available = item.halfAvailable
 
     const { data, error } = await supabase
       .from('menu_items')
