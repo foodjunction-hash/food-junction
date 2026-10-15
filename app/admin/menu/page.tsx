@@ -42,6 +42,8 @@ const EMPTY_FORM: FoodItem = {
   isBestseller: false,
   isSpicy: false,
   isAvailable: true,
+  halfPrice: undefined,
+  halfAvailable: false,
 }
 
 // ============================================
@@ -544,10 +546,68 @@ export default function AdminMenuPage() {
                   <input
                     type="number"
                     value={editing.discountPrice || ''}
-                    onChange={(e) => setEditing({ ...editing, discountPrice: e.target.value ? Number(e.target.value) : undefined })}
+                    onChange={(e) => {
+                      const val = e.target.value ? Number(e.target.value) : undefined;
+                      // Validate: discount must be less than price
+                      if (val && editing.price && val >= editing.price) {
+                        toast.error('Discount price se kam hona chahiye');
+                        return;
+                      }
+                      setEditing({ ...editing, discountPrice: val });
+                    }}
                     className="w-full bg-night border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:border-gold/50 focus:outline-none"
                   />
                 </div>
+              </div>
+
+              {/* Full/Half Portion */}
+              <div className="bg-night/60 border border-white/5 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold flex items-center gap-1.5">
+                      🍽️ Full/Half Portion
+                    </p>
+                    <p className="text-[10px] text-white/40">
+                      Half portion allow karo is item ke liye
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEditing({ ...editing, halfAvailable: !editing.halfAvailable })}
+                    className={`w-11 h-6 rounded-full transition-all relative ${
+                      editing.halfAvailable ? 'bg-gradient-to-r from-gold to-gold-dark' : 'bg-white/10'
+                    }`}
+                  >
+                    <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${
+                      editing.halfAvailable ? 'left-5' : 'left-0.5'
+                    }`} />
+                  </button>
+                </div>
+
+                {editing.halfAvailable && (
+                  <div className="pt-2 border-t border-white/5">
+                    <label className="block text-xs text-white/60 mb-1.5">Half Price (₹)</label>
+                    <input
+                      type="number"
+                      value={editing.halfPrice || ''}
+                      onChange={(e) => {
+                        const val = e.target.value ? Number(e.target.value) : undefined;
+                        // Validate: half price must be less than full price
+                        const fullPrice = editing.discountPrice || editing.price;
+                        if (val && fullPrice && val >= fullPrice) {
+                          toast.error('Half price full price se kam hona chahiye');
+                          return;
+                        }
+                        setEditing({ ...editing, halfPrice: val });
+                      }}
+                      placeholder="e.g. 150"
+                      className="w-full bg-night border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:border-gold/50 focus:outline-none"
+                    />
+                    <p className="text-[10px] text-white/40 mt-1.5">
+                      💡 Full price: ₹{editing.discountPrice || editing.price || 0}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>
