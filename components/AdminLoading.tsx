@@ -1,6 +1,7 @@
 'use client'
 
 export default function AdminLoading({ message = 'Loading' }: { message?: string }) {
+  const bitsArray = ['110101100000101', '011011111001011', '101010101010101', '111100001111000', '001100110011001', '110011001100110', '001111000011110', '101101101101101']
   return (
     <div className="fixed inset-0 z-50 bg-[#030308] flex items-center justify-center overflow-hidden">
       {/* Hexagon grid background */}
@@ -101,7 +102,7 @@ export default function AdminLoading({ message = 'Loading' }: { message?: string
               style={{ left: `${i * 12.5}%`, animationDelay: `${i * 0.3}s` }}
             >
               {Array.from({ length: 15 })
-                .map(() => Math.round(Math.random()))
+                .map((_, j) => parseInt(bitsArray[i % bitsArray.length][j % 15], 10))
                 .join('')}
             </div>
           ))}

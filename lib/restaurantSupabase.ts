@@ -1,21 +1,52 @@
 import { supabase } from '@/lib/supabase'
 
 export type RestaurantAdmin = {
-  google_login_enabled: boolean
   id: string
   slug: string
   name: string
   tagline: string
+  short_description: string
+  about: string
+  category: string
+  established_year: string
+  logo_url: string
+  mobile_logo_url: string
+  favicon_url: string
+  primary_color: string
+  secondary_color: string
+  accent_color: string
+  button_color: string
+  text_color: string
+  background_color: string
+  phone: string
+  whatsapp: string
+  email: string
+  alternate_phone: string
+  address: string
   city: string
   state: string
-  phone: string
-  email: string
+  pincode: string
+  google_maps_url: string
+  facebook_url: string
+  instagram_url: string
+  youtube_url: string
+  twitter_url: string
+  google_business_url: string
+  copyright_text: string
+  footer_description: string
+  owner_name: string
+  owner_role: string
+  owner_photo_url: string
+  developer_name: string
+  developer_role: string
+  developer_photo_url: string
   admin_username: string | null
   admin_password: string | null
   is_active: boolean
   subscription_status: 'trial' | 'active' | 'expired' | 'suspended'
   subscription_expires_at: string | null
   monthly_fee: number
+  google_login_enabled: boolean
   created_at: string
   last_login: string | null
 }
@@ -182,5 +213,23 @@ export async function getSuperAdminStats() {
       total: 0, active: 0, inactive: 0, trial: 0, paid: 0, expired: 0,
       suspended: 0, monthlyRevenue: 0,
     }
+  }
+}
+// ============================================
+// GET ALL ACTIVE RESTAURANTS (For Hub Page)
+// ============================================
+export async function getAllActiveRestaurants(): Promise<RestaurantAdmin[]> {
+  try {
+    const { data, error } = await supabase
+      .from('restaurants')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data || []
+  } catch (err) {
+    console.error('Failed to fetch active restaurants:', err)
+    return []
   }
 }
