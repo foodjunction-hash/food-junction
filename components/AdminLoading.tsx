@@ -23,10 +23,10 @@ export default function AdminLoading({ message = 'Loading' }: { message?: string
           key={i}
           className="absolute w-1 h-1 rounded-full bg-gold/60 animate-particle"
           style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 3}s`,
-            animationDuration: `${3 + Math.random() * 3}s`,
+            left: `${(i * 17) % 100}%`,
+            top: `${(i * 23) % 100}%`,
+            animationDelay: `${(i % 5) * 0.6}s`,
+            animationDuration: `${3 + (i % 4)}s`,
           }}
         />
       ))}
