@@ -15,16 +15,16 @@ export type FoodItem = {
 }
 
 export const CATEGORIES = [
-  { id: 'all', name: 'All', emoji: 'ðŸ½ï¸' },
-  { id: 'pizza', name: 'Pizza', emoji: 'ðŸ•' },
-  { id: 'burger', name: 'Burger', emoji: 'ðŸ”' },
-  { id: 'chinese', name: 'Chinese', emoji: 'ðŸ¥¡' },
-  { id: 'snacks', name: 'Snacks', emoji: 'ðŸŸ' },
-  { id: 'maincourse', name: 'Main Course', emoji: 'ðŸ›' },
-  { id: 'biryani', name: 'Biryani', emoji: 'ðŸš' },
-  { id: 'beverages', name: 'Beverages', emoji: 'ðŸ¥¤' },
-  { id: 'desserts', name: 'Desserts', emoji: 'ðŸ°' },
-  { id: 'special', name: 'Special', emoji: 'â­' },
+  { id: 'all', name: 'All', emoji: '🍽️' },
+  { id: 'pizza', name: 'Pizza', emoji: '🍕' },
+  { id: 'burger', name: 'Burger', emoji: '🍔' },
+  { id: 'chinese', name: 'Chinese', emoji: '🍜' },
+  { id: 'snacks', name: 'Snacks', emoji: '🍟' },
+  { id: 'maincourse', name: 'Main Course', emoji: '🍛' },
+  { id: 'biryani', name: 'Biryani', emoji: '🍚' },
+  { id: 'beverages', name: 'Beverages', emoji: '🍵' },
+  { id: 'desserts', name: 'Desserts', emoji: '🍰' },
+  { id: 'special', name: 'Special', emoji: '⭐' },
 ]
 
 export const FOOD_ITEMS: FoodItem[] = [
