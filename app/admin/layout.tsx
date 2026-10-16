@@ -1,66 +1,21 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  LayoutDashboard,
-  ClipboardList,
-  UtensilsCrossed,
-  Settings,
-  LogOut,
-  Menu as MenuIcon,
-  X,
-  Home,
-  BarChart3,
-  QrCode,
-  Briefcase,
-  Sparkles,
-  Gift,
-  Store,
-  Megaphone,
-  Clock,
-  Camera,
-  MessageSquare,
-  Layout,
+  LayoutDashboard, ClipboardList, UtensilsCrossed, Settings, LogOut,
+  Menu as MenuIcon, X, Home, BarChart3, QrCode, Briefcase, Sparkles,
+  Gift, Store, Megaphone, Clock, Camera, MessageSquare, Layout,
 } from 'lucide-react'
-import { isAdminLoggedIn, logoutAdmin } from '@/lib/auth'
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [checked, setChecked] = useState(false)
-
-  useEffect(() => {
-    if (pathname === '/admin/login') {
-      setChecked(true)
-      return
-    }
-    if (!isAdminLoggedIn()) {
-      router.push('/admin/login')
-    } else {
-      setChecked(true)
-    }
-  }, [pathname, router])
 
   if (pathname === '/admin/login') {
     return <>{children}</>
-  }
-
-  if (!checked) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-night">
-        <div className="flex items-center gap-3 text-white/60 text-sm">
-          <div className="w-4 h-4 border-2 border-gold border-t-transparent rounded-full animate-spin" />
-          Loading...
-        </div>
-      </div>
-    )
   }
 
   const links = [
@@ -80,9 +35,10 @@ export default function AdminLayout({
     { href: '/admin/settings', label: 'Settings', icon: Settings },
   ]
 
-  const handleLogout = () => {
-    logoutAdmin()
+  const handleLogout = async () => {
+    await fetch('/api/admin/logout', { method: 'POST' })
     router.push('/admin/login')
+    router.refresh()
   }
 
   return (
@@ -90,14 +46,10 @@ export default function AdminLayout({
       <aside className="hidden lg:flex flex-col w-64 bg-night-soft/80 backdrop-blur-xl border-r border-white/5 fixed h-full z-20">
         <div className="p-5 border-b border-white/5">
           <Link href="/admin/dashboard" className="flex items-center gap-3 group">
-            <div className="relative">
-              <div className="absolute inset-0 rounded-full bg-gold/30 blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
-              <img src="/food-junction-logo.png" alt="Food Junction" className="relative w-11 h-11 rounded-full object-cover ring-2 ring-gold/30 group-hover:ring-gold transition-all" />
-            </div>
+            <img src="/food-junction-logo.png" alt="Food Junction" className="w-11 h-11 rounded-full object-cover ring-2 ring-gold/30" />
             <div className="leading-tight">
               <p className="text-gold font-bold flex items-center gap-1">
-                Admin Panel
-                <Sparkles size={12} className="text-gold/60" />
+                Admin Panel <Sparkles size={12} className="text-gold/60" />
               </p>
               <p className="text-[10px] text-white/40 tracking-widest">FOOD JUNCTION</p>
             </div>
@@ -117,22 +69,19 @@ export default function AdminLayout({
                     : 'text-white/70 hover:bg-night-card hover:text-gold hover:translate-x-1'
                 }`}
               >
-                <l.icon size={18} className={active ? '' : 'group-hover:scale-110 transition-transform'} />
+                <l.icon size={18} />
                 {l.label}
-                {active && <span className="absolute right-3 w-1.5 h-1.5 rounded-full bg-night animate-pulse" />}
               </Link>
             )
           })}
         </nav>
 
         <div className="p-3 border-t border-white/5 space-y-1">
-          <Link href="/" target="_blank" className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-night-card hover:text-gold transition text-sm group">
-            <Home size={18} className="group-hover:scale-110 transition-transform" />
-            View Website
+          <Link href="/" target="_blank" className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-night-card hover:text-gold transition text-sm">
+            <Home size={18} /> View Website
           </Link>
-          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition text-sm group">
-            <LogOut size={18} className="group-hover:scale-110 transition-transform" />
-            Logout
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition text-sm">
+            <LogOut size={18} /> Logout
           </button>
         </div>
       </aside>
@@ -148,7 +97,7 @@ export default function AdminLayout({
       </div>
 
       {open && (
-        <div className="lg:hidden fixed inset-0 z-30 bg-night/95 backdrop-blur-xl pt-16 animate-fade-in">
+        <div className="lg:hidden fixed inset-0 z-30 bg-night/95 backdrop-blur-xl pt-16">
           <nav className="p-4 space-y-1">
             {links.map((l) => {
               const active = pathname === l.href || pathname.startsWith(l.href + '/')

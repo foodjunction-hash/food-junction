@@ -1,158 +1,100 @@
 ﻿'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import {
   ClipboardList,
-  Clock,
-  CheckCircle2,
   IndianRupee,
   TrendingUp,
-  TrendingDown,
-  ArrowRight,
   Package,
+  Clock,
+  CheckCircle2,
   ChefHat,
+  ArrowRight,
   Loader2,
-  Sparkles,
-  Users,
-  Activity,
+  RefreshCw,
+  AlertCircle,
 } from 'lucide-react'
-import { type Order } from '@/lib/orders'
+
+type Order = {
+  id: string
+  orderNumber: string
+  createdAt: string
+  total: number
+  status: string
+  customer: {
+    name: string
+    mobile: string
+  }
+}
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
 
-  const mapOrders = (data: any[]): Order[] =>
-    (data || []).map((o: any) => ({
-      id: o.id,
-      orderNumber: o.order_number,
-      createdAt: o.created_at,
-      items: o.items || [],
-      subtotal: o.subtotal,
-      deliveryCharge: o.delivery_charge,
-      tax: o.tax,
-      total: o.total,
-      orderType: o.order_type,
-      paymentMethod: o.payment_method,
-      paymentStatus: o.payment_status,
-      status: o.status,
-      customer: {
-        name: o.customer_name,
-        mobile: o.customer_mobile,
-        email: o.customer_email,
-        address: o.customer_address,
-        landmark: o.customer_landmark,
-        pincode: o.customer_pincode,
-        instructions: o.customer_instructions,
-        tableNumber: o.customer_table_number,
-      },
-    }))
+  const fetchOrders = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true)
+    else setLoading(true)
+    setError(null)
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const res = await fetch('/api/orders', { cache: 'no-store' })
-        const data = await res.json()
-        setOrders(mapOrders(data.orders))
-      } catch (err) {
-        console.error('Failed to fetch orders:', err)
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 10000)
+
+      const res = await fetch('/api/orders', {
+        cache: 'no-store',
+        signal: controller.signal,
+      })
+
+      clearTimeout(timeout)
+
+      if (!res.ok) {
+        throw new Error(`Server error: ${res.status}`)
       }
-    }
 
-    fetchOrders()
-    const interval = setInterval(fetchOrders, 30000)
-    return () => clearInterval(interval)
+      const data = await res.json()
+      const rawOrders = data.orders || data || []
+
+      const mapped: Order[] = rawOrders.map((o: any) => ({
+        id: o.id,
+        orderNumber: o.order_number || o.orderNumber || '',
+        createdAt: o.created_at || o.createdAt || new Date().toISOString(),
+        total: Number(o.total) || 0,
+        status: (o.status || 'placed').toLowerCase(),
+        customer: {
+          name: o.customer_name || o.customer?.name || 'Customer',
+          mobile: o.customer_mobile || o.customer?.mobile || '',
+        },
+      }))
+
+      setOrders(mapped)
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        setError('Request timeout. Please retry.')
+      } else {
+        setError(err.message || 'Failed to load orders')
+      }
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
   }, [])
 
-  const handleRefresh = async () => {
-    setRefreshing(true)
-    try {
-      const res = await fetch('/api/orders', { cache: 'no-store' })
-      const data = await res.json()
-      setOrders(mapOrders(data.orders))
-    } catch (err) {
-      console.error(err)
-    }
-    setRefreshing(false)
-  }
+  useEffect(() => {
+    fetchOrders()
+    const interval = setInterval(() => fetchOrders(true), 60000)
+    return () => clearInterval(interval)
+  }, [fetchOrders])
 
+  // Stats
   const today = new Date().toDateString()
-  const yesterday = new Date(Date.now() - 86400000).toDateString()
-
   const todayOrders = orders.filter(
     (o) => new Date(o.createdAt).toDateString() === today
   )
-  const yesterdayOrders = orders.filter(
-    (o) => new Date(o.createdAt).toDateString() === yesterday
-  )
-
-  const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0)
-  const todayRevenue = todayOrders.reduce((sum, o) => sum + o.total, 0)
-  const yesterdayRevenue = yesterdayOrders.reduce((sum, o) => sum + o.total, 0)
-
-  const ordersTrend = yesterdayOrders.length
-    ? Math.round(
-        ((todayOrders.length - yesterdayOrders.length) /
-          yesterdayOrders.length) *
-          100
-      )
-    : todayOrders.length > 0
-    ? 100
-    : 0
-
-  const revenueTrend = yesterdayRevenue
-    ? Math.round(((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100)
-    : todayRevenue > 0
-    ? 100
-    : 0
-
-  const stats = [
-    {
-      label: "Today's Orders",
-      value: todayOrders.length,
-      icon: ClipboardList,
-      gradient: 'from-amber-500/20 via-yellow-500/5 to-transparent',
-      border: 'border-amber-500/30',
-      iconBg: 'bg-gradient-to-br from-amber-400 to-yellow-600',
-      iconColor: 'text-night',
-      trend: ordersTrend,
-      trendLabel: 'vs yesterday',
-    },
-    {
-      label: "Today's Revenue",
-      value: `₹${todayRevenue}`,
-      icon: IndianRupee,
-      gradient: 'from-emerald-500/20 via-green-500/5 to-transparent',
-      border: 'border-emerald-500/30',
-      iconBg: 'bg-gradient-to-br from-emerald-400 to-green-600',
-      iconColor: 'text-night',
-      trend: revenueTrend,
-      trendLabel: 'vs yesterday',
-    },
-    {
-      label: 'Total Orders',
-      value: orders.length,
-      icon: TrendingUp,
-      gradient: 'from-blue-500/20 via-cyan-500/5 to-transparent',
-      border: 'border-blue-500/30',
-      iconBg: 'bg-gradient-to-br from-blue-400 to-cyan-600',
-      iconColor: 'text-night',
-      trend: null,
-      trendLabel: 'all time',
-    },
-    {
-      label: 'Total Revenue',
-      value: `₹${totalRevenue}`,
-      icon: Package,
-      gradient: 'from-purple-500/20 via-pink-500/5 to-transparent',
-      border: 'border-purple-500/30',
-      iconBg: 'bg-gradient-to-br from-purple-400 to-pink-600',
-      iconColor: 'text-night',
-      trend: null,
-      trendLabel: 'all time',
-    },
-  ]
+  const todayRevenue = todayOrders.reduce((s, o) => s + o.total, 0)
+  const totalRevenue = orders.reduce((s, o) => s + o.total, 0)
 
   const statusCount = {
     placed: orders.filter((o) => o.status === 'placed').length,
@@ -162,43 +104,30 @@ export default function AdminDashboard() {
     delivered: orders.filter((o) => o.status === 'delivered').length,
   }
 
-  const totalOrdersForProgress = orders.length || 1
-
-  const statusData = [
+  const stats = [
     {
-      label: 'Placed',
-      value: statusCount.placed,
-      emoji: '📝',
-      color: 'text-gold',
-      barColor: 'bg-gradient-to-r from-amber-400 to-yellow-600',
+      label: "Today's Orders",
+      value: todayOrders.length,
+      icon: ClipboardList,
+      color: 'from-amber-400 to-yellow-600',
     },
     {
-      label: 'Accepted',
-      value: statusCount.accepted,
-      emoji: '✅',
-      color: 'text-blue-400',
-      barColor: 'bg-gradient-to-r from-blue-400 to-cyan-500',
+      label: "Today's Revenue",
+      value: `₹${todayRevenue}`,
+      icon: IndianRupee,
+      color: 'from-emerald-400 to-green-600',
     },
     {
-      label: 'Preparing',
-      value: statusCount.preparing,
-      emoji: '👨‍🍳',
-      color: 'text-purple-400',
-      barColor: 'bg-gradient-to-r from-purple-400 to-pink-500',
+      label: 'Total Orders',
+      value: orders.length,
+      icon: TrendingUp,
+      color: 'from-blue-400 to-cyan-600',
     },
     {
-      label: 'Ready',
-      value: statusCount.ready,
-      emoji: '🍽️',
-      color: 'text-fresh',
-      barColor: 'bg-gradient-to-r from-emerald-400 to-green-600',
-    },
-    {
-      label: 'Delivered',
-      value: statusCount.delivered,
-      emoji: '🎉',
-      color: 'text-white/70',
-      barColor: 'bg-gradient-to-r from-gray-400 to-gray-600',
+      label: 'Total Revenue',
+      value: `₹${totalRevenue}`,
+      icon: Package,
+      color: 'from-purple-400 to-pink-600',
     },
   ]
 
@@ -209,224 +138,182 @@ export default function AdminDashboard() {
     if (mins < 60) return `${mins}m ago`
     const hours = Math.floor(mins / 60)
     if (hours < 24) return `${hours}h ago`
-    const days = Math.floor(hours / 24)
-    return `${days}d ago`
+    return `${Math.floor(hours / 24)}d ago`
   }
 
-  return (
-    <div className="p-4 md:p-8 min-h-screen bg-gradient-to-br from-night via-night to-night-soft">
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gold/5 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-500/5 rounded-full blur-[100px] animate-pulse" />
+  // ===== LOADING =====
+  if (loading) {
+    return (
+      <div className="p-6 min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="animate-spin text-gold" size={40} />
+          <p className="text-white/60 text-sm">Loading dashboard...</p>
+        </div>
       </div>
+    )
+  }
 
-      <div className="relative z-10">
-        <div className="mb-6 md:mb-8 flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Sparkles size={20} className="text-gold animate-pulse" />
-              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white via-gold to-white bg-clip-text text-transparent">
-                Dashboard
-              </h1>
-            </div>
-            <p className="text-white/50 text-sm flex items-center gap-2">
-              <Activity size={14} className="text-fresh" />
-              Welcome back, Admin! Here&apos;s what&apos;s happening today.
-            </p>
-          </div>
+  // ===== ERROR =====
+  if (error) {
+    return (
+      <div className="p-6 min-h-screen flex items-center justify-center">
+        <div className="max-w-md text-center">
+          <AlertCircle className="text-red-400 mx-auto mb-4" size={48} />
+          <h2 className="text-xl font-bold mb-2">Failed to load</h2>
+          <p className="text-white/60 text-sm mb-6">{error}</p>
           <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="flex items-center gap-2 bg-night-card border border-white/10 hover:border-gold/50 px-4 py-2.5 rounded-full text-sm font-semibold transition-all hover:scale-105 disabled:opacity-50"
+            onClick={() => fetchOrders()}
+            className="flex items-center gap-2 bg-gold text-night font-bold px-6 py-3 rounded-full mx-auto hover:scale-105 transition"
           >
-            <Loader2
-              size={14}
-              className={refreshing ? 'animate-spin text-gold' : 'text-gold'}
-            />
-            Refresh
+            <RefreshCw size={16} /> Retry
           </button>
         </div>
+      </div>
+    )
+  }
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 mb-6 md:mb-8">
-          {stats.map((s, i) => (
+  // ===== MAIN =====
+  return (
+    <div className="p-4 md:p-8 min-h-screen">
+      {/* Header */}
+      <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold mb-1">
+            Dashboard
+          </h1>
+          <p className="text-white/50 text-sm">
+            Welcome back, Admin!
+          </p>
+        </div>
+        <button
+          onClick={() => fetchOrders(true)}
+          disabled={refreshing}
+          className="flex items-center gap-2 bg-night-card border border-white/10 hover:border-gold/50 px-4 py-2.5 rounded-full text-sm font-semibold transition disabled:opacity-50"
+        >
+          <RefreshCw size={14} className={refreshing ? 'animate-spin text-gold' : 'text-gold'} />
+          Refresh
+        </button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {stats.map((s, i) => (
+          <div
+            key={i}
+            className="bg-night-card border border-white/5 rounded-2xl p-5 hover:border-gold/30 transition"
+          >
+            <div
+              className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center mb-3`}
+            >
+              <s.icon size={20} className="text-night" />
+            </div>
+            <p className="text-2xl md:text-3xl font-bold mb-1">{s.value}</p>
+            <p className="text-xs text-white/60">{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Status Overview */}
+      <div className="bg-night-card border border-white/5 rounded-2xl p-5 mb-6">
+        <h2 className="font-bold mb-4 text-lg">Order Status</h2>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {[
+            { label: 'Placed', value: statusCount.placed, emoji: '📝' },
+            { label: 'Accepted', value: statusCount.accepted, emoji: '✅' },
+            { label: 'Preparing', value: statusCount.preparing, emoji: '👨‍🍳' },
+            { label: 'Ready', value: statusCount.ready, emoji: '🍽️' },
+            { label: 'Delivered', value: statusCount.delivered, emoji: '🎉' },
+          ].map((s, i) => (
             <div
               key={i}
-              className={`relative group bg-gradient-to-br ${s.gradient} bg-night-card border ${s.border} rounded-2xl p-5 overflow-hidden transition-all duration-500 hover:scale-[1.03] hover:shadow-2xl hover:shadow-gold/10 cursor-pointer`}
-              style={{ animation: `fadeInUp 0.5s ease-out ${i * 0.1}s both` }}
+              className="text-center p-3 rounded-xl bg-white/5"
             >
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-white/5 to-transparent" />
-              <div className="relative z-10">
-                <div className="flex items-start justify-between mb-4">
-                  <div
-                    className={`w-12 h-12 rounded-xl ${s.iconBg} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}
-                  >
-                    <s.icon size={22} className={s.iconColor} strokeWidth={2.5} />
-                  </div>
-                  {s.trend !== null && s.trend !== 0 && (
-                    <div
-                      className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold ${
-                        s.trend > 0
-                          ? 'bg-fresh/20 text-fresh'
-                          : 'bg-red-500/20 text-red-400'
-                      }`}
-                    >
-                      {s.trend > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
-                      {Math.abs(s.trend)}%
-                    </div>
-                  )}
-                </div>
-                <p className="text-3xl md:text-4xl font-bold mb-1 tracking-tight">{s.value}</p>
-                <p className="text-xs md:text-sm text-white/60 font-medium">{s.label}</p>
-                {s.trend !== null && (
-                  <p className="text-[10px] text-white/30 mt-1">{s.trendLabel}</p>
-                )}
-              </div>
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="text-3xl mb-1">{s.emoji}</div>
+              <p className="text-2xl font-bold">{s.value}</p>
+              <p className="text-xs text-white/50">{s.label}</p>
             </div>
           ))}
         </div>
-
-        <div className="bg-night-card border border-white/5 rounded-2xl p-5 md:p-6 mb-6 md:mb-8 hover:border-gold/20 transition-colors">
-          <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
-            <h2 className="font-bold flex items-center gap-2 text-lg">
-              <Activity size={18} className="text-gold" />
-              Order Status Overview
-            </h2>
-            <span className="text-xs text-white/40 bg-white/5 px-3 py-1 rounded-full">
-              {orders.length} total orders
-            </span>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
-            {statusData.map((s, i) => (
-              <div
-                key={i}
-                className="relative group text-center p-4 rounded-xl bg-gradient-to-br from-white/[0.02] to-transparent hover:from-white/[0.05] transition-all duration-300"
-                style={{ animation: `fadeInUp 0.5s ease-out ${0.4 + i * 0.08}s both` }}
-              >
-                <div className="text-4xl mb-2 group-hover:scale-125 transition-transform duration-300 inline-block">
-                  {s.emoji}
-                </div>
-                <p className={`text-3xl font-bold ${s.color} mb-1`}>{s.value}</p>
-                <p className="text-xs text-white/50 font-medium mb-3">{s.label}</p>
-                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full ${s.barColor} rounded-full transition-all duration-1000`}
-                    style={{ width: `${(s.value / totalOrdersForProgress) * 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-night-card border border-white/5 rounded-2xl p-5 md:p-6 mb-6 md:mb-8 hover:border-gold/20 transition-colors">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold flex items-center gap-2 text-lg">
-              <Clock size={18} className="text-gold" /> Recent Orders
-            </h2>
-            <Link
-              href="/admin/orders"
-              className="text-sm text-gold hover:text-gold-light transition flex items-center gap-1 group"
-            >
-              View All
-              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-
-          {orders.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-5xl mb-3 animate-bounce">📭</div>
-              <p className="text-white/60 text-sm mb-2">No orders yet</p>
-              <p className="text-white/40 text-xs">Orders will appear here once customers place them</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {orders.slice(0, 5).map((order, i) => (
-                <Link
-                  key={order.id}
-                  href="/admin/orders"
-                  className="flex items-center justify-between p-3.5 rounded-xl bg-night border border-white/5 hover:border-gold/50 hover:bg-night-soft transition-all duration-300 group"
-                  style={{ animation: `fadeInUp 0.4s ease-out ${0.6 + i * 0.05}s both` }}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <p className="font-bold text-sm text-gold truncate group-hover:text-gold-light">
-                        #{order.orderNumber}
-                      </p>
-                      <span
-                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                          order.status === 'delivered'
-                            ? 'bg-fresh/20 text-fresh'
-                            : order.status === 'placed'
-                            ? 'bg-gold/20 text-gold'
-                            : order.status === 'preparing'
-                            ? 'bg-purple-400/20 text-purple-400'
-                            : 'bg-blue-400/20 text-blue-400'
-                        }`}
-                      >
-                        {order.status}
-                      </span>
-                    </div>
-                    <p className="text-xs text-white/60 truncate flex items-center gap-2">
-                      <Users size={11} className="text-gold/60" />
-                      {order.customer.name} • {order.customer.mobile}
-                    </p>
-                  </div>
-                  <div className="text-right ml-3 flex items-center gap-3">
-                    <div>
-                      <p className="font-bold text-sm">₹{order.total}</p>
-                      <p className="text-[10px] text-white/40">{timeAgo(order.createdAt)}</p>
-                    </div>
-                    <ArrowRight
-                      size={16}
-                      className="text-white/20 group-hover:text-gold group-hover:translate-x-1 transition-all"
-                    />
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-3 md:gap-5">
-          <Link
-            href="/admin/menu"
-            className="relative group bg-night-card border border-white/5 rounded-2xl p-5 hover:border-gold/50 transition-all duration-300 flex items-center gap-4 overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-gold/30 to-gold/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <ChefHat size={24} className="text-gold group-hover:rotate-12 transition-transform" />
-            </div>
-            <div className="flex-1 relative">
-              <p className="font-bold mb-0.5 text-lg">Manage Menu</p>
-              <p className="text-xs text-white/50">Add, edit, delete food items</p>
-            </div>
-            <ArrowRight size={18} className="relative text-white/40 group-hover:text-gold group-hover:translate-x-1 transition-all" />
-          </Link>
-
-          <Link
-            href="/admin/orders"
-            className="relative group bg-night-card border border-white/5 rounded-2xl p-5 hover:border-fresh/50 transition-all duration-300 flex items-center gap-4 overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-fresh/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-fresh/30 to-fresh/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <CheckCircle2 size={24} className="text-fresh group-hover:rotate-12 transition-transform" />
-            </div>
-            <div className="flex-1 relative">
-              <p className="font-bold mb-0.5 text-lg">Manage Orders</p>
-              <p className="text-xs text-white/50">Accept, reject, track orders</p>
-            </div>
-            <ArrowRight size={18} className="relative text-white/40 group-hover:text-fresh group-hover:translate-x-1 transition-all" />
-          </Link>
-        </div>
       </div>
 
-      <style jsx global>{`
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
+      {/* Recent Orders */}
+      <div className="bg-night-card border border-white/5 rounded-2xl p-5 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold text-lg flex items-center gap-2">
+            <Clock size={18} className="text-gold" /> Recent Orders
+          </h2>
+          <Link
+            href="/admin/orders"
+            className="text-sm text-gold hover:text-gold-light flex items-center gap-1"
+          >
+            View All <ArrowRight size={14} />
+          </Link>
+        </div>
+
+        {orders.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-5xl mb-3">📭</div>
+            <p className="text-white/60 text-sm">No orders yet</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {orders.slice(0, 5).map((order) => (
+              <Link
+                key={order.id}
+                href="/admin/orders"
+                className="flex items-center justify-between p-3 rounded-xl bg-night border border-white/5 hover:border-gold/50 transition group"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-bold text-sm text-gold">#{order.orderNumber}</p>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase bg-gold/20 text-gold">
+                      {order.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-white/60 truncate">
+                    {order.customer.name} • {order.customer.mobile}
+                  </p>
+                </div>
+                <div className="text-right ml-3">
+                  <p className="font-bold text-sm">₹{order.total}</p>
+                  <p className="text-[10px] text-white/40">{timeAgo(order.createdAt)}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid md:grid-cols-2 gap-4">
+        <Link
+          href="/admin/menu"
+          className="group bg-night-card border border-white/5 rounded-2xl p-5 hover:border-gold/50 transition flex items-center gap-4"
+        >
+          <div className="w-12 h-12 rounded-xl bg-gold/20 flex items-center justify-center">
+            <ChefHat size={22} className="text-gold" />
+          </div>
+          <div className="flex-1">
+            <p className="font-bold">Manage Menu</p>
+            <p className="text-xs text-white/50">Add or edit food items</p>
+          </div>
+          <ArrowRight size={18} className="text-white/30 group-hover:text-gold transition" />
+        </Link>
+
+        <Link
+          href="/admin/orders"
+          className="group bg-night-card border border-white/5 rounded-2xl p-5 hover:border-fresh/50 transition flex items-center gap-4"
+        >
+          <div className="w-12 h-12 rounded-xl bg-fresh/20 flex items-center justify-center">
+            <CheckCircle2 size={22} className="text-fresh" />
+          </div>
+          <div className="flex-1">
+            <p className="font-bold">Manage Orders</p>
+            <p className="text-xs text-white/50">Accept and track orders</p>
+          </div>
+          <ArrowRight size={18} className="text-white/30 group-hover:text-fresh transition" />
+        </Link>
+      </div>
     </div>
   )
 }

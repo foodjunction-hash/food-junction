@@ -12,7 +12,7 @@ const TIPS = [
   '🎉 Order karo, party karo!',
 ]
 
-const MIN_LOADING_TIME = 5000
+const MIN_LOADING_TIME = 300
 
 export default function Loading() {
   const [tipIndex, setTipIndex] = useState(0)
