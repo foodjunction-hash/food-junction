@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
@@ -24,9 +24,6 @@ async function getSupabase() {
   )
 }
 
-// ============================================
-// Helper: Get restaurant ID from slug
-// ============================================
 async function getRestaurantIdFromSlug(
   supabase: any,
   slug: string
@@ -56,13 +53,10 @@ export async function POST(req: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser()
 
-    // Get restaurant_id from slug (body.slug or query)
     let restaurantId: string | null = null
     if (body.slug) {
       restaurantId = await getRestaurantIdFromSlug(supabase, body.slug)
     }
-
-    // Fallback: use default food-junction
     if (!restaurantId) {
       restaurantId = await getRestaurantIdFromSlug(supabase, 'food-junction')
     }
@@ -114,13 +108,12 @@ export async function POST(req: NextRequest) {
 
 // ============================================
 // GET /api/orders — Fetch orders
-// Query params: ?slug=xxx  ?status=placed  ?mobile=  ?email=  ?mine=true
 // ============================================
 export async function GET(req: NextRequest) {
   try {
     const supabase = await getSupabase()
     const { searchParams } = new URL(req.url)
-    const slug = searchParams.get('slug')
+    const slug = searchParams.get('slug') || 'food-junction'
     const status = searchParams.get('status')
     const mobile = searchParams.get('mobile')
     const email = searchParams.get('email')
@@ -130,24 +123,11 @@ export async function GET(req: NextRequest) {
       .from('orders')
       .select('*')
       .order('created_at', { ascending: false })
+      .limit(100)
 
-    // 🔒 CRITICAL: Filter by restaurant_id
-    // If slug provided, filter by that restaurant
-    // If NO slug and NO mine → filter by default food-junction
-    if (slug) {
-      const restaurantId = await getRestaurantIdFromSlug(supabase, slug)
-      if (restaurantId) {
-        query = query.eq('restaurant_id', restaurantId)
-      } else {
-        // Slug not found — return empty
-        return NextResponse.json({ orders: [] }, { status: 200 })
-      }
-    } else if (mine !== 'true') {
-      // No slug, no mine → default to food-junction (backward compat)
-      const defaultId = await getRestaurantIdFromSlug(supabase, 'food-junction')
-      if (defaultId) {
-        query = query.eq('restaurant_id', defaultId)
-      }
+    const restaurantId = await getRestaurantIdFromSlug(supabase, slug)
+    if (restaurantId) {
+      query = query.eq('restaurant_id', restaurantId)
     }
 
     if (status) query = query.eq('status', status)
@@ -159,7 +139,7 @@ export async function GET(req: NextRequest) {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) {
-        return NextResponse.json({ orders: [] }, { status: 200 })
+        return NextResponse.json({ success: true, orders: [] }, { status: 200 })
       }
       query = query.eq('auth_user_id', user.id)
     }
@@ -168,14 +148,20 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       console.error('Supabase fetch error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(
+        { success: false, error: error.message, orders: [] },
+        { status: 500 }
+      )
     }
 
-    return NextResponse.json({ orders: data }, { status: 200 })
+    return NextResponse.json(
+      { success: true, orders: data || [] },
+      { status: 200 }
+    )
   } catch (err: any) {
     console.error('API error:', err)
     return NextResponse.json(
-      { error: err.message || 'Internal server error' },
+      { success: false, error: err.message || 'Internal server error', orders: [] },
       { status: 500 }
     )
   }

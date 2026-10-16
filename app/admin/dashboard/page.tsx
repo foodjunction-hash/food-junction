@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -21,44 +21,43 @@ import { type Order } from '@/lib/orders'
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([])
-  const [mounted, setMounted] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
+
+  const mapOrders = (data: any[]): Order[] =>
+    (data || []).map((o: any) => ({
+      id: o.id,
+      orderNumber: o.order_number,
+      createdAt: o.created_at,
+      items: o.items || [],
+      subtotal: o.subtotal,
+      deliveryCharge: o.delivery_charge,
+      tax: o.tax,
+      total: o.total,
+      orderType: o.order_type,
+      paymentMethod: o.payment_method,
+      paymentStatus: o.payment_status,
+      status: o.status,
+      customer: {
+        name: o.customer_name,
+        mobile: o.customer_mobile,
+        email: o.customer_email,
+        address: o.customer_address,
+        landmark: o.customer_landmark,
+        pincode: o.customer_pincode,
+        instructions: o.customer_instructions,
+        tableNumber: o.customer_table_number,
+      },
+    }))
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         const res = await fetch('/api/orders', { cache: 'no-store' })
         const data = await res.json()
-
-        const dbOrders: Order[] = (data.orders || []).map((o: any) => ({
-          id: o.id,
-          orderNumber: o.order_number,
-          createdAt: o.created_at,
-          items: o.items || [],
-          subtotal: o.subtotal,
-          deliveryCharge: o.delivery_charge,
-          tax: o.tax,
-          total: o.total,
-          orderType: o.order_type,
-          paymentMethod: o.payment_method,
-          paymentStatus: o.payment_status,
-          status: o.status,
-          customer: {
-            name: o.customer_name,
-            mobile: o.customer_mobile,
-            email: o.customer_email,
-            address: o.customer_address,
-            landmark: o.customer_landmark,
-            pincode: o.customer_pincode,
-            instructions: o.customer_instructions,
-            tableNumber: o.customer_table_number,
-          },
-        }))
-        setOrders(dbOrders)
+        setOrders(mapOrders(data.orders))
       } catch (err) {
         console.error('Failed to fetch orders:', err)
       }
-      setMounted(true)
     }
 
     fetchOrders()
@@ -71,44 +70,11 @@ export default function AdminDashboard() {
     try {
       const res = await fetch('/api/orders', { cache: 'no-store' })
       const data = await res.json()
-      const dbOrders: Order[] = (data.orders || []).map((o: any) => ({
-        id: o.id,
-        orderNumber: o.order_number,
-        createdAt: o.created_at,
-        items: o.items || [],
-        subtotal: o.subtotal,
-        deliveryCharge: o.delivery_charge,
-        tax: o.tax,
-        total: o.total,
-        orderType: o.order_type,
-        paymentMethod: o.payment_method,
-        paymentStatus: o.payment_status,
-        status: o.status,
-        customer: {
-          name: o.customer_name,
-          mobile: o.customer_mobile,
-          email: o.customer_email,
-          address: o.customer_address,
-          landmark: o.customer_landmark,
-          pincode: o.customer_pincode,
-          instructions: o.customer_instructions,
-          tableNumber: o.customer_table_number,
-        },
-      }))
-      setOrders(dbOrders)
+      setOrders(mapOrders(data.orders))
     } catch (err) {
       console.error(err)
     }
     setRefreshing(false)
-  }
-
-  if (!mounted) {
-    return (
-      <div className="p-6 text-white/60 text-sm flex items-center gap-2">
-        <Loader2 className="animate-spin" size={16} />
-        Loading dashboard...
-      </div>
-    )
   }
 
   const today = new Date().toDateString()
@@ -125,7 +91,6 @@ export default function AdminDashboard() {
   const todayRevenue = todayOrders.reduce((sum, o) => sum + o.total, 0)
   const yesterdayRevenue = yesterdayOrders.reduce((sum, o) => sum + o.total, 0)
 
-  // Calculate trends
   const ordersTrend = yesterdayOrders.length
     ? Math.round(
         ((todayOrders.length - yesterdayOrders.length) /
@@ -205,7 +170,6 @@ export default function AdminDashboard() {
       value: statusCount.placed,
       emoji: '📝',
       color: 'text-gold',
-      bg: 'from-gold/30 to-gold/10',
       barColor: 'bg-gradient-to-r from-amber-400 to-yellow-600',
     },
     {
@@ -213,7 +177,6 @@ export default function AdminDashboard() {
       value: statusCount.accepted,
       emoji: '✅',
       color: 'text-blue-400',
-      bg: 'from-blue-400/30 to-blue-400/10',
       barColor: 'bg-gradient-to-r from-blue-400 to-cyan-500',
     },
     {
@@ -221,7 +184,6 @@ export default function AdminDashboard() {
       value: statusCount.preparing,
       emoji: '👨‍🍳',
       color: 'text-purple-400',
-      bg: 'from-purple-400/30 to-purple-400/10',
       barColor: 'bg-gradient-to-r from-purple-400 to-pink-500',
     },
     {
@@ -229,7 +191,6 @@ export default function AdminDashboard() {
       value: statusCount.ready,
       emoji: '🍽️',
       color: 'text-fresh',
-      bg: 'from-fresh/30 to-fresh/10',
       barColor: 'bg-gradient-to-r from-emerald-400 to-green-600',
     },
     {
@@ -237,7 +198,6 @@ export default function AdminDashboard() {
       value: statusCount.delivered,
       emoji: '🎉',
       color: 'text-white/70',
-      bg: 'from-white/20 to-white/5',
       barColor: 'bg-gradient-to-r from-gray-400 to-gray-600',
     },
   ]
@@ -255,14 +215,12 @@ export default function AdminDashboard() {
 
   return (
     <div className="p-4 md:p-8 min-h-screen bg-gradient-to-br from-night via-night to-night-soft">
-      {/* Animated Background Effects */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gold/5 rounded-full blur-[120px] animate-pulse" />
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-500/5 rounded-full blur-[100px] animate-pulse" />
       </div>
 
       <div className="relative z-10">
-        {/* Header */}
         <div className="mb-6 md:mb-8 flex items-start justify-between gap-4 flex-wrap">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -289,19 +247,14 @@ export default function AdminDashboard() {
           </button>
         </div>
 
-        {/* Stats Cards with Animations */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 mb-6 md:mb-8">
           {stats.map((s, i) => (
             <div
               key={i}
               className={`relative group bg-gradient-to-br ${s.gradient} bg-night-card border ${s.border} rounded-2xl p-5 overflow-hidden transition-all duration-500 hover:scale-[1.03] hover:shadow-2xl hover:shadow-gold/10 cursor-pointer`}
-              style={{
-                animation: `fadeInUp 0.5s ease-out ${i * 0.1}s both`,
-              }}
+              style={{ animation: `fadeInUp 0.5s ease-out ${i * 0.1}s both` }}
             >
-              {/* Glow effect */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-white/5 to-transparent" />
-
               <div className="relative z-10">
                 <div className="flex items-start justify-between mb-4">
                   <div
@@ -317,36 +270,22 @@ export default function AdminDashboard() {
                           : 'bg-red-500/20 text-red-400'
                       }`}
                     >
-                      {s.trend > 0 ? (
-                        <TrendingUp size={10} />
-                      ) : (
-                        <TrendingDown size={10} />
-                      )}
+                      {s.trend > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
                       {Math.abs(s.trend)}%
                     </div>
                   )}
                 </div>
-
-                <p className="text-3xl md:text-4xl font-bold mb-1 tracking-tight">
-                  {s.value}
-                </p>
-                <p className="text-xs md:text-sm text-white/60 font-medium">
-                  {s.label}
-                </p>
+                <p className="text-3xl md:text-4xl font-bold mb-1 tracking-tight">{s.value}</p>
+                <p className="text-xs md:text-sm text-white/60 font-medium">{s.label}</p>
                 {s.trend !== null && (
-                  <p className="text-[10px] text-white/30 mt-1">
-                    {s.trendLabel}
-                  </p>
+                  <p className="text-[10px] text-white/30 mt-1">{s.trendLabel}</p>
                 )}
               </div>
-
-              {/* Bottom accent line */}
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           ))}
         </div>
 
-        {/* Status Overview with Progress Bars */}
         <div className="bg-night-card border border-white/5 rounded-2xl p-5 md:p-6 mb-6 md:mb-8 hover:border-gold/20 transition-colors">
           <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
             <h2 className="font-bold flex items-center gap-2 text-lg">
@@ -357,33 +296,22 @@ export default function AdminDashboard() {
               {orders.length} total orders
             </span>
           </div>
-
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
             {statusData.map((s, i) => (
               <div
                 key={i}
                 className="relative group text-center p-4 rounded-xl bg-gradient-to-br from-white/[0.02] to-transparent hover:from-white/[0.05] transition-all duration-300"
-                style={{
-                  animation: `fadeInUp 0.5s ease-out ${0.4 + i * 0.08}s both`,
-                }}
+                style={{ animation: `fadeInUp 0.5s ease-out ${0.4 + i * 0.08}s both` }}
               >
                 <div className="text-4xl mb-2 group-hover:scale-125 transition-transform duration-300 inline-block">
                   {s.emoji}
                 </div>
-                <p className={`text-3xl font-bold ${s.color} mb-1`}>
-                  {s.value}
-                </p>
-                <p className="text-xs text-white/50 font-medium mb-3">
-                  {s.label}
-                </p>
-
-                {/* Progress bar */}
+                <p className={`text-3xl font-bold ${s.color} mb-1`}>{s.value}</p>
+                <p className="text-xs text-white/50 font-medium mb-3">{s.label}</p>
                 <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
                   <div
                     className={`h-full ${s.barColor} rounded-full transition-all duration-1000`}
-                    style={{
-                      width: `${(s.value / totalOrdersForProgress) * 100}%`,
-                    }}
+                    style={{ width: `${(s.value / totalOrdersForProgress) * 100}%` }}
                   />
                 </div>
               </div>
@@ -391,7 +319,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Recent Orders */}
         <div className="bg-night-card border border-white/5 rounded-2xl p-5 md:p-6 mb-6 md:mb-8 hover:border-gold/20 transition-colors">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold flex items-center gap-2 text-lg">
@@ -402,10 +329,7 @@ export default function AdminDashboard() {
               className="text-sm text-gold hover:text-gold-light transition flex items-center gap-1 group"
             >
               View All
-              <ArrowRight
-                size={14}
-                className="group-hover:translate-x-1 transition-transform"
-              />
+              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
 
@@ -413,9 +337,7 @@ export default function AdminDashboard() {
             <div className="text-center py-12">
               <div className="text-5xl mb-3 animate-bounce">📭</div>
               <p className="text-white/60 text-sm mb-2">No orders yet</p>
-              <p className="text-white/40 text-xs">
-                Orders will appear here once customers place them
-              </p>
+              <p className="text-white/40 text-xs">Orders will appear here once customers place them</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -424,9 +346,7 @@ export default function AdminDashboard() {
                   key={order.id}
                   href="/admin/orders"
                   className="flex items-center justify-between p-3.5 rounded-xl bg-night border border-white/5 hover:border-gold/50 hover:bg-night-soft transition-all duration-300 group"
-                  style={{
-                    animation: `fadeInUp 0.4s ease-out ${0.6 + i * 0.05}s both`,
-                  }}
+                  style={{ animation: `fadeInUp 0.4s ease-out ${0.6 + i * 0.05}s both` }}
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -455,9 +375,7 @@ export default function AdminDashboard() {
                   <div className="text-right ml-3 flex items-center gap-3">
                     <div>
                       <p className="font-bold text-sm">₹{order.total}</p>
-                      <p className="text-[10px] text-white/40">
-                        {timeAgo(order.createdAt)}
-                      </p>
+                      <p className="text-[10px] text-white/40">{timeAgo(order.createdAt)}</p>
                     </div>
                     <ArrowRight
                       size={16}
@@ -470,7 +388,6 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        {/* Quick Actions */}
         <div className="grid md:grid-cols-2 gap-3 md:gap-5">
           <Link
             href="/admin/menu"
@@ -478,21 +395,13 @@ export default function AdminDashboard() {
           >
             <div className="absolute inset-0 bg-gradient-to-br from-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-gold/30 to-gold/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <ChefHat
-                size={24}
-                className="text-gold group-hover:rotate-12 transition-transform"
-              />
+              <ChefHat size={24} className="text-gold group-hover:rotate-12 transition-transform" />
             </div>
             <div className="flex-1 relative">
               <p className="font-bold mb-0.5 text-lg">Manage Menu</p>
-              <p className="text-xs text-white/50">
-                Add, edit, delete food items
-              </p>
+              <p className="text-xs text-white/50">Add, edit, delete food items</p>
             </div>
-            <ArrowRight
-              size={18}
-              className="relative text-white/40 group-hover:text-gold group-hover:translate-x-1 transition-all"
-            />
+            <ArrowRight size={18} className="relative text-white/40 group-hover:text-gold group-hover:translate-x-1 transition-all" />
           </Link>
 
           <Link
@@ -501,36 +410,21 @@ export default function AdminDashboard() {
           >
             <div className="absolute inset-0 bg-gradient-to-br from-fresh/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-fresh/30 to-fresh/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <CheckCircle2
-                size={24}
-                className="text-fresh group-hover:rotate-12 transition-transform"
-              />
+              <CheckCircle2 size={24} className="text-fresh group-hover:rotate-12 transition-transform" />
             </div>
             <div className="flex-1 relative">
               <p className="font-bold mb-0.5 text-lg">Manage Orders</p>
-              <p className="text-xs text-white/50">
-                Accept, reject, track orders
-              </p>
+              <p className="text-xs text-white/50">Accept, reject, track orders</p>
             </div>
-            <ArrowRight
-              size={18}
-              className="relative text-white/40 group-hover:text-fresh group-hover:translate-x-1 transition-all"
-            />
+            <ArrowRight size={18} className="relative text-white/40 group-hover:text-fresh group-hover:translate-x-1 transition-all" />
           </Link>
         </div>
       </div>
 
-      {/* Animations */}
       <style jsx global>{`
         @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>
