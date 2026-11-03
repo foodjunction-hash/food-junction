@@ -1,340 +1,158 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import Header from '@/components/Header'
-import Hero from '@/components/Hero'
-import Footer from '@/components/Footer'
-import FoodCard from '@/components/FoodCard'
-import TestimonialsSection from '@/components/TestimonialsSection'
-import { type FoodItem } from '@/lib/data'
-import { getMenuItems } from '@/lib/menuSupabase'
-import { useRestaurant } from '@/lib/restaurantContext'
-import {
-  ShoppingBag,
-  Leaf,
-  Zap,
-  ShieldCheck,
-  Award,
-  Heart,
-  Truck,
-  ArrowRight,
-  Code2,
-  Crown,
-  Loader2,
-} from 'lucide-react'
+import { useEffect } from 'react'
 
 export default function Home() {
-  const { restaurant, slug } = useRestaurant()
-  const [bestsellers, setBestsellers] = useState<FoodItem[]>([])
-  const [loading, setLoading] = useState(true)
-
-  // Base path for multi-tenant links
-  const basePath = !slug || slug === 'food-junction' ? '' : `/${slug}`
-
+  // Font aur Animation ko load karne ke liye effect
   useEffect(() => {
-    const loadBestsellers = async () => {
-      if (!restaurant) return
-      setLoading(true)
-      const items = await getMenuItems(restaurant.id)
-      const best = items.filter((f) => f.isBestseller).slice(0, 4)
-      setBestsellers(best)
-      setLoading(false)
-    }
-    loadBestsellers()
-  }, [restaurant])
+    // Google Fonts add karna
+    const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Montserrat:wght@300;400;500;600&display=swap';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
 
-  // Dynamic values
-  const restaurantName = restaurant?.name || 'Food Junction'
-  const city = restaurant?.city || 'Amarpur'
-  const phone = restaurant?.phone || '+91 99733 18421'
-  const callLink = `tel:${phone.replace(/\s/g, '')}`
+    // Page ka title change karna
+    document.title = "The King Is Back! - Coming Soon";
 
-  // Dynamic Team
-  const team = [
-    {
-      name: restaurant?.owner_name || 'Owner',
-      role: restaurant?.owner_role || 'Owner & Founder',
-      photo: restaurant?.owner_photo_url || '/team/owner.jpg',
-      icon: Crown,
-      color: 'from-gold to-gold-dark',
-    },
-    {
-      name: restaurant?.developer_name || 'Developer',
-      role: restaurant?.developer_role || 'Web Developer',
-      photo: restaurant?.developer_photo_url || '/team/developer-new.jpg',
-      icon: Code2,
-      color: 'from-fresh to-fresh-dark',
-    },
-  ].filter((m) => m.name)
-
-  const features = [
-    {
-      icon: Leaf,
-      title: 'Fresh Ingredients',
-      desc: 'Daily sourced fresh vegetables & meat',
-      emoji: '🌿',
-    },
-    {
-      icon: Zap,
-      title: 'Fast Delivery',
-      desc: 'Hot food delivered within 30 minutes',
-      emoji: '⚡',
-    },
-    {
-      icon: ShieldCheck,
-      title: 'Hygienic Kitchen',
-      desc: 'FSSAI certified clean kitchen',
-      emoji: '🛡️',
-    },
-    {
-      icon: Award,
-      title: 'Premium Quality',
-      desc: `Best taste in ${city} guaranteed`,
-      emoji: '🏆',
-    },
-    {
-      icon: Heart,
-      title: 'Family Friendly',
-      desc: 'Perfect ambiance for families',
-      emoji: '❤️',
-    },
-    {
-      icon: Truck,
-      title: 'Free Delivery',
-      desc: 'On orders above ₹500',
-      emoji: '🚚',
-    },
-  ]
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, []);
 
   return (
-    <>
-      <Header />
+    <div style={{
+      backgroundColor: '#030201',
+      backgroundImage: `
+        radial-gradient(circle at 90% 30%, rgba(139, 69, 19, 0.4) 0%, transparent 40%),
+        radial-gradient(circle at 20% 80%, rgba(139, 69, 19, 0.1) 0%, transparent 30%),
+        radial-gradient(circle at 50% 50%, #110a04 0%, #000000 80%)
+      `,
+      color: '#ffffff',
+      fontFamily: "'Montserrat', sans-serif",
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      overflow: 'hidden',
+      textAlign: 'center',
+      position: 'relative',
+      width: '100%'
+    }}>
+      
+      {/* Background Stars effect */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        pointerEvents: 'none',
+        backgroundImage: `
+          radial-gradient(1.5px 1.5px at 10% 20%, #d4af37, transparent),
+          radial-gradient(1px 1px at 25% 15%, #d4af37, transparent),
+          radial-gradient(2px 2px at 40% 30%, #ffcc00, transparent),
+          radial-gradient(1px 1px at 60% 10%, #d4af37, transparent),
+          radial-gradient(1.5px 1.5px at 80% 25%, #d4af37, transparent),
+          radial-gradient(1px 1px at 95% 50%, #ffcc00, transparent),
+          radial-gradient(1px 1px at 15% 65%, #d4af37, transparent),
+          radial-gradient(1.5px 1.5px at 35% 85%, #d4af37, transparent),
+          radial-gradient(1px 1px at 70% 75%, #ffcc00, transparent),
+          radial-gradient(2px 2px at 88% 90%, #d4af37, transparent)
+        `,
+        backgroundSize: '100% 100%',
+        opacity: 0.7,
+        animation: 'twinkle 4s infinite alternate'
+      }} />
 
-      <main className="min-h-screen">
-        <Hero />
+      <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        
+        <div style={{ fontSize: '11px', letterSpacing: '8px', color: '#d4af37', marginBottom: '25px', textTransform: 'uppercase', fontWeight: 600 }}>
+          ✦ THE ROYAL RETURN ✦
+        </div>
+        
+        <div style={{ fontSize: '55px', marginBottom: '15px', filter: 'drop-shadow(0 0 15px rgba(255, 165, 0, 0.8)) drop-shadow(0 0 30px rgba(255, 100, 0, 0.4))' }}>
+          👑
+        </div>
+        
+        <div style={{ fontSize: '16px', letterSpacing: '7px', color: '#ffffff', marginBottom: '25px', fontWeight: 500, textShadow: '0 0 10px rgba(255, 255, 255, 0.3)' }}>
+          WAIT... I AM BACK!
+        </div>
+        
+        <h1 style={{
+          fontFamily: "'Cinzel', serif",
+          fontSize: '95px',
+          lineHeight: 0.95,
+          background: 'linear-gradient(to bottom, #fff5cc 10%, #f3c04b 50%, #b87e1b 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          textShadow: '0px 0px 20px rgba(255, 180, 50, 0.6), 0px 0px 50px rgba(255, 140, 0, 0.4), 0px 0px 80px rgba(139, 69, 19, 0.3)',
+          marginBottom: '30px',
+          fontWeight: 900,
+          letterSpacing: '2px'
+        }}>
+          THE KING<br />IS BACK!
+        </h1>
+        
+        <div style={{
+          width: '350px',
+          height: '2px',
+          background: 'linear-gradient(90deg, transparent, #d4af37, #fff5cc, #d4af37, transparent)',
+          margin: '0 auto 35px auto',
+          boxShadow: '0 0 15px rgba(212, 175, 55, 0.8)',
+          borderRadius: '50%'
+        }}></div>
+        
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: '24px', color: '#ffffff', marginBottom: '15px', letterSpacing: '1px', fontWeight: 600, textShadow: '0 0 10px rgba(255,255,255,0.2)' }}>
+          Legends Never Quit,
+        </div>
+        
+        <div style={{ fontFamily: "'Cinzel', serif", color: '#d4af37', fontSize: '20px', fontWeight: 700, marginBottom: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', letterSpacing: '2px', textShadow: '0 0 15px rgba(212, 175, 55, 0.6)' }}>
+          KINGS ALWAYS RETURN! 🦁 🔥
+        </div>
+        
+        <div style={{
+          border: '1px solid rgba(212, 175, 55, 0.4)',
+          padding: '15px 45px',
+          borderRadius: '50px',
+          color: '#d4af37',
+          fontSize: '12px',
+          letterSpacing: '5px',
+          textTransform: 'uppercase',
+          background: 'rgba(10, 5, 0, 0.5)',
+          boxShadow: 'inset 0 0 20px rgba(212, 175, 55, 0.1), 0 0 20px rgba(212, 175, 55, 0.2)',
+          marginBottom: '40px',
+          display: 'inline-block',
+          fontWeight: 600
+        }}>
+          NO FEAR · NO LIMITS · ONLY KING
+        </div>
 
-        {/* BEST SELLERS */}
-        <section className="relative py-20 md:py-28 bg-night-soft overflow-hidden">
-          <div className="absolute inset-0 bg-dots opacity-20" />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-gold/5 rounded-full blur-[120px]" />
+        <div style={{ fontSize: '24px', display: 'flex', gap: '30px', justifyContent: 'center', filter: 'drop-shadow(0 0 10px rgba(255, 80, 0, 0.6))' }}>
+          <span>🔥</span>
+          <span>💀</span>
+          <span>🔥</span>
+        </div>
+      </div>
 
-          <div className="relative max-w-7xl mx-auto px-4">
-            <div className="text-center mb-14">
-              <div className="inline-flex items-center gap-2 text-gold tracking-[0.3em] text-xs md:text-sm mb-3">
-                <span className="w-8 h-px bg-gradient-to-r from-transparent to-gold" />
-                <span className="font-semibold">OUR SPECIALTIES</span>
-                <span className="w-8 h-px bg-gradient-to-l from-transparent to-gold" />
-              </div>
-              <h2 className="font-display text-4xl md:text-6xl font-bold mb-4">
-                Best <span className="text-shimmer">Sellers</span>
-              </h2>
-              <p className="text-white/60 max-w-2xl mx-auto text-sm md:text-base">
-                Handpicked dishes loved by our customers
-              </p>
-              <div className="w-24 h-1 bg-gradient-to-r from-transparent via-gold to-transparent mx-auto mt-6 opacity-60" />
-            </div>
+      <div style={{ position: 'absolute', bottom: '25px', fontSize: '10px', letterSpacing: '6px', color: '#666', textTransform: 'uppercase', fontWeight: 600, zIndex: 2 }}>
+        THE LEGEND NEVER DIES
+      </div>
 
-            {loading ? (
-              <div className="text-center py-20">
-                <Loader2 className="animate-spin text-gold mx-auto mb-3" size={32} />
-                <p className="text-white/60 text-sm">Loading bestsellers...</p>
-              </div>
-            ) : bestsellers.length === 0 ? (
-              <div className="text-center py-16">
-                <p className="text-5xl mb-3">🍽️</p>
-                <p className="text-white/60 text-sm">
-                  No bestsellers available right now
-                </p>
-                <Link
-                  href={`${basePath}/menu`}
-                  className="inline-block mt-4 text-gold hover:text-gold-light font-semibold underline"
-                >
-                  Browse full menu
-                </Link>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-                {bestsellers.map((item) => (
-                  <FoodCard key={item.id} item={item} />
-                ))}
-              </div>
-            )}
-
-            <div className="text-center mt-14">
-              <Link
-                href={`${basePath}/menu`}
-                className="group inline-flex items-center gap-2 border-2 border-gold text-gold font-bold px-8 py-4 rounded-full hover:bg-gold hover:text-night transition-all duration-300 hover:shadow-[0_10px_30px_rgba(245,179,1,0.3)] hover:scale-105"
-              >
-                <span>View Full Menu</span>
-                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* WHY CHOOSE US */}
-        <section className="relative py-20 md:py-28 overflow-hidden">
-          <div className="absolute inset-0 bg-mesh opacity-50" />
-
-          <div className="relative max-w-7xl mx-auto px-4">
-            <div className="text-center mb-14">
-              <div className="inline-flex items-center gap-2 text-gold tracking-[0.3em] text-xs md:text-sm mb-3">
-                <span className="w-8 h-px bg-gradient-to-r from-transparent to-gold" />
-                <span className="font-semibold">WHY CHOOSE US</span>
-                <span className="w-8 h-px bg-gradient-to-l from-transparent to-gold" />
-              </div>
-              <h2 className="font-display text-4xl md:text-6xl font-bold mb-4">
-                The <span className="text-shimmer">{restaurantName}</span> Promise
-              </h2>
-              <p className="text-white/60 max-w-2xl mx-auto text-sm md:text-base">
-                We promise fresh, hygienic, and delicious food with every order
-              </p>
-              <div className="w-24 h-1 bg-gradient-to-r from-transparent via-gold to-transparent mx-auto mt-6 opacity-60" />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-              {features.map((f, i) => (
-                <div
-                  key={i}
-                  className="group relative glass border border-white/5 rounded-2xl p-6 text-center card-premium overflow-hidden"
-                >
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-gold/20 rounded-full blur-3xl" />
-                  </div>
-
-                  <div className="relative w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-gold/20 to-gold/5 border border-gold/30 flex items-center justify-center mb-5 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-[0_0_20px_rgba(245,179,1,0.1)] group-hover:shadow-[0_0_30px_rgba(245,179,1,0.4)]">
-                    <f.icon size={28} className="text-gold group-hover:scale-110 transition-transform" />
-                    <span className="absolute -top-2 -right-2 text-2xl opacity-0 group-hover:opacity-100 group-hover:animate-bounce-soft transition-opacity">
-                      {f.emoji}
-                    </span>
-                  </div>
-
-                  <h3 className="font-bold text-lg mb-2 group-hover:text-gold transition-colors">
-                    {f.title}
-                  </h3>
-
-                  <p className="text-sm text-white/60 group-hover:text-white/80 transition-colors leading-relaxed">
-                    {f.desc}
-                  </p>
-
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 group-hover:w-3/4 h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent transition-all duration-500" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* MEET THE TEAM */}
-        {team.length > 0 && (
-          <section className="relative py-16 md:py-24 bg-night-soft overflow-hidden">
-            <div className="absolute inset-0 bg-dots opacity-20" />
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gold/10 rounded-full blur-[100px]" />
-
-            <div className="relative max-w-4xl mx-auto px-4">
-              <div className="text-center mb-12">
-                <p className="text-gold tracking-[0.3em] text-xs md:text-sm mb-3">
-                  MEET THE TEAM
-                </p>
-                <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
-                  The <span className="text-shimmer">People</span> Behind
-                </h2>
-                <p className="text-white/60 max-w-2xl mx-auto text-sm md:text-base">
-                  The duo who built this dream — from food to code
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {team.map((member, i) => (
-                  <div
-                    key={i}
-                    className="group relative bg-night-card border border-white/5 rounded-3xl p-6 text-center card-premium overflow-hidden"
-                  >
-                    <div
-                      className={`absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-gradient-to-br ${member.color} rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity`}
-                    />
-
-                    <div className="relative mx-auto mb-5">
-                      <div
-                        className={`absolute inset-0 rounded-full bg-gradient-to-br ${member.color} blur-lg opacity-40 group-hover:opacity-70 transition-opacity`}
-                      />
-                      <div className="relative w-24 h-24 md:w-28 md:h-28 mx-auto rounded-full overflow-hidden border-4 border-gold/30 group-hover:border-gold transition-all duration-500 group-hover:scale-105">
-                        <img
-                          src={member.photo}
-                          alt={member.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </div>
-
-                    <h3 className="font-display text-xl font-bold mb-1 group-hover:text-gold transition-colors">
-                      {member.name}
-                    </h3>
-                    <span
-                      className={`inline-flex items-center gap-1 bg-gradient-to-br ${member.color} text-night text-xs font-bold px-3 py-1 rounded-full shadow-gold mb-3`}
-                    >
-                      <member.icon size={12} />
-                      <span>{member.role}</span>
-                    </span>
-
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 group-hover:w-3/4 h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent transition-all duration-500" />
-                  </div>
-                ))}
-              </div>
-
-              <div className="text-center mt-10">
-                <Link
-                  href={`${basePath}/about`}
-                  className="inline-flex items-center gap-2 border-2 border-gold text-gold font-bold px-6 py-3 rounded-full hover:bg-gold hover:text-night transition"
-                >
-                  <span>Read Full Story</span>
-                  <ArrowRight size={16} />
-                </Link>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* TESTIMONIALS */}
-        <TestimonialsSection />
-
-        {/* FINAL CTA */}
-        <section className="relative py-20 md:py-28 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-gold/10 via-night to-night" />
-          <div className="absolute inset-0 bg-dots opacity-30" />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gold/20 rounded-full blur-[100px]" />
-
-          <div className="relative max-w-4xl mx-auto px-4 text-center">
-            <div className="text-6xl mb-6 animate-bounce-soft">🍽️</div>
-            <h2 className="font-display text-4xl md:text-6xl font-bold mb-4">
-              <span className="text-shimmer">Order from {restaurantName}!</span>
-            </h2>
-            <p className="text-white/60 mb-10 text-base md:text-lg max-w-2xl mx-auto">
-              Fresh, delicious, hygienic food delivered to your doorstep in just
-              30 minutes. Ab kya sochna? 🍕
-            </p>
-            <div className="flex flex-wrap gap-4 justify-center">
-              <Link
-                href={`${basePath}/menu`}
-                className="group relative bg-gradient-to-br from-gold to-gold-dark text-night font-bold px-10 py-4 rounded-full btn-premium text-base md:text-lg shadow-gold hover:shadow-[0_15px_40px_rgba(245,179,1,0.5)]"
-              >
-                <span className="relative z-10 flex items-center gap-2">
-                  <ShoppingBag size={20} />
-                  <span>Order Now</span>
-                </span>
-              </Link>
-              <a
-                href={callLink}
-                className="group border-2 border-gold text-gold font-bold px-10 py-4 rounded-full hover:bg-gold hover:text-night transition-all duration-300 text-base md:text-lg hover:scale-105"
-              >
-                <span className="flex items-center gap-2">📞 Call Now</span>
-              </a>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <Footer />
-    </>
+      {/* CSS Styles for Animation & Mobile Responsive */}
+      <style jsx global>{`
+        @keyframes twinkle {
+          0% { opacity: 0.4; transform: translateY(0px); }
+          100% { opacity: 0.9; transform: translateY(-10px); }
+        }
+        @media (max-width: 768px) {
+          h1 { font-size: 55px !important; }
+          div[style*="letter-spacing: 7px"] { font-size: 12px !important; letter-spacing: 4px !important; }
+          div[style*="letter-spacing: 8px"] { font-size: 9px !important; letter-spacing: 5px !important; }
+          div[style*="width: 350px"] { width: 250px !important; }
+          div[style*="padding: 15px 45px"] { padding: 12px 25px !important; font-size: 9px !important; letter-spacing: 3px !important; }
+        }
+      `}</style>
+    </div>
   )
 }
